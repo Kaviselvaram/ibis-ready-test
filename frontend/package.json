@@ -1,0 +1,43 @@
+{
+  "name": "ibis-physics-portal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "optimize-assets": "node scripts/optimize-assets.mjs",
+    "predev": "npm run optimize-assets",
+    "dev": "vite --host 0.0.0.0 --port 3002",
+    "prebuild": "npm run optimize-assets",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/s3-request-presigner": "^3.1075.0",
+    "@paper-design/shaders": "^0.0.76",
+    "@sentry/browser": "^10.62.0",
+    "@sentry/react": "^10.62.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "@upstash/redis": "^1.38.0",
+    "@vitejs/plugin-react": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "framer-motion": "^12.41.0",
+    "katex": "^0.17.0",
+    "lucide-react": "^1.21.0",
+    "ogl": "^1.0.11",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.0",
+    "vite": "^8.1.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/generator": "^8.0.0",
+    "@babel/parser": "^8.0.0",
+    "@babel/traverse": "^8.0.0",
+    "concurrently": "^10.0.3",
+    "playwright": "^1.61.1",
+    "sharp": "^0.35.2"
+  }
+}

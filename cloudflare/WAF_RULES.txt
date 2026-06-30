@@ -1,0 +1,21 @@
+# Cloudflare WAF Rules specifically for Ibis Physics Portal
+
+1. Rate Limiting (Strict at Edge)
+   - Route: `/api/auth/login`
+   - Limit: 10 requests / 1 minute / IP
+   - Action: Block for 1 hour
+
+2. Block Known Malicious IPs & Tor Exit Nodes
+   - Action: Managed Challenge or Block
+
+3. Strict Path Matching
+   - If URI path contains `/wp-admin`, `.env`, `.git`
+   - Action: Block
+
+4. Webhook Integrity
+   - Route: `/api/webhooks/razorpay`
+   - Action: Require `X-Razorpay-Signature` header to exist, else Block
+
+5. API Abuse Protection
+   - If User-Agent is empty OR suspicious (e.g. "curl", "python-requests")
+   - Action: Managed Challenge (Exclude `/api/webhooks/razorpay`)

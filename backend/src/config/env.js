@@ -1,0 +1,39 @@
+import { z } from "zod";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env.local from the monorepo root
+dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
+
+const envSchema = z.object({
+  PORT: z.string().default("4000"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  SUPABASE_URL: z.string().url(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string(),
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET_NAME: z.string().optional(),
+  JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 chars"),
+  TOTP_MASTER_KEY: z.string().min(32).max(32, "TOTP_MASTER_KEY must be exactly 32 chars").optional()
+});
+
+const parsedEnv = envSchema.safeParse({
+  ...process.env,
+  SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+});
+
+import { logger } from "../utils/logger.js";
+
+if (!parsedEnv.success) {
+  logger.error("❌ Invalid environment variables:", { errors: parsedEnv.error.format() });
+  process.exit(1);
+}
+
+export const env = parsedEnv.data;

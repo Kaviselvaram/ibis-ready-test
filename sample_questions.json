@@ -1,0 +1,852 @@
+[
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Biot-Savart Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 4 units. If another parameter Y is 14 units, which formula best describes their interaction in Biot-Savart Law?",
+    "options": [
+      "X + Y = 18",
+      "X * Y = 56",
+      "X / Y = 0.29",
+      "X^2 + Y = 30"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (4 * 14 = 56) is typically the derived quantity for Biot-Savart Law.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Gauss Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Gauss Law in the context of Electric Charges and Fields?",
+    "options": [
+      "It relies solely on temperature (Variant 5).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Gauss Law, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Optical Instruments",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Optical Instruments in the context of Ray Optics and Optical Instruments?",
+    "options": [
+      "It relies solely on temperature (Variant 8).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Optical Instruments, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Wave Optics",
+    "topic": "Huygens Principle",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Huygens Principle in the context of Wave Optics?",
+    "options": [
+      "It relies solely on temperature (Variant 8).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Huygens Principle, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Waves",
+    "topic": "Electromagnetic Spectrum",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Electromagnetic Spectrum. If the initial state has a magnitude of 26 and it decreases by a factor of 1, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 26.00.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 26 by the factor 1, we arrive at 26.00, demonstrating the application of Electromagnetic Spectrum principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Induction",
+    "topic": "Self and Mutual Induction",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Self and Mutual Induction. If the initial state has a magnitude of 17 and it decreases by a factor of 7, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.43.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 17 by the factor 7, we arrive at 2.43, demonstrating the application of Self and Mutual Induction principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Magnetism and Matter",
+    "topic": "Earth's Magnetism",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Earth's Magnetism in the context of Magnetism and Matter?",
+    "options": [
+      "It relies solely on temperature (Variant 8).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Earth's Magnetism, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Electrostatic Potential",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 7 units. If another parameter Y is 29 units, which formula best describes their interaction in Electrostatic Potential?",
+    "options": [
+      "X + Y = 36",
+      "X * Y = 203",
+      "X / Y = 0.24",
+      "X^2 + Y = 78"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (7 * 29 = 203) is typically the derived quantity for Electrostatic Potential.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Optical Instruments",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Optical Instruments in the context of Ray Optics and Optical Instruments?",
+    "options": [
+      "It relies solely on temperature (Variant 6).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Optical Instruments, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Ampere's Circuital Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 5 units. If another parameter Y is 15 units, which formula best describes their interaction in Ampere's Circuital Law?",
+    "options": [
+      "X + Y = 20",
+      "X * Y = 75",
+      "X / Y = 0.33",
+      "X^2 + Y = 40"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (5 * 15 = 75) is typically the derived quantity for Ampere's Circuital Law.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Current Electricity",
+    "topic": "Wheatstone Bridge",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Wheatstone Bridge in the context of Current Electricity?",
+    "options": [
+      "It relies solely on temperature (Variant 10).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Wheatstone Bridge, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Refraction",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Refraction in the context of Ray Optics and Optical Instruments?",
+    "options": [
+      "It relies solely on temperature (Variant 5).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Refraction, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Magnetism and Matter",
+    "topic": "The Bar Magnet",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 5 units. If another parameter Y is 29 units, which formula best describes their interaction in The Bar Magnet?",
+    "options": [
+      "X + Y = 34",
+      "X * Y = 145",
+      "X / Y = 0.17",
+      "X^2 + Y = 54"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (5 * 29 = 145) is typically the derived quantity for The Bar Magnet.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Waves",
+    "topic": "Displacement Current",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 7 units. If another parameter Y is 17 units, which formula best describes their interaction in Displacement Current?",
+    "options": [
+      "X + Y = 24",
+      "X * Y = 119",
+      "X / Y = 0.41",
+      "X^2 + Y = 66"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (7 * 17 = 119) is typically the derived quantity for Displacement Current.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Induction",
+    "topic": "Faraday's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 8 units. If another parameter Y is 14 units, which formula best describes their interaction in Faraday's Law?",
+    "options": [
+      "X + Y = 22",
+      "X * Y = 112",
+      "X / Y = 0.57",
+      "X^2 + Y = 78"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (8 * 14 = 112) is typically the derived quantity for Faraday's Law.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Gauss Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Gauss Law. If the initial state has a magnitude of 23 and it decreases by a factor of 6, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 3.83.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 23 by the factor 6, we arrive at 3.83, demonstrating the application of Gauss Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Refraction",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Refraction in the context of Ray Optics and Optical Instruments?",
+    "options": [
+      "It relies solely on temperature (Variant 6).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Refraction, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Reflection of Light",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Reflection of Light. If the initial state has a magnitude of 21 and it decreases by a factor of 9, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.33.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 21 by the factor 9, we arrive at 2.33, demonstrating the application of Reflection of Light principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Biot-Savart Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Biot-Savart Law. If the initial state has a magnitude of 19 and it decreases by a factor of 3, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 6.33.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 19 by the factor 3, we arrive at 6.33, demonstrating the application of Biot-Savart Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Biot-Savart Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Biot-Savart Law. If the initial state has a magnitude of 27 and it decreases by a factor of 5, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 5.40.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 27 by the factor 5, we arrive at 5.40, demonstrating the application of Biot-Savart Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Waves",
+    "topic": "Electromagnetic Spectrum",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 6 units. If another parameter Y is 19 units, which formula best describes their interaction in Electromagnetic Spectrum?",
+    "options": [
+      "X + Y = 25",
+      "X * Y = 114",
+      "X / Y = 0.32",
+      "X^2 + Y = 55"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (6 * 19 = 114) is typically the derived quantity for Electromagnetic Spectrum.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Capacitors and Capacitance",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Capacitors and Capacitance. If the initial state has a magnitude of 20 and it decreases by a factor of 8, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.50.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 20 by the factor 8, we arrive at 2.50, demonstrating the application of Capacitors and Capacitance principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Ray Optics and Optical Instruments",
+    "topic": "Optical Instruments",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Optical Instruments. If the initial state has a magnitude of 16 and it decreases by a factor of 9, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 1.78.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 16 by the factor 9, we arrive at 1.78, demonstrating the application of Optical Instruments principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Waves",
+    "topic": "Electromagnetic Spectrum",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Electromagnetic Spectrum. If the initial state has a magnitude of 15 and it decreases by a factor of 2, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 7.50.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 15 by the factor 2, we arrive at 7.50, demonstrating the application of Electromagnetic Spectrum principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Field Lines",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Electric Field Lines in the context of Electric Charges and Fields?",
+    "options": [
+      "It relies solely on temperature (Variant 10).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Electric Field Lines, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Magnetism and Matter",
+    "topic": "Earth's Magnetism",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 8 units. If another parameter Y is 18 units, which formula best describes their interaction in Earth's Magnetism?",
+    "options": [
+      "X + Y = 26",
+      "X * Y = 144",
+      "X / Y = 0.44",
+      "X^2 + Y = 82"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (8 * 18 = 144) is typically the derived quantity for Earth's Magnetism.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Magnetic Force",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 1 units. If another parameter Y is 13 units, which formula best describes their interaction in Magnetic Force?",
+    "options": [
+      "X + Y = 14",
+      "X * Y = 13",
+      "X / Y = 0.08",
+      "X^2 + Y = 14"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (1 * 13 = 13) is typically the derived quantity for Magnetic Force.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Alternating Current",
+    "topic": "AC Voltage Applied to an Inductor",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 2 units. If another parameter Y is 19 units, which formula best describes their interaction in AC Voltage Applied to an Inductor?",
+    "options": [
+      "X + Y = 21",
+      "X * Y = 38",
+      "X / Y = 0.11",
+      "X^2 + Y = 23"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (2 * 19 = 38) is typically the derived quantity for AC Voltage Applied to an Inductor.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Electric Field Lines",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Electric Field Lines. If the initial state has a magnitude of 12 and it decreases by a factor of 8, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 1.50.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 12 by the factor 8, we arrive at 1.50, demonstrating the application of Electric Field Lines principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Coulomb's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Coulomb's Law in the context of Electric Charges and Fields?",
+    "options": [
+      "It relies solely on temperature (Variant 3).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Coulomb's Law, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Alternating Current",
+    "topic": "AC Voltage Applied to an Inductor",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of AC Voltage Applied to an Inductor in the context of Alternating Current?",
+    "options": [
+      "It relies solely on temperature (Variant 7).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For AC Voltage Applied to an Inductor, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Biot-Savart Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Biot-Savart Law in the context of Moving Charges and Magnetism?",
+    "options": [
+      "It relies solely on temperature (Variant 10).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Biot-Savart Law, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Alternating Current",
+    "topic": "AC Voltage Applied to an Inductor",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 5 units. If another parameter Y is 14 units, which formula best describes their interaction in AC Voltage Applied to an Inductor?",
+    "options": [
+      "X + Y = 19",
+      "X * Y = 70",
+      "X / Y = 0.36",
+      "X^2 + Y = 39"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (5 * 14 = 70) is typically the derived quantity for AC Voltage Applied to an Inductor.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Current Electricity",
+    "topic": "Wheatstone Bridge",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Wheatstone Bridge. If the initial state has a magnitude of 27 and it decreases by a factor of 1, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 27.00.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 27 by the factor 1, we arrive at 27.00, demonstrating the application of Wheatstone Bridge principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electromagnetic Induction",
+    "topic": "Faraday's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Faraday's Law. If the initial state has a magnitude of 11 and it decreases by a factor of 5, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.20.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 11 by the factor 5, we arrive at 2.20, demonstrating the application of Faraday's Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Magnetism and Matter",
+    "topic": "Magnetic Properties of Materials",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Magnetic Properties of Materials. If the initial state has a magnitude of 18 and it decreases by a factor of 7, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.57.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 18 by the factor 7, we arrive at 2.57, demonstrating the application of Magnetic Properties of Materials principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electrostatic Potential and Capacitance",
+    "topic": "Capacitors and Capacitance",
+    "questionType": "MCQ",
+    "bloomLevel": "Evaluate",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Capacitors and Capacitance. If the initial state has a magnitude of 10 and it decreases by a factor of 4, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.50.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 10 by the factor 4, we arrive at 2.50, demonstrating the application of Capacitors and Capacitance principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Current Electricity",
+    "topic": "Ohm's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 3 units. If another parameter Y is 18 units, which formula best describes their interaction in Ohm's Law?",
+    "options": [
+      "X + Y = 21",
+      "X * Y = 54",
+      "X / Y = 0.17",
+      "X^2 + Y = 27"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (3 * 18 = 54) is typically the derived quantity for Ohm's Law.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Wave Optics",
+    "topic": "Diffraction",
+    "questionType": "MCQ",
+    "bloomLevel": "Understand",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 1 units. If another parameter Y is 21 units, which formula best describes their interaction in Diffraction?",
+    "options": [
+      "X + Y = 22",
+      "X * Y = 21",
+      "X / Y = 0.05",
+      "X^2 + Y = 22"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (1 * 21 = 21) is typically the derived quantity for Diffraction.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Wave Optics",
+    "topic": "Interference of Light Waves",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Interference of Light Waves. If the initial state has a magnitude of 15 and it decreases by a factor of 8, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 1.88.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 15 by the factor 8, we arrive at 1.88, demonstrating the application of Interference of Light Waves principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Magnetism and Matter",
+    "topic": "The Bar Magnet",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving The Bar Magnet. If the initial state has a magnitude of 26 and it decreases by a factor of 6, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 4.33.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 26 by the factor 6, we arrive at 4.33, demonstrating the application of The Bar Magnet principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Magnetic Force",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Magnetic Force in the context of Moving Charges and Magnetism?",
+    "options": [
+      "It relies solely on temperature (Variant 7).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Magnetic Force, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Ampere's Circuital Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Create",
+    "difficulty": "Easy",
+    "question": "What is a fundamental characteristic of Ampere's Circuital Law in the context of Moving Charges and Magnetism?",
+    "options": [
+      "It relies solely on temperature (Variant 9).",
+      "It is an inverse square relationship.",
+      "It is directly proportional to mass.",
+      "It remains constant under all conditions."
+    ],
+    "answer": "B",
+    "explanation": "For Ampere's Circuital Law, the core principle generally follows an inverse square relationship or similar foundational rule.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Wave Optics",
+    "topic": "Huygens Principle",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Huygens Principle. If the initial state has a magnitude of 22 and it decreases by a factor of 4, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 5.50.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 22 by the factor 4, we arrive at 5.50, demonstrating the application of Huygens Principle principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Electric Charges and Fields",
+    "topic": "Coulomb's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Coulomb's Law. If the initial state has a magnitude of 28 and it decreases by a factor of 10, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 2.80.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 28 by the factor 10, we arrive at 2.80, demonstrating the application of Coulomb's Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Current Electricity",
+    "topic": "Ohm's Law",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Ohm's Law. If the initial state has a magnitude of 16 and it decreases by a factor of 10, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 1.60.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 16 by the factor 10, we arrive at 1.60, demonstrating the application of Ohm's Law principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Moving Charges and Magnetism",
+    "topic": "Magnetic Force",
+    "questionType": "MCQ",
+    "bloomLevel": "Analyze",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 1 units. If another parameter Y is 10 units, which formula best describes their interaction in Magnetic Force?",
+    "options": [
+      "X + Y = 11",
+      "X * Y = 10",
+      "X / Y = 0.10",
+      "X^2 + Y = 11"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (1 * 10 = 10) is typically the derived quantity for Magnetic Force.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Alternating Current",
+    "topic": "AC Voltage Applied to a Resistor",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 7 units. If another parameter Y is 23 units, which formula best describes their interaction in AC Voltage Applied to a Resistor?",
+    "options": [
+      "X + Y = 30",
+      "X * Y = 161",
+      "X / Y = 0.30",
+      "X^2 + Y = 72"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (7 * 23 = 161) is typically the derived quantity for AC Voltage Applied to a Resistor.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Current Electricity",
+    "topic": "Wheatstone Bridge",
+    "questionType": "MCQ",
+    "bloomLevel": "Apply",
+    "difficulty": "Hard",
+    "question": "Consider a complex scenario involving Wheatstone Bridge. If the initial state has a magnitude of 17 and it decreases by a factor of 5, what is the conceptual outcome?",
+    "options": [
+      "The system collapses.",
+      "The new magnitude becomes 3.40.",
+      "The energy is dissipated as heat.",
+      "It creates an electromagnetic wave."
+    ],
+    "answer": "B",
+    "explanation": "By dividing the initial state 17 by the factor 5, we arrive at 3.40, demonstrating the application of Wheatstone Bridge principles.",
+    "source": "Generated Test Bank"
+  },
+  {
+    "chapter": "Wave Optics",
+    "topic": "Huygens Principle",
+    "questionType": "MCQ",
+    "bloomLevel": "Remember",
+    "difficulty": "Medium",
+    "question": "A system has a parameter X = 3 units. If another parameter Y is 21 units, which formula best describes their interaction in Huygens Principle?",
+    "options": [
+      "X + Y = 24",
+      "X * Y = 63",
+      "X / Y = 0.14",
+      "X^2 + Y = 30"
+    ],
+    "answer": "B",
+    "explanation": "The product of X and Y (3 * 21 = 63) is typically the derived quantity for Huygens Principle.",
+    "source": "Generated Test Bank"
+  }
+]

@@ -1,0 +1,407 @@
+import { useAuthenticationController } from "../../hooks/useAuthenticationController";
+import { useCourseContext } from "../../contexts/CourseContext";
+import { useCourseController } from "../../hooks/useCourseController";
+import { useAccessContext } from "../../contexts/AccessContext";
+import { useAccessController } from "../../hooks/useAccessController";
+import { useUI } from "../../contexts/UIContext";
+import React, { useState, useEffect, useRef } from 'react';
+import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, CalendarDays } from 'lucide-react';
+import { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
+import TextReveal from '../ui/TextReveal';
+import GradientBlobCard from '../ui/GradientBlobCard';
+import ChapterCardStack from '../shared/ChapterCardStack';
+import { StudentChapterShowcase } from '../common/Landing';
+
+export function getCalendarDays(year, month) {
+  const firstDayIndex = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const days = [];
+  for (let i = 0; i < firstDayIndex; i++) {
+    days.push(null);
+  }
+  for (let d = 1; d <= totalDays; d++) {
+    days.push(d);
+  }
+  return days;
+}
+
+export function getStudyCalendar(studyDataByDay, baseDate = new Date()) {
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const today = baseDate.getDate();
+  const monthName = baseDate.toLocaleString("en-IN", { month: "long" });
+  const days = getCalendarDays(year, month);
+  const safeData = studyDataByDay || {};
+  const activeDays = Object.keys(safeData).filter((day) => Number(day) <= new Date(year, month + 1, 0).getDate()).length;
+  const totalMinutes = Object.values(safeData).reduce((sum, day) => sum + day.minutes, 0);
+  return { year, month, today, monthName, days, activeDays, totalMinutes };
+}
+
+export function CalendarCard({ onClick, isNested = false }) {
+  const { studyData } = useCourseContext();
+  const { year, today, monthName, days, activeDays } = getStudyCalendar(studyData || {});
+  
+  const Tag = isNested ? "div" : "button";
+  const extraProps = isNested ? {} : { onClick };
+
+  return (
+    <Tag 
+      className="metric-card calendar-card" 
+      style={isNested ? { background: "transparent", border: "none", boxShadow: "none", padding: "14px 16px 16px" } : {}} 
+      {...extraProps}
+    >
+      <div className="card-header-row">
+        <CalendarDays />
+        <span>Study rhythm</span>
+      </div>
+      <div className="calendar-header-title">
+        <strong>{monthName} {year}</strong>
+        <span className="streak-badge"><Flame size={12} /> 3 day streak</span>
+      </div>
+      <div className="calendar-grid-wrapper">
+        <div className="weekdays-row">
+          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+        </div>
+        <div className="calendar-days-grid">
+          {days.map((day, idx) => {
+            if (day === null) return <span key={`empty-${idx}`} className="day-cell empty" />;
+            const isToday = day === today;
+            const data = (studyData || {})[day];
+            let cellClass = "";
+            if (data) cellClass += ` ${data.type}`;
+            if (isToday) cellClass += " today";
+            return (
+              <span key={`day-${day}`} className={`day-cell${cellClass}`}>
+                {day}
+                {isToday && <span className="today-dot" />}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+      <span className="calendar-card-footer">
+        {activeDays} active days this month · open calendar
+      </span>
+    </Tag>
+  );
+}
+
+export function StatsModal({ onClose, chapters }) {
+  const { studyData } = useCourseContext();
+  const { year, today, monthName, days, totalMinutes } = getStudyCalendar(studyData || {});
+  const [selectedDay, setSelectedDay] = useState(today);
+  const selectedData = (studyData || {})[selectedDay];
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal wide-modal" onClick={(e) => e.stopPropagation()}>
+        <Button className="icon-btn close-btn" aria-label="Close modal" onClick={onClose}><X size={16} /></Button>
+        <div>
+          <Pill tone="accent">Study Progress & Metrics</Pill>
+          <h2 style={{ marginTop: "6px", marginBottom: "4px" }}>Study Rhythm & Progress Dashboard</h2>
+        </div>
+        
+        <div className="stats-dashboard-grid">
+          <div className="stats-left">
+            <h3 className="modal-section-title">{monthName} {year} Calendar</h3>
+            <div className="large-calendar-grid">
+              <div className="weekdays-row" style={{ marginBottom: "6px" }}>
+                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+              </div>
+              <div className="large-calendar-days">
+                {days.map((day, idx) => {
+                  if (day === null) return <span key={`empty-${idx}`} className="day-cell empty" />;
+                  const isToday = day === today;
+                  const data = (studyData || {})[day];
+                  let cellClass = "";
+                  if (data) cellClass += ` ${data.type}`;
+                  if (isToday) cellClass += " today";
+                  if (selectedDay === day) cellClass += " active-selected";
+                  return (
+                    <button 
+                      key={`day-${day}`} 
+                      className={`day-cell${cellClass}`}
+                      onClick={() => setSelectedDay(day)}
+                      style={selectedDay === day ? { borderColor: "var(--clay-dark)", borderWidth: "2px" } : {}}
+                    >
+                      {day}
+                      {isToday && <span className="today-dot" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="calendar-legend">
+              <div className="legend-item">
+                <span className="legend-color none" />
+                <span>No study</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color warm" />
+                <span>Active study (0 - 60m)</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color hot" />
+                <span>Deep focus (60m+)</span>
+              </div>
+            </div>
+
+            <div className="detail-bubble">
+              <strong>{monthName} {selectedDay}, {year}</strong>
+              {selectedData ? (
+                <span>
+                  Studied for <strong>{selectedData.minutes} minutes</strong>. Covered <strong>{selectedData.lessons} lessons</strong> and completed <strong>{selectedData.tests} practice tests</strong>.
+                </span>
+              ) : (
+                <span>No study recorded for this day. Rest and recovery.</span>
+              )}
+            </div>
+          </div>
+          
+          <div className="stats-right">
+            <h3 className="modal-section-title">Performance Summary</h3>
+            <div className="stats-summary-grid">
+              <div className="stat-bubble">
+                <span>Current Streak</span>
+                <strong>3 Days</strong>
+              </div>
+              <div className="stat-bubble">
+                <span>Max Streak</span>
+                <strong>14 Days</strong>
+              </div>
+              <div className="stat-bubble">
+                <span>Total Study Time</span>
+                <strong>{(totalMinutes / 60).toFixed(1)} Hours</strong>
+              </div>
+              <div className="stat-bubble">
+                <span>Worked Examples</span>
+                <strong>32 Solved</strong>
+              </div>
+            </div>
+
+            <h3 className="modal-section-title" style={{ marginTop: "8px" }}>Syllabus Coverage</h3>
+            <div className="chapter-progress-list">
+              {chapters.slice(0, 5).map((ch) => (
+                <div key={ch.id} className="chapter-progress-item">
+                  <div className="chapter-progress-header">
+                    <span>Ch {ch.id}: {ch.name}</span>
+                    <strong>{ch.progress}%</strong>
+                  </div>
+                  <div className="progress-line">
+                    <i style={{ width: `${ch.progress}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function LeaderboardModal({ onClose }) {
+  const { leaderboard } = useCourseContext();
+  const cohort = leaderboard || [];
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal wide-modal" style={{ maxWidth: "680px" }} onClick={(e) => e.stopPropagation()}>
+        <Button className="icon-btn close-btn" aria-label="Close modal" onClick={onClose}><X size={16} /></Button>
+        <div>
+          <Pill tone="accent">Cohort Leaderboard</Pill>
+          <h2 style={{ marginTop: "6px", marginBottom: "4px" }}>Board Intensive Rankings</h2>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", margin: 0 }}>
+            Compare your study time, board accuracy, and total tests solved against your batch.
+          </p>
+        </div>
+        
+        <div className="leaderboard-list">
+          {cohort.map((student) => {
+            const initials = student.name.split(" ").map(p => p[0]).join("");
+            return (
+              <div key={student.rank} className={`leaderboard-item${student.isMe ? " me" : ""}`}>
+                <span className="leaderboard-rank">#{student.rank}</span>
+                <span className="leaderboard-avatar">{initials}</span>
+                <div className="leaderboard-info">
+                  <span className="leaderboard-name">{student.name} {student.isMe && "(You)"}</span>
+                  <span className="leaderboard-meta">Active {student.active} · {student.badges} badges</span>
+                </div>
+                <div className="leaderboard-stats">
+                  <div>
+                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", color: "var(--muted)", fontWeight: 800 }}>Study Time</div>
+                    <div style={{ fontWeight: 700 }}>{student.studyTime}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", color: "var(--muted)", fontWeight: 800 }}>Accuracy</div>
+                    <div style={{ fontWeight: 700 }}>{student.accuracy}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.65rem", textTransform: "uppercase", color: "var(--muted)", fontWeight: 800 }}>Board Score</div>
+                    <div className="leaderboard-score">{student.score}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ActivityRings() {
+  const rings = [
+    { value: 74, color: "#c95f42", label: "Progress" },
+    { value: 62, color: "#d7a154", label: "Practice" },
+    { value: 41, color: "#4f6f5e", label: "Tests" }
+  ];
+
+  return (
+    <div className="activity-rings" aria-label="Study activity rings">
+      <svg viewBox="0 0 120 120" role="img">
+        {rings.map((ring, index) => {
+          const radius = 49 - index * 13;
+          const circumference = 2 * Math.PI * radius;
+          const dash = (ring.value / 100) * circumference;
+          return (
+            <g key={ring.label}>
+              <circle className="ring-track" cx="60" cy="60" r={radius} />
+              <circle
+                className="ring-fill"
+                cx="60"
+                cy="60"
+                r={radius}
+                stroke={ring.color}
+                strokeDasharray={`${dash} ${circumference - dash}`}
+              />
+            </g>
+          );
+        })}
+      </svg>
+      <span>
+        <b>3-ring pace</b>
+        <small>Lessons · practice · tests</small>
+      </span>
+    </div>
+  );
+}
+
+export function Paywall({ onPay, onClose }) {
+  return (
+    <div className="overlay">
+      <section className="modal paywall">
+        <Pill tone="warning">Premium chapter</Pill>
+        <h2>Unlock every lesson in the syllabus deck.</h2>
+        <p>The trial shows the real portal with selected free topics. Continue with Full Access to open all chapters, notes, and worked examples.</p>
+        <div className="modal-actions">
+          <Button onClick={onClose}>Keep browsing</Button>
+          <Button variant="primary" onClick={onPay}>Sign up and pay</Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function BatchModal({ onClose }) {
+  const [code, setCode] = useState("");
+
+  return (
+    <div className="overlay">
+      <section className="modal">
+        <Button className="icon-btn close-btn" aria-label="Close" onClick={onClose}><X size={16} /></Button>
+        <h2>Enter Batch Code</h2>
+        <p>Link your account to a teacher-controlled school batch.</p>
+        <input value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="IBIS-26A" />
+        <div className="modal-actions">
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={onClose}><Check size={16} /> Link batch</Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default function StudentPortal() {
+  const { chapters, chapterIndex, setChapterIndex, leaderboard } = useCourseContext();
+  const { switchChapter, openChapter } = useCourseController();
+  const { access } = useAccessContext();
+  const { initiateSignup } = useAccessController();
+  const { signOut } = useAuthenticationController();
+  const { setBatchOpen, paywall: showPaywall, setPaywall } = useUI();
+  
+  const onBatch = () => setBatchOpen(true);
+  const onLogout = signOut;
+  const onPay = () => initiateSignup("signup");
+  const onClosePaywall = () => setPaywall(false);
+
+  const chapter = chapters[chapterIndex];
+
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+
+  return (
+    <section className="app-shell">
+      <header className="topbar portal-bar">
+        <strong className="student-name">Riya Sharma</strong>
+        <Button variant="ghost" onClick={onBatch}><Clipboard size={16} /> Enter batch code</Button>
+        <Button onClick={onLogout}><LogOut size={16} /> Log out</Button>
+      </header>
+
+      <div className="portal-grid">
+        <aside className="student-side">
+          <GradientBlobCard onClick={() => setLeaderboardOpen(true)} className="achievement-card">
+            <div className="metric-card" style={{ background: "transparent", border: "none", boxHighlight: "none", boxShadow: "none", padding: "16px", cursor: "pointer", display: "grid", gap: "10px", width: "100%" }}>
+              <Trophy />
+              <span>Current rank</span>
+              <strong style={{ fontFamily: "var(--display-accent)" }}>#{leaderboard?.find(s => s.isMe)?.rank || '-'}</strong>
+              <small>{leaderboard?.find(s => s.isMe)?.badges || 0} badges earned · tap for leaderboard</small>
+              <div className="mini-leaderboard">
+                {leaderboard?.slice(0, 2).map(s => (
+                  <b key={s.id}>#{s.rank} {s.name.split(" ")[0]}</b>
+                ))}
+                <b>#{leaderboard?.find(s => s.isMe)?.rank || '-'} You</b>
+              </div>
+            </div>
+          </GradientBlobCard>
+          
+          <GradientBlobCard onClick={() => setStatsOpen(true)} className="stat-card">
+            <CalendarCard isNested={true} />
+          </GradientBlobCard>
+        </aside>
+
+        <section className="chapter-switcher">
+          <StudentChapterShowcase
+            access={access}
+            chapters={chapters}
+            activeIndex={chapterIndex}
+            setActiveIndex={setChapterIndex}
+            onOpen={openChapter}
+          />
+        </section>
+      </div>
+
+      {showPaywall && <Paywall onPay={onPay} onClose={onClosePaywall} />}
+      {statsOpen && <StatsModal onClose={() => setStatsOpen(false)} chapters={chapters} />}
+      {leaderboardOpen && <LeaderboardModal onClose={() => setLeaderboardOpen(false)} />}
+    </section>
+  );
+}
+

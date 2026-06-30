@@ -1,0 +1,75 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@10..48,600..800&family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..850,55..100,0..1&family=Manrope:wght@500;650;750;850&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=VT323&family=Caveat:wght@400..700&display=swap");
+
+
+
+* {
+  box-sizing: border-box;
+}
+
+@property --shine-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes button-shine {
+  to {
+    --shine-angle: 360deg;
+  }
+}
+
+@property --card-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes card-border-flow {
+  to {
+    --card-border-angle: 360deg;
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+body {
+  min-width: 320px;
+  height: 100vh;
+  background: linear-gradient(135deg, #fcf6ee 0%, #ebdccf 50%, #fffbf5 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(43, 31, 24, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43, 31, 24, 0.06) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(180deg, black, transparent 85%);
+}
+
+body:has(.landing-screen)::before,
+body:has(.checkout-flow)::before,
+body:has(.why-ibis-screen)::before {
+  display: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
