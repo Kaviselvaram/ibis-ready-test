@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.git
+**/.env*
+**/*.log
+frontend
+docs
+tools
+supabase
+cloudflare
+**/*.png
+**/debug-*
+**/test-*.cjs
+**/test-*.js

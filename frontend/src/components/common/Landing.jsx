@@ -106,7 +106,7 @@ export function StudentChapterShowcase({
               <span className="student-feature-lock"><Lock size={15} /> Full access</span>
             )}
             <div className="student-feature-copy">
-              <span>Chapter {activeChapter.id} · {activeChapter.progress}% complete</span>
+              <span>Chapter {activeIndex + 1} · {activeChapter.progress}% complete</span>
               <h2>{activeChapter.name}</h2>
               <p>{activeChapter.topics.slice(0, 3).map((topic) => topic.name).join(" · ")}</p>
             </div>

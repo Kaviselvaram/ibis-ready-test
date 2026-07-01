@@ -2,17 +2,9 @@ import { getYouTubeThumbnail } from "../../utils/youtube";
 import { useCourseContext } from "../../contexts/CourseContext";
 import { CourseRepository } from "../../repositories/CourseRepository";
 import { useAdminContext } from "../../contexts/AdminContext";
-import { useAdminController } from "../../hooks/useAdminController";
-import { useNavigationController } from "../../hooks/useNavigationController";
-import { useAuthenticationController } from "../../hooks/useAuthenticationController";
 import React, { useState, useEffect } from 'react';
-import { ArrowDown, ArrowUp, CalendarDays, Clipboard, Edit3, Eye, EyeOff, FileText, Lock, LogOut, Play, Plus, Save, Trash2, Upload, Users, Video } from 'lucide-react';
-import { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
-
-import { AdminQuestionBank } from "../test/AdminQuestionBank";
-import LatexDocument from "../LatexDocument";
-
-const LatexFallback = () => <div style={{ padding: "20px", color: "var(--muted)" }}>Loading preview...</div>;
+import { ArrowDown, ArrowUp, Edit3, FileText, Plus, Trash2, Upload, Video } from 'lucide-react';
+import { Button, Pill } from '../ui/LegacyUI';
 
 export function reorder(items, index, direction) {
   const next = [...items];
@@ -75,9 +67,12 @@ export function AdminRow({ title, subtitle, image, active, onSelect, onRename, o
   );
 }
 
-export function AdminVideos({ type, topic, updateTopic }) {
+export function AdminVideos({ type, topic, updateTopic, onAddVideo, onDeleteVideo }) {
   const field = type === "worked" ? "examples" : "videos";
   const label = type === "worked" ? "worked example" : "video";
+  // The "videos" tab persists to Supabase (youtubes). "Worked examples" stay
+  // local until the schema gains a discriminator (handled in a later phase).
+  const persists = type === "video";
   const [url, setUrl] = useState("");
 
   const updateMedia = (id, patch) => {
@@ -89,13 +84,18 @@ export function AdminVideos({ type, topic, updateTopic }) {
 
   const addMedia = () => {
     if (!url.trim()) return;
+    if (persists) {
+      onAddVideo?.(topic.id, url.trim());
+      setUrl("");
+      return;
+    }
     updateTopic(topic.id, (topicItem) => ({
       ...topicItem,
       [field]: [
         ...topicItem[field],
         {
           id: `${field}-${Date.now()}`,
-          label: label === "video" ? "New lesson" : "New worked example",
+          label: "New worked example",
           title: "Editable title field",
           url,
           duration: "10 min"
@@ -106,6 +106,7 @@ export function AdminVideos({ type, topic, updateTopic }) {
   };
 
   const removeMedia = (id) => {
+    if (persists) { onDeleteVideo?.(id); return; }
     updateTopic(topic.id, (topicItem) => ({ ...topicItem, [field]: topicItem[field].filter((item) => item.id !== id) }));
   };
 
@@ -147,14 +148,8 @@ export function UploadIllustration() {
 }
 
 export function AdminNotes({ topic, updateTopic }) {
-  const [latex, setLatex] = useState(topic.notes[0]?.content || "\\[ F = qE \\]");
   const [dragging, setDragging] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("PDF only · multiple files supported");
-  const publishedLatex = topic.notes.find((note) => note.type === "latex");
-
-  useEffect(() => {
-    setLatex(publishedLatex?.content || "\\section*{New Notes}\\nType your LaTeX here.\\n\\[ F = qE \\]");
-  }, [topic.id]);
 
   const addPdfFiles = (files) => {
     if (!files.length) return;
@@ -170,16 +165,6 @@ export function AdminNotes({ topic, updateTopic }) {
 
   const addPdf = (event) => {
     addPdfFiles(Array.from(event.target.files || []));
-  };
-
-  const publishLatex = () => {
-    updateTopic(topic.id, (topicItem) => ({
-      ...topicItem,
-      notes: [
-        { id: `latex-${Date.now()}`, title: `${topicItem.name} LaTeX notes`, type: "latex", content: latex },
-        ...topicItem.notes.filter((note) => note.type !== "latex")
-      ]
-    }));
   };
 
   const deleteNote = (noteId) => {
@@ -206,17 +191,6 @@ export function AdminNotes({ topic, updateTopic }) {
           <input type="file" accept="application/pdf" multiple onChange={addPdf} />
         </label>
       </section>
-      <section>
-        <h3>Option B · Paste LaTeX</h3>
-        <textarea value={latex} onChange={(event) => setLatex(event.target.value)} />
-        <Button variant="primary" onClick={publishLatex}><Save size={16} /> Publish to students</Button>
-      </section>
-      <article className="latex-preview">
-        <strong>Live preview</strong>
-        <React.Suspense fallback={<LatexFallback compact />}>
-          <LatexDocument title={`${topic.name} preview`} source={latex} compact />
-        </React.Suspense>
-      </article>
       <div className="note-list">
         {topic.notes.map((note) => (
           <article key={note.id}>
@@ -239,78 +213,101 @@ export default function AdminPanel() {
     }
   }, [chapters.length, setChapters]);
   const { adminTab: activeTab, setAdminTab: setActiveTab } = useAdminContext();
-  const { questionBank, updateQuestionBank: setQuestionBank } = useAdminController();
-  const { goToBatches } = useNavigationController();
-  const { signOut } = useAuthenticationController();
-  
-  const onBatch = goToBatches;
-  const onLogout = signOut;
 
   const chapter = chapters[chapterIndex] || chapters[0];
   const topic = chapter?.topics[topicIndex] || chapter?.topics[0];
   const [newChapter, setNewChapter] = useState("");
   const [newTopic, setNewTopic] = useState("");
 
-  const updateChapter = (chapterId, updater) => {
-    setChapters((items) => items.map((item) => item.id === chapterId ? updater(item) : item));
+  // Pull the canonical course tree back from the backend after every mutation.
+  const refresh = async () => {
+    try {
+      const data = await CourseRepository.getChapters();
+      setChapters(data || []);
+    } catch (e) { console.error("Failed to refresh chapters:", e); }
   };
 
-  const addChapter = () => {
-    const name = newChapter.trim();
-    if (!name) return;
-    const image = chapters.length > 0 ? chapters[chapters.length % chapters.length].image : "";
-    setChapters((items) => [...items, { id: Date.now(), name, image, progress: 0, topics: [] }]);
-    setNewChapter("");
-  };
-
-  const deleteChapter = (id) => {
-    setChapters((items) => items.filter((item) => item.id !== id));
-    setChapterIndex(0);
-    setTopicIndex(0);
-  };
-
-  const moveChapter = (index, direction) => {
-    setChapters((items) => reorder(items, index, direction));
-    setChapterIndex((value) => Math.max(0, Math.min(chapters.length - 1, value + direction)));
-  };
-
-  const addTopic = () => {
-    const name = newTopic.trim();
-    if (!name) return;
-    updateChapter(chapter.id, (item) => ({
-      ...item,
-      topics: [...item.topics, { id: "topic-" + Date.now(), name, isFree: false, videos: [], examples: [], notes: [] }]
-    }));
-    setNewTopic("");
-  };
-
+  // Local-only updater, used by child editors for optimistic in-topic edits.
   const updateTopic = (topicId, updater) => {
-    updateChapter(chapter.id, (item) => ({
+    setChapters((items) => items.map((item) => item.id !== chapter?.id ? item : ({
       ...item,
       topics: item.topics.map((topicItem) => topicItem.id === topicId ? updater(topicItem) : topicItem)
-    }));
+    })));
   };
 
-  const deleteTopic = (topicId) => {
-    updateChapter(chapter.id, (item) => ({
-      ...item,
-      topics: item.topics.filter((topicItem) => topicItem.id !== topicId)
-    }));
-    setTopicIndex(0);
+  const addChapter = async () => {
+    const name = newChapter.trim();
+    if (!name) return;
+    setNewChapter("");
+    try { await CourseRepository.createChapter(name); await refresh(); }
+    catch (e) { console.error("Add chapter failed:", e); }
   };
 
-  const moveTopic = (index, direction) => {
-    updateChapter(chapter.id, (item) => ({ ...item, topics: reorder(item.topics, index, direction) }));
-    setTopicIndex(Math.max(0, Math.min(chapter.topics.length - 1, topicIndex + direction)));
+  const renameChapter = async (id, name) => {
+    const title = (name || "").trim();
+    if (!title) return;
+    try { await CourseRepository.updateChapter(id, { title }); await refresh(); }
+    catch (e) { console.error("Rename chapter failed:", e); }
+  };
+
+  const deleteChapter = async (id) => {
+    try { await CourseRepository.deleteChapter(id); setChapterIndex(0); setTopicIndex(0); await refresh(); }
+    catch (e) { console.error("Delete chapter failed:", e); }
+  };
+
+  const moveChapter = async (index, direction) => {
+    const target = index + direction;
+    if (target < 0 || target >= chapters.length) return;
+    const ordered = reorder(chapters, index, direction).map((c) => c.id);
+    try { await CourseRepository.reorderChapters(ordered); await refresh(); }
+    catch (e) { console.error("Reorder chapters failed:", e); }
+  };
+
+  const addTopic = async () => {
+    const name = newTopic.trim();
+    if (!name || !chapter) return;
+    setNewTopic("");
+    try { await CourseRepository.createTopic({ chapter_id: chapter.id, title: name }); await refresh(); }
+    catch (e) { console.error("Add topic failed:", e); }
+  };
+
+  const renameTopic = async (id, name) => {
+    const title = (name || "").trim();
+    if (!title) return;
+    try { await CourseRepository.updateTopic(id, { title }); await refresh(); }
+    catch (e) { console.error("Rename topic failed:", e); }
+  };
+
+  const deleteTopic = async (topicId) => {
+    try { await CourseRepository.deleteTopic(topicId); setTopicIndex(0); await refresh(); }
+    catch (e) { console.error("Delete topic failed:", e); }
+  };
+
+  const moveTopic = async (index, direction) => {
+    if (!chapter) return;
+    const target = index + direction;
+    if (target < 0 || target >= chapter.topics.length) return;
+    const ordered = reorder(chapter.topics, index, direction).map((t) => t.id);
+    try { await CourseRepository.reorderTopics(ordered); await refresh(); }
+    catch (e) { console.error("Reorder topics failed:", e); }
+  };
+
+  // Video (youtubes) persistence for the AdminVideos editor.
+  const addVideoBackend = async (topicId, url, title) => {
+    try { await CourseRepository.addVideo({ topic_id: topicId, url, title }); await refresh(); }
+    catch (e) { console.error("Add video failed:", e); }
+  };
+  const deleteVideoBackend = async (videoId) => {
+    try { await CourseRepository.deleteVideo(videoId); await refresh(); }
+    catch (e) { console.error("Delete video failed:", e); }
   };
 
   return (
-    <section className="admin-shell">
-      <header className="topbar admin-bar">
-        <Brand admin />
-        <div className="top-actions">
-          <Button variant="primary" onClick={onBatch}><Users size={16} /> Full control</Button>
-          <Button onClick={onLogout}><LogOut size={16} /> Log out</Button>
+    <div className="adminx-page">
+      <header className="adminx-pagehead">
+        <div>
+          <h1>Content</h1>
+          <p>Manage chapters, topics, lessons and notes. Every change saves to the database and appears live for students.</p>
         </div>
       </header>
 
@@ -324,7 +321,7 @@ export default function AdminPanel() {
               title={item.name}
               subtitle={`${item.topics.length} topics`}
               onSelect={() => { setChapterIndex(index); setTopicIndex(0); }}
-              onRename={(name) => updateChapter(item.id, (chapterItem) => ({ ...chapterItem, name }))}
+              onRename={(name) => renameChapter(item.id, name)}
               onUp={() => moveChapter(index, -1)}
               onDown={() => moveChapter(index, 1)}
               onDelete={() => deleteChapter(item.id)}
@@ -344,7 +341,7 @@ export default function AdminPanel() {
               title={item.name}
               subtitle={item.isFree ? "free trial topic" : "student-visible"}
               onSelect={() => setTopicIndex(index)}
-              onRename={(name) => updateTopic(item.id, (topicItem) => ({ ...topicItem, name }))}
+              onRename={(name) => renameTopic(item.id, name)}
               onUp={() => moveTopic(index, -1)}
               onDown={() => moveTopic(index, 1)}
               onDelete={() => deleteTopic(item.id)}
@@ -362,25 +359,32 @@ export default function AdminPanel() {
               <small>Topic editor</small>
               <strong>{topic?.name || "Select a topic"}</strong>
             </span>
-            <Pill tone="accent">live local changes</Pill>
+            <Pill tone="accent">saved to database</Pill>
           </div>
           <nav className="tabs compact">
-            {["videos", "worked", "notes", "test"].map((item) => (
+            {["videos", "worked", "notes"].map((item) => (
               <button
                 key={item}
                 className={activeTab === item ? "active" : ""}
                 onClick={() => setActiveTab(item)}
               >
-                {item === "worked" ? "Worked examples" : item === "test" ? "Test bank" : item[0].toUpperCase() + item.slice(1)}
+                {item === "worked" ? "Worked examples" : item[0].toUpperCase() + item.slice(1)}
               </button>
             ))}
           </nav>
           {topic && activeTab === "notes" && <AdminNotes topic={topic} updateTopic={updateTopic} />}
-          {topic && (activeTab === "videos" || activeTab === "worked") && <AdminVideos type={activeTab} topic={topic} updateTopic={updateTopic} />}
-          {activeTab === "test" && <AdminQuestionBank questionBank={questionBank} setQuestionBank={setQuestionBank} />}
+          {topic && (activeTab === "videos" || activeTab === "worked") && (
+            <AdminVideos
+              type={activeTab}
+              topic={topic}
+              updateTopic={updateTopic}
+              onAddVideo={addVideoBackend}
+              onDeleteVideo={deleteVideoBackend}
+            />
+          )}
         </section>
       </div>
-    </section>
+    </div>
   );
 }
 

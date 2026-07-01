@@ -5,7 +5,8 @@ import { useAccessContext } from "../../contexts/AccessContext";
 import { useAccessController } from "../../hooks/useAccessController";
 import { useUI } from "../../contexts/UIContext";
 import React, { useState, useEffect, useRef } from 'react';
-import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, CalendarDays } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays } from 'lucide-react';
 import { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
 import TextReveal from '../ui/TextReveal';
 import GradientBlobCard from '../ui/GradientBlobCard';
@@ -34,12 +35,17 @@ export function getStudyCalendar(studyDataByDay, baseDate = new Date()) {
   const safeData = studyDataByDay || {};
   const activeDays = Object.keys(safeData).filter((day) => Number(day) <= new Date(year, month + 1, 0).getDate()).length;
   const totalMinutes = Object.values(safeData).reduce((sum, day) => sum + day.minutes, 0);
-  return { year, month, today, monthName, days, activeDays, totalMinutes };
+  // Current streak: consecutive active days ending today.
+  let streak = 0;
+  for (let d = today; d >= 1; d--) {
+    if (safeData[d]) streak++; else break;
+  }
+  return { year, month, today, monthName, days, activeDays, totalMinutes, streak };
 }
 
 export function CalendarCard({ onClick, isNested = false }) {
   const { studyData } = useCourseContext();
-  const { year, today, monthName, days, activeDays } = getStudyCalendar(studyData || {});
+  const { year, today, monthName, days, activeDays, streak } = getStudyCalendar(studyData || {});
   
   const Tag = isNested ? "div" : "button";
   const extraProps = isNested ? {} : { onClick };
@@ -56,7 +62,7 @@ export function CalendarCard({ onClick, isNested = false }) {
       </div>
       <div className="calendar-header-title">
         <strong>{monthName} {year}</strong>
-        <span className="streak-badge"><Flame size={12} /> 3 day streak</span>
+        {streak > 0 && <span className="streak-badge"><Flame size={12} /> {streak} day streak</span>}
       </div>
       <div className="calendar-grid-wrapper">
         <div className="weekdays-row">
@@ -190,10 +196,10 @@ export function StatsModal({ onClose, chapters }) {
 
             <h3 className="modal-section-title" style={{ marginTop: "8px" }}>Syllabus Coverage</h3>
             <div className="chapter-progress-list">
-              {chapters.slice(0, 5).map((ch) => (
+              {chapters.slice(0, 5).map((ch, chIndex) => (
                 <div key={ch.id} className="chapter-progress-item">
                   <div className="chapter-progress-header">
-                    <span>Ch {ch.id}: {ch.name}</span>
+                    <span>Ch {chIndex + 1}: {ch.name}</span>
                     <strong>{ch.progress}%</strong>
                   </div>
                   <div className="progress-line">
@@ -344,10 +350,12 @@ export default function StudentPortal() {
   const { switchChapter, openChapter } = useCourseController();
   const { access } = useAccessContext();
   const { initiateSignup } = useAccessController();
-  const { signOut } = useAuthenticationController();
+  const { signOut, user } = useAuthenticationController();
   const { setBatchOpen, paywall: showPaywall, setPaywall } = useUI();
-  
+  const navigate = useNavigate();
+
   const onBatch = () => setBatchOpen(true);
+  const onTakeTest = () => navigate("/test-center");
   const onLogout = signOut;
   const onPay = () => initiateSignup("signup");
   const onClosePaywall = () => setPaywall(false);
@@ -360,8 +368,9 @@ export default function StudentPortal() {
   return (
     <section className="app-shell">
       <header className="topbar portal-bar">
-        <strong className="student-name">Riya Sharma</strong>
+        <strong className="student-name">{user?.name || "Student"}</strong>
         <Button variant="ghost" onClick={onBatch}><Clipboard size={16} /> Enter batch code</Button>
+        <Button variant="primary" onClick={onTakeTest}><ClipboardList size={16} /> Take Test</Button>
         <Button onClick={onLogout}><LogOut size={16} /> Log out</Button>
       </header>
 

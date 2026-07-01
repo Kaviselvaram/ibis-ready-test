@@ -4,8 +4,8 @@
     {
       "name": "ibis-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3002
+      "runtimeArgs": ["run", "dev", "-w", "frontend", "--", "--port", "3005"],
+      "port": 3005
     }
   ]
 }

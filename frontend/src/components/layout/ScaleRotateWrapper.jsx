@@ -1,39 +1,71 @@
 import React from "react";
-import { Check } from "lucide-react";
+import { Check, Smartphone } from "lucide-react";
 
+/**
+ * Outermost layout frame.
+ *
+ * This project uses vanilla CSS (no Tailwind), so all styling here is real CSS
+ * via inline styles. The app's individual screens are responsive (clamp() + vh
+ * units) and manage their own internal scrolling per the project layout rules,
+ * so the frame's only job is to provide a clean full-viewport container and,
+ * on portrait phones/tablets, a "rotate device" gate.
+ */
 export const ScaleRotateWrapper = ({ children, needsScale, isPortrait, isEmbedded }) => {
-  if (isEmbedded) {
+  // Portrait handheld devices: the experience is widescreen-first, so ask the
+  // user to rotate. Skipped when embedded (host page controls the viewport).
+  if (isPortrait && !isEmbedded) {
     return (
-      <div className="w-full h-full min-h-screen bg-neutral-900 text-neutral-50 font-sans overflow-x-hidden selection:bg-rose-500/30 selection:text-rose-200">
-        <div className="w-full h-full p-4">{children}</div>
-      </div>
-    );
-  }
-
-  if (!needsScale) {
-    return (
-      <div className="w-full h-full min-h-screen bg-transparent text-neutral-50 font-sans overflow-x-hidden selection:bg-rose-500/30 selection:text-rose-200 flex items-center justify-center">
-        <div className="w-full max-w-[1280px] h-[720px] aspect-video glass-panel overflow-hidden relative rounded-2xl shadow-2xl border border-white/10 mx-auto">
-          {children}
-        </div>
-      </div>
-    );
-  }
-
-  if (isPortrait) {
-    return (
-      <div className="fixed inset-0 w-full h-full bg-neutral-950 flex items-center justify-center text-white overflow-hidden font-sans">
-        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at center, #6366f1 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-        <div className="relative text-center p-8 glass-panel max-w-sm">
-          <div className="mb-6 flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center animate-bounce-slow">
-              <svg className="w-8 h-8 text-white rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          background: "#0f0d0c",
+          color: "#fff",
+          textAlign: "center",
+          overflow: "hidden",
+          zIndex: 50,
+        }}
+      >
+        <div style={{ maxWidth: "360px" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "22px" }}>
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "linear-gradient(135deg, #f43f5e, #f59e0b)",
+              }}
+            >
+              <Smartphone size={32} style={{ color: "#fff", transform: "rotate(90deg)" }} />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-3 tracking-tight">Rotate Device</h2>
-          <p className="text-neutral-400 text-sm leading-relaxed mb-6">Ibis Physics is designed for immersive widescreen learning. Please rotate your device to landscape mode.</p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-neutral-300">
-            <Check size={14} className="text-emerald-400" />
+          <h2 style={{ fontSize: "1.6rem", fontWeight: 800, margin: "0 0 12px", letterSpacing: "-0.01em" }}>
+            Rotate Device
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.62)", fontSize: "0.95rem", lineHeight: 1.6, margin: "0 0 22px" }}>
+            Ibis Physics is designed for immersive widescreen learning. Please rotate your device to landscape mode.
+          </p>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              borderRadius: "999px",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              fontSize: "0.78rem",
+              color: "rgba(255,255,255,0.8)",
+            }}
+          >
+            <Check size={14} style={{ color: "#34d399" }} />
             <span>Orientation Lock Recommended</span>
           </div>
         </div>
@@ -41,13 +73,22 @@ export const ScaleRotateWrapper = ({ children, needsScale, isPortrait, isEmbedde
     );
   }
 
+  // Default: a transparent, full-viewport container. `needsScale` (small or
+  // touch viewports) is intentionally handled by the responsive CSS of each
+  // screen rather than a fixed-canvas transform, so layouts stack/scroll
+  // cleanly instead of being letterboxed.
   return (
-    <div className="fixed inset-0 w-full h-full bg-neutral-900 flex items-center justify-center overflow-hidden font-sans">
-      <div className="transform-origin-center scale-[min(100vw/1280,100vh/720)]">
-        <div className="w-[1280px] h-[720px] bg-neutral-950 relative overflow-hidden shadow-2xl">
-          {children}
-        </div>
-      </div>
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {children}
     </div>
   );
 };

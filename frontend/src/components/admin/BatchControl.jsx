@@ -5,29 +5,16 @@ import { ArrowLeft, CalendarDays, Download, LogOut, Mail, Upload, Users, Save, C
 import { Brand, Button, GlassButton, Pill } from '../ui/LegacyUI';
 import { StudentManager } from "./StudentManager";
 
-export function StudentRow({ student, expanded, onClick }) {
-  const initials = student[0].split(" ").map((part) => part[0]).join("");
-  return (
-    <article className={`student-row ${expanded ? "expanded" : ""}`} onClick={onClick}>
-      <span className="avatar">{initials}</span>
-      <strong>{student[0]}</strong>
-      <span>{student[1]}</span>
-      <span>{student[2]}</span>
-      <span>{student[3]}</span>
-      <small>{student[4]}</small>
-      {expanded && <p>Chapter detail: Electric Charges 92%, Current Electricity 78%, Ray Optics 54%.</p>}
-    </article>
-  );
-}
-
 export default function BatchControl() {
   const { goToAdmin } = useNavigationController();
-  const { batches, updateBatches } = useAdminController();
+  const { batches, updateBatches, students } = useAdminController();
   const setBatches = updateBatches;
+  const studentList = students || [];
+  const fullCount = studentList.filter((s) => s.access === "full").length;
+  const trialCount = studentList.length - fullCount;
   const [selected, setSelected] = useState(0);
   const [school, setSchool] = useState("");
   const [batchName, setBatchName] = useState("");
-  const [expandedStudent, setExpandedStudent] = useState(null);
   const [showAll, setShowAll] = useState(true);
 
   const createBatch = () => {
@@ -53,14 +40,14 @@ export default function BatchControl() {
           <article className="metric-card compact-card">
             <Users />
             <span>Total students</span>
-            <strong>{batches.reduce((sum, item) => sum + item.count, 0)}</strong>
-            <small>Recent signup: Riya Sharma · 2 min ago</small>
+            <strong>{studentList.length}</strong>
+            <small>{batches.length} batch{batches.length === 1 ? "" : "es"} configured</small>
           </article>
           <article className="activity-card">
-            <h3>Live activity</h3>
-            <p>Arjun joined Batch A</p>
-            <p>Kavya completed Magnetism</p>
-            <p>Meera scored 96 in quiz</p>
+            <h3>Enrollment</h3>
+            <p>{fullCount} full access</p>
+            <p>{trialCount} on trial</p>
+            <p>{studentList.length} total students</p>
           </article>
           <h3>Batch containers</h3>
           <button className={`batch-row ${showAll ? "active" : ""}`} onClick={() => setShowAll(true)}>

@@ -1,0 +1,51 @@
+# Render Blueprint — backend web service (free tier).
+# On first deploy, secret env vars are set by the agent via the Render API
+# (sync:false keeps them out of git). Non-secret values are inline.
+services:
+  - type: web
+    name: ibis-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore          # closest Render region to India
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: COOKIE_CROSS_SITE
+        value: "true"          # Pages + Render are different domains
+      # --- Secrets (set via API / dashboard, never committed) ---
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: INTERNAL_WEBHOOK_SECRET
+        sync: false
+      - key: TOTP_MASTER_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ADMIN_SECURITY_EMAIL
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false            # set to the Cloudflare Pages URL after it deploys
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET_NAME
+        sync: false

@@ -1,6 +1,10 @@
 import { AppError } from "../errors/AppError.js";
-import { verifyAccess, getSecureMediaLink, getProtectedVideo } from "../services/ContentService.js";
+import { verifyAccess, getSecureMediaLink, getProtectedVideo, getPricing } from "../services/ContentService.js";
 import { logger } from "../utils/logger.js";
+
+export const getPricingController = async () => {
+  return getPricing();
+};
 
 export const getMedia = async ({ validatedData, user }) => {
   try {

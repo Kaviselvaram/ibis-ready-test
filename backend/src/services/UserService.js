@@ -9,6 +9,21 @@ const hashUserId = (userId) => {
 };
 
 export const UserService = {
+  getMe: async (userId) => {
+    const { data, error } = await UserRepository.getFullProfile(userId);
+    if (error || !data) throw new AppError("Profile not found", 404, "NOT_FOUND");
+    return {
+      id: data.id,
+      email: data.email,
+      full_name: data.full_name,
+      role: data.is_admin ? 'admin' : 'student',
+      batch_id: data.batch_id,
+      phone: data.phone,
+      school: data.school,
+      grade: data.grade
+    };
+  },
+
   deleteUserAccount: async (userId, jti) => {
     const redis = getRedisClient();
 

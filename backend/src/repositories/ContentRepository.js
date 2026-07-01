@@ -8,6 +8,6 @@ export class ContentRepository {
 
   static async getVideoByTopicId(topicId) {
     const supabase = getServiceSupabase();
-    return supabase.from('videos').select('*').eq('topic_id', topicId).single();
+    return supabase.from('youtubes').select('*').eq('topic_id', topicId).limit(1).maybeSingle();
   }
 }

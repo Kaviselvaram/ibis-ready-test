@@ -1,4 +1,5 @@
 import { StudentRepository } from "../repositories/StudentRepository.js";
+import { cached, CACHE_KEYS } from "../utils/cache.js";
 
 export class StudentService {
   static async getStudents() {
@@ -70,9 +71,18 @@ export class StudentService {
     }
   }
 
+  // Public read hit by every student on the portal. The ranked board is global
+  // (user-agnostic); only the `isMe` flag differs per requester. So we cache the
+  // computed global board (60s) and stamp `isMe`/reorder per request in memory —
+  // turning an O(all users + all attempts) scan-per-request into one scan / 60s.
   static async getLeaderboard(userId) {
+    const board = await cached(CACHE_KEYS.leaderboard, 60, () => StudentService._buildLeaderboard());
+    return (board || []).map((s) => ({ ...s, isMe: s.id === userId }));
+  }
+
+  static async _buildLeaderboard() {
     try {
-      const { profiles, attempts } = await StudentRepository.getLeaderboard(userId);
+      const { profiles, attempts } = await StudentRepository.getLeaderboard(null);
       
       const statsMap = (attempts || []).reduce((acc, att) => {
         if (!acc[att.profile_id]) acc[att.profile_id] = { totalScore: 0, count: 0, timeTaken: 0, badges: 0 };
@@ -99,7 +109,7 @@ export class StudentService {
           score: avgScore.toString(),
           badges: stats.badges,
           active: "Recently", // A real app would use last sign-in
-          isMe: p.id === userId,
+          isMe: false, // stamped per-request by getLeaderboard() from the cached board
           rawScore: avgScore * stats.count // for sorting
         };
       });

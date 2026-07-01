@@ -9,6 +9,20 @@ export const signup = async ({ email, password, name }) => {
   if (error) {
     throw new AppError(error.message, 400, "SIGNUP_FAILED");
   }
+
+  // Create the matching public.profiles row so the user shows up everywhere
+  // (admin student list, etc). A DB trigger is the belt-and-suspenders backup,
+  // but doing it here guarantees it for the API signup path.
+  const { error: profileError } = await UserRepository.upsertProfile({
+    id: data.user.id,
+    email: data.user.email,
+    full_name: name
+  });
+  if (profileError) {
+    // Don't fail signup over this — log loudly; trigger/backfill will reconcile.
+    console.error("Profile creation failed after signup:", profileError.message);
+  }
+
   return { id: data.user.id, email: data.user.email };
 };
 
@@ -42,9 +56,10 @@ export const login = async ({ email, password }) => {
   const { data: sub } = await PaymentRepository.getActiveSubscription(data.user.id);
   const plan = sub ? 'pro' : 'free';
   const paid_until = sub ? sub.valid_until : null;
+  const name = profile?.full_name || data.user.user_metadata?.full_name || null;
 
   // Issue our own JWT payload
-  return generateTokens(data.user, role, plan, paid_until);
+  return generateTokens(data.user, role, plan, paid_until, name);
 };
 
 export const refresh = async (refreshToken) => {
@@ -69,7 +84,7 @@ export const refresh = async (refreshToken) => {
   const plan = sub ? 'pro' : 'free';
   const paid_until = sub ? sub.valid_until : null;
 
-  return generateTokens(user, role, plan, paid_until);
+  return generateTokens(user, role, plan, paid_until, profile?.full_name || null);
 };
 
 export const logout = async (jti) => {

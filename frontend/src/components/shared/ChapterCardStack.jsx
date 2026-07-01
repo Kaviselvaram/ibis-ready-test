@@ -14,8 +14,9 @@ export default function ChapterCardStack({
 }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const visibleCards = [0, 1, 2].map((offset) => {
-    const chapter = chapters[(activeIndex + offset) % chapters.length];
-    return { chapter, stackIndex: offset };
+    const chapterIndex = (activeIndex + offset) % chapters.length;
+    const chapter = chapters[chapterIndex];
+    return { chapter, stackIndex: offset, chapterNumber: chapterIndex + 1 };
   });
 
   const changeChapter = (nextIndex) => {
@@ -33,7 +34,7 @@ export default function ChapterCardStack({
     <section className={`chapter-card-stack ${mode} ${className}`} aria-label="Animated chapter stack">
       <div className="stack-stage">
         <AnimatePresence initial={false}>
-          {visibleCards.map(({ chapter, stackIndex }) => (
+          {visibleCards.map(({ chapter, stackIndex, chapterNumber }) => (
             <motion.div
               key={chapter.id}
               initial={stackIndex === 2 ? { y: -16, scale: 0.9 } : false}
@@ -67,7 +68,7 @@ export default function ChapterCardStack({
                 <div className="card-stack-info-row">
                   <div className="card-stack-text-col">
                     <span className="card-stack-chapter-label">
-                      Chapter {chapter.id} {mode === "student" ? ` · ${chapter.progress}% complete` : " · Board Course"}
+                      Chapter {chapterNumber} {mode === "student" ? ` · ${chapter.progress}% complete` : " · Board Course"}
                     </span>
                     <span className="card-stack-chapter-title">{chapter.name}</span>
                   </div>

@@ -25,8 +25,24 @@ app.use(helmet({
   },
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
+// Allowed browser origins in production come from FRONTEND_ORIGIN
+// (comma-separated, e.g. "https://ibis.pages.dev,https://ibisphysics.com").
+// Falls back to the primary domain if unset. Dev allows any localhost port.
+const prodOrigins = (process.env.FRONTEND_ORIGIN || "https://ibisphysics.com")
+  .split(",").map((s) => s.trim()).filter(Boolean);
 app.use(cors({
-  origin: env.NODE_ENV === "production" ? "https://ibisphysics.com" : "http://localhost:3002",
+  origin: env.NODE_ENV === "production"
+    ? (origin, callback) => {
+        // Allow same-origin/non-browser (no Origin header) and any allow-listed origin.
+        if (!origin || prodOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("Not allowed by CORS"));
+      }
+    : (origin, callback) => {
+        if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error("Not allowed by CORS"));
+      },
   credentials: true
 }));
 app.use(compression());

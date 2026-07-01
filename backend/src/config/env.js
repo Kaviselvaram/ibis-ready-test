@@ -13,7 +13,13 @@ const envSchema = z.object({
   PORT: z.string().default("4000"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   SUPABASE_URL: z.string().url(),
+  SUPABASE_ANON_KEY: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string(),
+  INTERNAL_WEBHOOK_SECRET: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  ADMIN_SECURITY_EMAIL: z.string().optional(),
+  FRONTEND_ORIGIN: z.string().optional(),      // comma-separated allowed browser origins (prod CORS)
+  COOKIE_CROSS_SITE: z.string().optional(),    // "true" when frontend/backend are on different domains
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   R2_ACCOUNT_ID: z.string().optional(),

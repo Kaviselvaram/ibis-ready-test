@@ -5,6 +5,7 @@ import { getRedisClient } from "../config/redis.js";
 import { AppError } from "../errors/AppError.js";
 import { QuestionBankService } from "./QuestionBankService.js";
 import { DIFFICULTIES } from "../../../shared/contracts/v1/question/QuestionEnums.js";
+import { invalidate, CACHE_KEYS } from "../utils/cache.js";
 
 // Cryptographically secure Fisher-Yates shuffle
 const secureShuffleArray = (arr) => {
@@ -185,7 +186,7 @@ export class TestEngineService {
     return testQuestions;
   }
 
-  static async evaluateTest({ questions, answers, meta }) {
+  static async evaluateTest({ questions, answers, meta }, userId = null) {
     const bank = await QuestionBankService.getBank();
     const bankMap = new Map(bank.map(q => [q.id, q]));
 
@@ -231,6 +232,22 @@ export class TestEngineService {
     else if (accuracy >= 70) verdict = "Strong";
     else if (accuracy >= 50) verdict = "Developing";
 
+    // Persist the attempt so it feeds student progress + the leaderboard.
+    // Best-effort: a storage hiccup must never block the student's report.
+    if (userId) {
+      try {
+        await TestRepository.recordAttempt({
+          profileId: userId,
+          topicId: null,
+          score: accuracy,
+          timeTakenSeconds: meta?.timeTakenSec || 0
+        });
+        await invalidate(CACHE_KEYS.leaderboard);
+      } catch (e) {
+        console.error("Could not record test attempt (non-fatal):", e.message);
+      }
+    }
+
     return {
       meta,
       total,
@@ -245,6 +262,76 @@ export class TestEngineService {
       strongest,
       weakest,
       graded,
+    };
+  }
+
+  // ---- Admin test management ----
+  static async listTests() {
+    const { data, error } = await TestRepository.listAllTests();
+    if (error) throw new AppError(error.message, 500, "DB_ERROR");
+    return data || [];
+  }
+
+  static async createTest(payload) {
+    const { data, error } = await TestRepository.createTest(payload);
+    if (error) throw new AppError(error.message, 400, "DB_ERROR");
+    return data;
+  }
+
+  static async updateTest(id, patch) {
+    const { data, error } = await TestRepository.updateTest(id, patch);
+    if (error) throw new AppError(error.message, 400, "DB_ERROR");
+    return data;
+  }
+
+  static async deleteTest(id) {
+    const { error } = await TestRepository.deleteTest(id);
+    if (error) throw new AppError(error.message, 400, "DB_ERROR");
+    return { id };
+  }
+
+  // ---- Student: browse live tests + start an attempt ----
+  static async listAvailableTests() {
+    const { data, error } = await TestRepository.listLiveTests();
+    if (error) throw new AppError(error.message, 500, "DB_ERROR");
+    return data || [];
+  }
+
+  // Build a ready-to-take test (answers stripped) from a live test config.
+  static async startTest(testId) {
+    const { data: test, error } = await TestRepository.getTestById(testId);
+    if (error || !test) throw new AppError("Test not found", 404, "NOT_FOUND");
+    if (!test.is_live) throw new AppError("This test is not currently available", 403, "FORBIDDEN");
+
+    // Map the config's chapter ids to their titles (the bank is keyed by name).
+    let chapterNames = [];
+    if (test.chapter_ids?.length) {
+      const { data: chs } = await TestRepository.getChaptersByIds(test.chapter_ids);
+      chapterNames = (chs || []).map((c) => c.title);
+    }
+
+    const bank = await QuestionBankService.getBank();
+    let pool = chapterNames.length
+      ? bank.filter((q) => chapterNames.includes(q.chapter))
+      : bank;
+
+    if (!pool.length) throw new AppError("No questions available for this test yet", 409, "NO_QUESTIONS");
+
+    const count = Math.min(test.question_count, pool.length);
+    const questions = secureShuffleArray(pool).slice(0, count).map((q) => {
+      const { answer, explanation, ...safe } = q;
+      return safe;
+    });
+
+    return {
+      test: {
+        id: test.id,
+        title: test.title,
+        test_type: test.test_type,
+        duration_minutes: test.duration_minutes,
+        question_count: count
+      },
+      questions
     };
   }
 }

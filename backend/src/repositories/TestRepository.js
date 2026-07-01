@@ -11,6 +11,54 @@ export class TestRepository {
     return supabase.from('questions').select('id, prompt, options, difficulty_level, question_type').eq('chapter_id', chapterId);
   }
 
+  // ---- Test config management (public.tests) ----
+  static async listAllTests() {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').select('*').order('created_at', { ascending: false });
+  }
+
+  static async listLiveTests() {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').select('*').eq('is_live', true).order('created_at', { ascending: false });
+  }
+
+  static async getTestById(id) {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').select('*').eq('id', id).single();
+  }
+
+  static async createTest(payload) {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').insert(payload).select().single();
+  }
+
+  static async updateTest(id, patch) {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+  }
+
+  static async deleteTest(id) {
+    const supabase = getServiceSupabase();
+    return supabase.from('tests').delete().eq('id', id);
+  }
+
+  static async getChaptersByIds(ids) {
+    const supabase = getServiceSupabase();
+    return supabase.from('chapters').select('id, title').in('id', ids);
+  }
+
+  // Records a completed attempt so it feeds progress + the leaderboard.
+  static async recordAttempt({ profileId, topicId = null, score, timeTakenSeconds }) {
+    const supabase = getServiceSupabase();
+    return supabase.from('test_attempts').insert({
+      profile_id: profileId,
+      topic_id: topicId,
+      score,
+      time_taken_seconds: timeTakenSeconds || 0,
+      completed_at: new Date().toISOString()
+    });
+  }
+
   static async getSealedAnswers(questionIds) {
     const supabase = getServiceSupabase();
     return supabase.from('sealed_answers').select('question_id, correct_option_id').in('question_id', questionIds);

@@ -7,7 +7,6 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Award, BookOpen, Download, FileText, Lock, Play, Video, WandSparkles, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button, GlassButton, Pill } from '../ui/LegacyUI';
 import { StudentTest } from "../test/StudentTest";
-import LatexDocument from '../LatexDocument';
 import ChapterImage from '../shared/ChapterImage';
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -83,21 +82,28 @@ export function VideoModal({ video, onClose }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <motion.section 
-        className="video-modal" 
+      <motion.section
+        className="video-modal"
         onClick={(event) => event.stopPropagation()}
+        onContextMenu={(event) => event.preventDefault()}
         initial={{ scale: 0.82, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.82, opacity: 0 }}
         transition={{ type: "spring", duration: 0.45, bounce: 0.08 }}
       >
         <Button className="icon-btn close-btn" aria-label="Close video" onClick={onClose}><X size={16} /></Button>
-        <iframe
-          src={getYouTubeEmbed(video.url)}
-          title={video.title}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-        />
+        <div className="video-frame">
+          <iframe
+            src={getYouTubeEmbed(video.url)}
+            title={video.title}
+            allow="autoplay; encrypted-media; fullscreen"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+          {/* Transparent strip over the player's title bar so the embedded
+              YouTube title can't be clicked through to youtube.com. */}
+          <span className="video-frame-guard" aria-hidden="true" />
+        </div>
         <div>
           <strong>{video.label}</strong>
           <span>{video.title}</span>
@@ -136,44 +142,23 @@ export function NotesTab({ topic }) {
 
   return (
     <div className="pdf-panel">
-      {note.type === "latex" ? (
-        <React.Suspense fallback={<LatexFallback />}>
-          <LatexDocument title={note.title} source={note.content} />
-        </React.Suspense>
-      ) : (
-        <>
-          <div className="pdf-toolbar">
-            <Button className="icon-btn" aria-label="Previous page"><ArrowLeft size={16} /></Button>
-            <span>{note.title} · uploaded PDF</span>
-            <Button className="icon-btn" aria-label="Next page"><ArrowRight size={16} /></Button>
-            <div className="toolbar-end">
-              <Button className="icon-btn" aria-label="Zoom in" onClick={handleZoomIn}><ZoomIn size={16} /></Button>
-              <Button className="icon-btn" aria-label="Zoom out" onClick={handleZoomOut}><ZoomOut size={16} /></Button>
-              <Button className="icon-btn" aria-label="Download" onClick={handleDownload}><Download size={16} /></Button>
-            </div>
-          </div>
-          <div style={{ overflow: "auto", flex: 1, position: "relative" }}>
-            <article className="pdf-page" style={{ transform: `scale(${zoom})`, transformOrigin: "top left", transition: "transform 0.2s ease" }}>
-              <h2>{topic.name}</h2>
-              <p>{note.content}</p>
-            </article>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-export function LatexFallback({ compact = false }) {
-  return (
-    <section className={`latex-document ${compact ? "compact" : ""}`} aria-busy="true">
       <div className="pdf-toolbar">
-        <span>Loading notes preview...</span>
+        <Button className="icon-btn" aria-label="Previous page"><ArrowLeft size={16} /></Button>
+        <span>{note.title} · uploaded PDF</span>
+        <Button className="icon-btn" aria-label="Next page"><ArrowRight size={16} /></Button>
+        <div className="toolbar-end">
+          <Button className="icon-btn" aria-label="Zoom in" onClick={handleZoomIn}><ZoomIn size={16} /></Button>
+          <Button className="icon-btn" aria-label="Zoom out" onClick={handleZoomOut}><ZoomOut size={16} /></Button>
+          <Button className="icon-btn" aria-label="Download" onClick={handleDownload}><Download size={16} /></Button>
+        </div>
       </div>
-      <article className="latex-page">
-        <p>Preparing LaTeX renderer.</p>
-      </article>
-    </section>
+      <div style={{ overflow: "auto", flex: 1, position: "relative" }}>
+        <article className="pdf-page" style={{ transform: `scale(${zoom})`, transformOrigin: "top left", transition: "transform 0.2s ease" }}>
+          <h2>{topic.name}</h2>
+          <p>{note.content}</p>
+        </article>
+      </div>
+    </div>
   );
 }
 

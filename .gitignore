@@ -9,3 +9,5 @@ pnpm-debug.log*
 .env.*
 !.env.example
 .mcp.json
+deploy.env
+deploy.env.*

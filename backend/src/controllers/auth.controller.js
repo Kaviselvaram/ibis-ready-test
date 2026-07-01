@@ -1,48 +1,46 @@
 import { login, refresh, logout, signup } from "../services/AuthService.js";
 
+// Refresh-token cookie options.
+// When the frontend and backend are on DIFFERENT domains (e.g. Cloudflare Pages
+// + Render), the browser only sends the cookie cross-site if it is
+// `SameSite=None; Secure`. Set COOKIE_CROSS_SITE=true in that case. When they
+// share a parent domain, leave it unset for the safer `SameSite=Strict`.
+const isProd = () => process.env.NODE_ENV === "production";
+const crossSite = () => process.env.COOKIE_CROSS_SITE === "true";
+
+const cookieOptions = () => ({
+  httpOnly: true,
+  secure: isProd(),                       // HTTPS-only in production
+  sameSite: crossSite() ? "None" : "Strict",
+  maxAge: 7 * 24 * 60 * 60 * 1000         // 7 days
+});
+
+const setRefreshCookie = (res, token) => res.cookie("refresh_token", token, cookieOptions());
+
 export const signupController = async ({ req, res, validatedData }) => {
   await signup(validatedData);
   const { accessToken, refreshToken } = await login({ email: validatedData.email, password: validatedData.password });
-  
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
-
+  setRefreshCookie(res, refreshToken);
   return { access_token: accessToken };
 };
 
 export const loginController = async ({ req, res, validatedData }) => {
   const { accessToken, refreshToken } = await login(validatedData);
-  
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  });
-
+  setRefreshCookie(res, refreshToken);
   return { access_token: accessToken };
 };
 
 export const refreshController = async ({ req, res }) => {
   const token = req.cookies?.refresh_token;
   const { accessToken, refreshToken } = await refresh(token);
-  
-  res.cookie("refresh_token", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  });
-
+  setRefreshCookie(res, refreshToken);
   return { access_token: accessToken };
 };
 
 export const logoutController = async ({ req, res, user }) => {
   await logout(user?.jti);
-  res.clearCookie("refresh_token");
+  // clearCookie must use matching attributes to actually clear a cross-site cookie.
+  const { maxAge, ...clearOpts } = cookieOptions();
+  res.clearCookie("refresh_token", clearOpts);
   return { message: "Logged out successfully" };
 };

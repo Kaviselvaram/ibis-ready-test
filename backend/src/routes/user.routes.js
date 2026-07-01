@@ -1,9 +1,17 @@
 import { Router } from "express";
+import { z } from "zod";
 import { withHandler } from "../utils/routeBuilder.js";
-import { deleteUserAccount } from "../controllers/user.controller.js";
+import { getMe, deleteUserAccount } from "../controllers/user.controller.js";
 import { UserDeleteRequest } from "../../../shared/contracts/v1/user/user.dto.js";
 
 const router = Router();
+
+router.get("/me", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: true,
+  roles: ['student', 'admin']
+}, getMe));
 
 router.delete("/delete", withHandler({
   method: "DELETE",

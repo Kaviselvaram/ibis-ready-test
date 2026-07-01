@@ -2,6 +2,7 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { useUI } from "../../contexts/UIContext";
 import { useAccessController } from "../../hooks/useAccessController";
 import { useNavigationController } from "../../hooks/useNavigationController";
+import { CourseRepository } from "../../repositories/CourseRepository";
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, Check, Lock, GraduationCap } from 'lucide-react';
 import { Brand, Button, GlassButton, Pill } from '../ui/LegacyUI';
@@ -26,20 +27,30 @@ export default function Checkout() {
   const { isSignedIn } = useAuthContext();
   
   const onBack = goBackFromCheckout;
-  const onDone = () => {
-    if (isSignedIn) {
-      enterPortal("full");
-    } else {
-      goToSignup();
-    }
-  };
+
+  // Pricing comes from the backend (nothing hardcoded here).
+  const [pricing, setPricing] = useState(null);
+  const [comingSoon, setComingSoon] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    CourseRepository.getPricing()
+      .then((data) => { if (active) setPricing(data); })
+      .catch((e) => console.error("Failed to load pricing:", e));
+    return () => { active = false; };
+  }, []);
+
+  // Payments are not live yet — surface a clean "coming soon" state instead of
+  // granting access without a real, verified payment.
+  const onDone = () => setComingSoon(true);
 
   const [starterFast, setStarterFast] = useState(false);
   const [proFast, setProFast] = useState(false);
 
-  // Price calculations
-  const starterPrice = starterFast ? 2499 + 499 : 2499;
-  const proPrice = proFast ? 14999 + 1999 : 14999;
+  const starterPlan = pricing?.plans?.find((p) => p.id === "starter");
+  const proPlan = pricing?.plans?.find((p) => p.id === "pro");
+  const starterPrice = (starterPlan?.price || 0) + (starterFast ? (starterPlan?.addon?.price || 0) : 0);
+  const proPrice = (proPlan?.price || 0) + (proFast ? (proPlan?.addon?.price || 0) : 0);
 
   const starterFeatures = [
     { text: "1 Chapter Access", enabled: true },
@@ -86,6 +97,12 @@ export default function Checkout() {
           <p>
             Select the perfect access level to master physics with interactive simulations and structured learning.
           </p>
+          {comingSoon && (
+            <div className="pricing-coming-soon" role="status">
+              <Lock size={15} />
+              <span>Online payments are opening soon — enrolment will be available shortly. Thanks for your patience!</span>
+            </div>
+          )}
         </div>
 
       {/* Cards Grid */}
@@ -130,10 +147,10 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
-            <ToggleSwitch 
-              enabled={starterFast} 
-              onChange={setStarterFast} 
-              label="Mentor doubt chat (+₹499)" 
+            <ToggleSwitch
+              enabled={starterFast}
+              onChange={setStarterFast}
+              label={`${starterPlan?.addon?.label || "Add-on"} (+₹${(starterPlan?.addon?.price || 0).toLocaleString('en-IN')})`}
             />
           </div>
         </div>
@@ -178,11 +195,11 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
-            <ToggleSwitch 
-              enabled={proFast} 
-              onChange={setProFast} 
-              isDark 
-              label="Printed prep books (+₹1,999)" 
+            <ToggleSwitch
+              enabled={proFast}
+              onChange={setProFast}
+              isDark
+              label={`${proPlan?.addon?.label || "Add-on"} (+₹${(proPlan?.addon?.price || 0).toLocaleString('en-IN')})`}
             />
           </div>
         </div>

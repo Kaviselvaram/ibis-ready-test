@@ -3,10 +3,11 @@ import { env } from "../config/env.js";
 import { AppError } from "../errors/AppError.js";
 import crypto from "crypto";
 
-export const generateTokens = (user, role = "student", plan = "free", paid_until = null) => {
+export const generateTokens = (user, role = "student", plan = "free", paid_until = null, name = null) => {
   const jti = crypto.randomUUID();
   const payload = {
     sub: user.id,
+    name: name || user.user_metadata?.full_name || null,
     role,
     plan,
     paid_until: paid_until ? Math.floor(new Date(paid_until).getTime() / 1000) : null,
@@ -22,8 +23,6 @@ export const generateTokens = (user, role = "student", plan = "free", paid_until
 
 export const verifyAccessToken = async (token) => {
   return new Promise((resolve, reject) => {
-    console.log("DEBUG: token=", token);
-    console.log("DEBUG: JWT_SECRET=", env.JWT_SECRET);
     jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] }, (err, decoded) => {
       if (err) {
         if (err.name === 'TokenExpiredError') {

@@ -1,9 +1,15 @@
 import { QuestionBankRepository } from "../repositories/QuestionBankRepository.js";
 import { DIFFICULTIES } from "../../../shared/contracts/v1/question/QuestionEnums.js";
+import { cached, invalidate, CACHE_KEYS } from "../utils/cache.js";
 import crypto from 'crypto';
 
 export class QuestionBankService {
   static async getBank() {
+    // Read-heavy: every /test/start and /test/evaluate needs the bank.
+    return cached(CACHE_KEYS.questionBank, 600, () => QuestionBankService._buildBank());
+  }
+
+  static async _buildBank() {
     try {
       const questions = await QuestionBankRepository.getBank();
       
@@ -86,7 +92,9 @@ export class QuestionBankService {
         });
       }
 
-      return await QuestionBankRepository.saveBank(questionsToUpsert, answersToUpsert);
+      const result = await QuestionBankRepository.saveBank(questionsToUpsert, answersToUpsert);
+      await invalidate(CACHE_KEYS.questionBank);
+      return result;
     } catch (e) {
       throw new Error(`QuestionBankService.saveBank failed: ${e.message}`);
     }

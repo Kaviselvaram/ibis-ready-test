@@ -48,7 +48,29 @@ export class UserRepository {
 
   static async getProfile(userId) {
     const supabase = getServiceSupabase();
-    return supabase.from('profiles').select('is_admin, batch_id').eq('id', userId).single();
+    return supabase.from('profiles').select('is_admin, batch_id, full_name, email').eq('id', userId).single();
+  }
+
+  // Full profile for GET /user/me
+  static async getFullProfile(userId) {
+    const supabase = getServiceSupabase();
+    return supabase
+      .from('profiles')
+      .select('id, email, full_name, is_admin, batch_id, phone, school, grade, created_at')
+      .eq('id', userId)
+      .single();
+  }
+
+  // Idempotently ensure a profile row exists for an auth user.
+  // ignoreDuplicates => never clobbers an existing row (e.g. an admin's is_admin flag).
+  static async upsertProfile({ id, email, full_name }) {
+    const supabase = getServiceSupabase();
+    return supabase
+      .from('profiles')
+      .upsert(
+        { id, email, full_name: full_name || null, is_admin: false },
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
   }
 
   static async deleteUser(userId) {

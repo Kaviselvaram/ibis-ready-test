@@ -5,10 +5,7 @@ import { PublicRoute } from "./routes/PublicRoute";
 import { AdminRoute } from "./routes/AdminRoute";
 import { RouteFallback } from "./routes/RouteFallback";
 import { AppLayout } from "./components/layout/AppLayout";
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { ShamayimToggleSwitch } from "./components/ui/switch";
-import { TimelineContent } from "./components/ui/timeline-animation";
-import { AwardBadge } from "./components/ui/award-badge";
+import React, { useEffect, useMemo, useState, useRef, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -56,17 +53,24 @@ import { CourseProvider } from "./contexts/CourseContext";
 import { AccessProvider } from "./contexts/AccessContext";
 
 import HomeSession from "./components/common/HomeSession";
-import Landing from "./components/common/Landing";
-import WhyIbisView from "./components/common/WhyIbisView";
 import StudentPortal from "./components/student/StudentPortal";
 import ChapterView from "./components/student/ChapterView";
-import AdminPanel from "./components/admin/AdminPanel";
-import BatchControl from "./components/admin/BatchControl";
-import Signup from "./components/auth/Signup";
-import Checkout from "./components/auth/Checkout";
-import LegalInfoPage from "./components/common/LegalInfoPage";
-import { Routes, Route, BrowserRouter } from "react-router-dom";
 import { BatchModal } from "./components/student/StudentPortal";
+import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
+
+// Route-level code splitting — admin, test-taking and secondary pages load on
+// demand so a student never downloads admin code (and vice versa).
+const WhyIbisView = React.lazy(() => import("./components/common/WhyIbisView"));
+const TestCenter = React.lazy(() => import("./components/test/TestCenter"));
+const AdminPanel = React.lazy(() => import("./components/admin/AdminPanel"));
+const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
+const AdminDashboard = React.lazy(() => import("./components/admin/AdminDashboard"));
+const TestManager = React.lazy(() => import("./components/admin/TestManager"));
+const AdminStudents = React.lazy(() => import("./components/admin/AdminStudents"));
+const AdminSettings = React.lazy(() => import("./components/admin/AdminSettings"));
+const Signup = React.lazy(() => import("./components/auth/Signup"));
+const Checkout = React.lazy(() => import("./components/auth/Checkout"));
+const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage"));
 
 const FaultyTerminal = React.lazy(() => import("./components/ui/FaultyTerminal"));
 
@@ -81,6 +85,7 @@ function App() {
   
   return (
     <AppLayout>
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
@@ -93,12 +98,19 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/student" element={<StudentPortal />} />
           <Route path="/chapter" element={<ChapterView />} />
+          <Route path="/test-center" element={<TestCenter />} />
         </Route>
 
-        {/* Admin Routes */}
+        {/* Admin Routes — routed dashboard inside a sidebar layout */}
         <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="/admin/batches" element={<BatchControl />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/content" element={<AdminPanel />} />
+            <Route path="/admin/tests" element={<TestManager />} />
+            <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/batches" element={<Navigate to="/admin/students" replace />} />
+          </Route>
         </Route>
 
         {/* Unprotected Static Routes */}
@@ -110,6 +122,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<RouteFallback />} />
       </Routes>
+      </Suspense>
       {batchOpen && <BatchModal onClose={() => setBatchOpen(false)} />}
     </AppLayout>
   );
@@ -137,7 +150,10 @@ const RootApp = () => {
 
 const container = document.getElementById("root");
 if (container) {
-  const root = createRoot(container);
-  root.render(<RootApp />);
+  // Reuse the root across HMR reloads instead of calling createRoot twice.
+  if (!container._reactRoot) {
+    container._reactRoot = createRoot(container);
+  }
+  container._reactRoot.render(<RootApp />);
 }
 

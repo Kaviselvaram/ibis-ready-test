@@ -270,7 +270,7 @@ export function StudentTest({ chapter }) {
 }
 
 // ───────────────────────────── Test runner ──────────────────────────────────
-function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFinish }) {
+export function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFinish }) {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState({});
   const [remaining, setRemaining] = useState(durationSec);
@@ -417,7 +417,7 @@ function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFinish }) 
 }
 
 // ───────────────────────────── Report (2 pages) ─────────────────────────────
-function TestReport({ report, onRetake, onClose }) {
+export function TestReport({ report, onRetake, onClose }) {
   const { getAnswerIndex } = useTestController();
   const {
     accuracy, verdict, total, correct, wrong, skipped,

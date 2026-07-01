@@ -10,5 +10,22 @@ export const CourseRepository = {
   },
   getLeaderboard: async () => {
     return await api.get('/student/leaderboard');
-  }
+  },
+  getPricing: async () => {
+    return await api.get('/content/pricing');
+  },
+
+  // ---- Admin CRUD (persists to Supabase) ----
+  createChapter: (title) => api.post('/course/chapters', { title }),
+  updateChapter: (id, patch) => api.patch(`/course/chapters/${id}`, patch),
+  deleteChapter: (id) => api.delete(`/course/chapters/${id}`),
+  reorderChapters: (orderedIds) => api.patch('/course/chapters/reorder', { orderedIds }),
+
+  createTopic: (payload) => api.post('/course/topics', payload),
+  updateTopic: (id, patch) => api.patch(`/course/topics/${id}`, patch),
+  deleteTopic: (id) => api.delete(`/course/topics/${id}`),
+  reorderTopics: (orderedIds) => api.patch('/course/topics/reorder', { orderedIds }),
+
+  addVideo: (payload) => api.post('/course/videos', payload),
+  deleteVideo: (id) => api.delete(`/course/videos/${id}`)
 };

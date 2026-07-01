@@ -1,9 +1,16 @@
 import { Router } from "express";
+import { z } from "zod";
 import { withHandler } from "../utils/routeBuilder.js";
-import { getMedia, getVideo } from "../controllers/ContentController.js";
+import { getMedia, getVideo, getPricingController } from "../controllers/ContentController.js";
 import { MediaRequest, VideoRequest } from "../../../shared/contracts/v1/content/content.dto.js";
 
 const router = Router();
+
+router.get("/pricing", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: false
+}, getPricingController));
 
 router.all("/media", withHandler({
   schema: MediaRequest,
