@@ -33,3 +33,14 @@ export const availableTests = async () => {
 export const startTest = async ({ req }) => {
   return await TestEngineService.startTest(req.params.id);
 };
+
+// ---- Test history + single result ----
+// Students see their own; admins may pass ?profileId=<id> to view any student's.
+export const testHistory = async ({ req, user }) => {
+  const profileId = (user.role === "admin" && req.query.profileId) ? req.query.profileId : user.sub;
+  return await TestEngineService.getHistory(profileId);
+};
+
+export const testResult = async ({ req, user }) => {
+  return await TestEngineService.getResult(req.params.id, user);
+};

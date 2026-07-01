@@ -422,6 +422,7 @@ export function TestReport({ report, onRetake, onClose }) {
   const {
     accuracy, verdict, total, correct, wrong, skipped,
     byDifficulty, byBloom, byTopic, strongest, weakest, graded, meta,
+    strengths = [], focusAreas = [],
   } = report;
 
   const avgPerQ = meta.timeTakenSec && total ? Math.round(meta.timeTakenSec / total) : 0;
@@ -496,6 +497,21 @@ export function TestReport({ report, onRetake, onClose }) {
               ))}
             </div>
 
+            <div className="report-swot">
+              <div className="report-swot-col strong">
+                <h4><Target size={15} /> Strengths</h4>
+                {strengths.length ? (
+                  <ul>{strengths.map((s) => <li key={s.key}><b>{s.key}</b><span>{s.correct}/{s.total} · {s.accuracy}%</span></li>)}</ul>
+                ) : <p className="report-swot-empty">Keep practising to build clear strengths.</p>}
+              </div>
+              <div className="report-swot-col focus">
+                <h4><AlertTriangle size={15} /> Focus areas</h4>
+                {focusAreas.length ? (
+                  <ul>{focusAreas.map((f) => <li key={f.key}><b>{f.key}</b><span>{f.correct}/{f.total} · {f.accuracy}%</span></li>)}</ul>
+                ) : <p className="report-swot-empty">No weak areas this time — great work!</p>}
+              </div>
+            </div>
+
             <div className="report-analysis">
               <h3>Examiner's analysis</h3>
               <ul>
@@ -557,7 +573,7 @@ export function TestReport({ report, onRetake, onClose }) {
 
         <div className="report-actions">
           <button type="button" className="qt-nav-btn" onClick={onClose}><X size={16} /> Close</button>
-          <button type="button" className="qt-nav-btn" onClick={onRetake}><RotateCcw size={16} /> Retake</button>
+          {onRetake && <button type="button" className="qt-nav-btn" onClick={onRetake}><RotateCcw size={16} /> Retake</button>}
           <button type="button" className="qt-start-btn compact" onClick={() => window.print()}>
             <Download size={16} /> Export PDF
           </button>

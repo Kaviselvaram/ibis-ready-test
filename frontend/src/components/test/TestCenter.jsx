@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, ClipboardList, Clock, Layers, Play, Radio } from "lucide-react";
+import { ArrowLeft, ClipboardList, Clock, Layers, Play, Radio, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TestRepository, testTypeLabel } from "../../repositories/TestRepository";
 import { useTestController } from "../../hooks/useTestController";
@@ -49,14 +49,21 @@ export default function TestCenter() {
       const r = await submitTest(active.questions, answers, {
         label: active.test.title,
         mode: active.test.test_type,
+        testId: active.test.id,
         requested: active.test.question_count,
         delivered: active.questions.length,
         durationSec,
         timeTakenSec,
         date: new Date()
       });
-      setReport(r);
-      setPhase("report");
+      // Go to the dedicated result page (persisted); fall back to inline report
+      // only if the attempt could not be stored.
+      if (r?.attemptId) {
+        navigate(`/test-result/${r.attemptId}`);
+      } else {
+        setReport(r);
+        setPhase("report");
+      }
     } catch (e) {
       console.error("Evaluate failed:", e);
     }
@@ -78,6 +85,9 @@ export default function TestCenter() {
           <h1>Take a Test</h1>
           <p>Choose a live test below. Each is timed and gives you a full performance report.</p>
         </div>
+        <Button variant="ghost" onClick={() => navigate("/test-history")} className="tc-history-btn">
+          <History size={16} /> My History
+        </Button>
       </header>
 
       {error && <div className="tc-error">{error}</div>}

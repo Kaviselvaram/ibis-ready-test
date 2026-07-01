@@ -3,7 +3,8 @@ import { withHandler } from "../utils/routeBuilder.js";
 import {
   generateTest, evaluateTest,
   listTests, createTest, updateTest, deleteTest,
-  availableTests, startTest
+  availableTests, startTest,
+  testHistory, testResult
 } from "../controllers/test.controller.js";
 import { z } from "zod";
 
@@ -47,6 +48,21 @@ router.get("/available", withHandler({
 router.post("/start/:id", withHandler({
   method: "POST", schema: z.object({}).strict(), requireAuth: true
 }, startTest));
+
+// ---- Test history + single result (student owns theirs; admin sees any) ----
+router.get("/history", withHandler({
+  method: "GET",
+  schema: z.object({ profileId: z.string().uuid().optional() }),
+  requireAuth: true,
+  roles: ["student", "admin"]
+}, testHistory));
+
+router.get("/result/:id", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: true,
+  roles: ["student", "admin"]
+}, testResult));
 
 // ---- Admin: manage tests ----
 router.get("/manage", admin(z.object({}).strict(), listTests));

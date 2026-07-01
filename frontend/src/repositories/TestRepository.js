@@ -18,5 +18,8 @@ export const TestRepository = {
   deleteTest: (id) => api.delete(`/test/manage/${id}`),
   // Student
   availableTests: () => api.get('/test/available'),
-  startTest: (id) => api.post(`/test/start/${id}`, {})
+  startTest: (id) => api.post(`/test/start/${id}`, {}),
+  // History + results (student owns theirs; admin can pass profileId)
+  history: (profileId) => api.get(`/test/history${profileId ? `?profileId=${profileId}` : ''}`),
+  getResult: (id) => api.get(`/test/result/${id}`)
 };

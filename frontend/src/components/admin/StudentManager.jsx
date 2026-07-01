@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  CheckCircle2, Edit3, Mail, Phone, Plus, Save, Search, Trash2, TrendingUp, UserPlus, X,
+  CheckCircle2, ClipboardList, Edit3, Mail, Phone, Plus, Save, Search, Trash2, TrendingUp, UserPlus, X,
 } from "lucide-react";
 import { blankStudent, ACCESS_LEVELS, PAYMENT_STATES } from "../../repositories/StudentRepository";
 import { useAdminController } from "../../hooks/useAdminController";
@@ -8,6 +9,7 @@ import { useAdminController } from "../../hooks/useAdminController";
 const initials = (name) => name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
 
 export function StudentManager({ batches, batchFilter }) {
+  const navigate = useNavigate();
   const { students, updateStudents } = useAdminController();
   const setStudents = updateStudents;
   const [query, setQuery] = useState("");
@@ -75,6 +77,10 @@ export function StudentManager({ batches, batchFilter }) {
             <span className={`sm-pill ${s.access === "full" ? "full" : "trial"}`}>{s.access}</span>
             <span className={`sm-pay sm-pay-${s.paymentStatus.toLowerCase()}`}>{s.paymentStatus}</span>
             <div className="sm-row-actions">
+              <button type="button" aria-label="View test history" title="Test history"
+                onClick={() => navigate(`/test-history?student=${s.id}&name=${encodeURIComponent(s.name || "Student")}`)}>
+                <ClipboardList size={15} />
+              </button>
               <button type="button" aria-label="Edit student" onClick={() => openEdit(s)}><Edit3 size={15} /></button>
               <button type="button" aria-label="Delete student" onClick={() => remove(s.id)}><Trash2 size={15} /></button>
             </div>

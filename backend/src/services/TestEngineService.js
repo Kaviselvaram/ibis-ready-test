@@ -232,23 +232,12 @@ export class TestEngineService {
     else if (accuracy >= 70) verdict = "Strong";
     else if (accuracy >= 50) verdict = "Developing";
 
-    // Persist the attempt so it feeds student progress + the leaderboard.
-    // Best-effort: a storage hiccup must never block the student's report.
-    if (userId) {
-      try {
-        await TestRepository.recordAttempt({
-          profileId: userId,
-          topicId: null,
-          score: accuracy,
-          timeTakenSeconds: meta?.timeTakenSec || 0
-        });
-        await invalidate(CACHE_KEYS.leaderboard);
-      } catch (e) {
-        console.error("Could not record test attempt (non-fatal):", e.message);
-      }
-    }
+    // Genuine, data-derived strengths & focus areas (per-topic accuracy).
+    const rankedTopics = [...byTopic].filter((t) => t.total > 0);
+    const strengths = rankedTopics.filter((t) => t.accuracy >= 70).sort((a, b) => b.accuracy - a.accuracy);
+    const focusAreas = rankedTopics.filter((t) => t.accuracy < 50).sort((a, b) => a.accuracy - b.accuracy);
 
-    return {
+    const report = {
       meta,
       total,
       correct,
@@ -259,10 +248,66 @@ export class TestEngineService {
       byDifficulty,
       byBloom,
       byTopic,
+      strengths,
+      focusAreas,
       strongest,
       weakest,
       graded,
     };
+
+    // Persist the full attempt (report included) so it feeds progress, the
+    // leaderboard, and the student/admin history views. Best-effort: a storage
+    // hiccup must never block the student's report.
+    let attemptId = null;
+    if (userId) {
+      try {
+        const { data } = await TestRepository.recordAttempt({
+          profileId: userId,
+          topicId: null,
+          testId: meta?.testId || null,
+          title: meta?.label || "Test",
+          testType: meta?.mode || null,
+          score: accuracy,
+          total, correct, wrong, skipped,
+          timeTakenSeconds: meta?.timeTakenSec || 0,
+          report
+        });
+        attemptId = data?.id || null;
+        await invalidate(CACHE_KEYS.leaderboard);
+      } catch (e) {
+        console.error("Could not record test attempt (non-fatal):", e.message);
+      }
+    }
+
+    return { ...report, attemptId };
+  }
+
+  // ---- Test history + single result (student owns theirs; admin sees any) ----
+  static async getHistory(profileId) {
+    const { data, error } = await TestRepository.getHistory(profileId);
+    if (error) throw new AppError(error.message, 500, "DB_ERROR");
+    return data || [];
+  }
+
+  static async getResult(id, requester) {
+    const { data, error } = await TestRepository.getResult(id);
+    if (error) throw new AppError(error.message, 500, "DB_ERROR");
+    if (!data) throw new AppError("Result not found", 404, "NOT_FOUND");
+    const isOwner = data.profile_id === requester.sub;
+    const isAdmin = requester.role === "admin";
+    if (!isOwner && !isAdmin) throw new AppError("You cannot view this result", 403, "FORBIDDEN");
+    return {
+      id: data.id,
+      title: data.title,
+      test_type: data.test_type,
+      completed_at: data.completed_at,
+      report: data.report
+    };
+  }
+
+  static async getStudentInfo(profileId) {
+    const { data } = await TestRepository.getProfileBasic(profileId);
+    return data ? { id: data.id, name: data.full_name || data.email, email: data.email } : null;
   }
 
   // ---- Admin test management ----

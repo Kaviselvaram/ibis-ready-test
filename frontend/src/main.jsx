@@ -62,6 +62,8 @@ import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
 // demand so a student never downloads admin code (and vice versa).
 const WhyIbisView = React.lazy(() => import("./components/common/WhyIbisView"));
 const TestCenter = React.lazy(() => import("./components/test/TestCenter"));
+const TestHistory = React.lazy(() => import("./components/test/TestHistory"));
+const TestResultPage = React.lazy(() => import("./components/test/TestResultPage"));
 const AdminPanel = React.lazy(() => import("./components/admin/AdminPanel"));
 const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./components/admin/AdminDashboard"));
@@ -99,6 +101,8 @@ function App() {
           <Route path="/student" element={<StudentPortal />} />
           <Route path="/chapter" element={<ChapterView />} />
           <Route path="/test-center" element={<TestCenter />} />
+          <Route path="/test-history" element={<TestHistory />} />
+          <Route path="/test-result/:id" element={<TestResultPage />} />
         </Route>
 
         {/* Admin Routes — routed dashboard inside a sidebar layout */}

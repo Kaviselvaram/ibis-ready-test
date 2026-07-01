@@ -47,16 +47,49 @@ export class TestRepository {
     return supabase.from('chapters').select('id, title').in('id', ids);
   }
 
-  // Records a completed attempt so it feeds progress + the leaderboard.
-  static async recordAttempt({ profileId, topicId = null, score, timeTakenSeconds }) {
+  // Records a completed attempt (with its full report) so it feeds progress,
+  // the leaderboard, and the student/admin test-history views.
+  static async recordAttempt(row) {
     const supabase = getServiceSupabase();
     return supabase.from('test_attempts').insert({
-      profile_id: profileId,
-      topic_id: topicId,
-      score,
-      time_taken_seconds: timeTakenSeconds || 0,
+      profile_id: row.profileId,
+      topic_id: row.topicId ?? null,
+      test_id: row.testId ?? null,
+      title: row.title ?? null,
+      test_type: row.testType ?? null,
+      score: row.score,
+      total: row.total ?? null,
+      correct: row.correct ?? null,
+      wrong: row.wrong ?? null,
+      skipped: row.skipped ?? null,
+      time_taken_seconds: row.timeTakenSeconds || 0,
+      report: row.report ?? null,
       completed_at: new Date().toISOString()
-    });
+    }).select('id').single();
+  }
+
+  // Summary list for a student's (or, for admins, any student's) test history.
+  static async getHistory(profileId) {
+    const supabase = getServiceSupabase();
+    return supabase.from('test_attempts')
+      .select('id, title, test_type, score, total, correct, wrong, skipped, time_taken_seconds, completed_at')
+      .eq('profile_id', profileId)
+      .order('completed_at', { ascending: false })
+      .limit(100);
+  }
+
+  // Full stored result (incl. report JSONB) for one attempt.
+  static async getResult(id) {
+    const supabase = getServiceSupabase();
+    return supabase.from('test_attempts')
+      .select('id, profile_id, title, test_type, score, total, correct, wrong, skipped, time_taken_seconds, completed_at, report')
+      .eq('id', id)
+      .maybeSingle();
+  }
+
+  static async getProfileBasic(profileId) {
+    const supabase = getServiceSupabase();
+    return supabase.from('profiles').select('id, full_name, email').eq('id', profileId).maybeSingle();
   }
 
   static async getSealedAnswers(questionIds) {
