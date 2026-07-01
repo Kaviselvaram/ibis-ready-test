@@ -3,7 +3,9 @@
 #   docker build -f backend/Dockerfile -t ibis-backend .
 #
 # Stateless by design (JWT + Redis), so run N replicas behind a load balancer.
-FROM node:20-slim AS runner
+# Node 22+ required: @supabase/supabase-js RealtimeClient needs native WebSocket
+# (absent in Node 20), otherwise the client throws on first use.
+FROM node:22-slim AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
