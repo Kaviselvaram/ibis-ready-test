@@ -33,9 +33,15 @@ export const useAuthenticationController = () => {
   };
 
   const signUp = async (email, password, metadata) => {
+    // The signup response already logs the user in (access token + refresh cookie
+    // are set server-side by signupController). So we adopt that session directly
+    // instead of firing a second, redundant login — which doubled the cold-start
+    // exposure and, on any transient failure, surfaced "Signup failed" even though
+    // the account had already been created.
     const newUser = await AuthenticationRepository.signUp(email, password, metadata);
     if (newUser) {
-      return await signIn(email, password);
+      setUser(newUser);
+      return newUser;
     }
     return null;
   };

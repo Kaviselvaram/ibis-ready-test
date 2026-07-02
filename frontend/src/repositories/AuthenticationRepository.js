@@ -14,7 +14,10 @@ export const AuthenticationRepository = {
       }
       return data;
     } catch (e) {
-      throw new RepositoryError("Signup failed", e);
+      // Surface the real server message (e.g. "already registered") instead of a
+      // generic string, so users can actually act on the failure.
+      const msg = e?.details?.message || e?.message || "Signup failed. Please try again.";
+      throw new RepositoryError(msg, e);
     }
   },
   signIn: async (email, password) => {
