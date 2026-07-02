@@ -7818,6 +7818,44 @@ body:has(.embedded-content-frame) {
   .sm-grid, .sm-grid-tight { grid-template-columns: 1fr 1fr; }
 }
 
+/* Clean landing/why-screen top-right entries (replaced the rocker switch) */
+.landing-topbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(32, 22, 17, 0.14);
+  background: rgba(255, 252, 247, 0.72);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #201611;
+  font-family: var(--body, inherit);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.landing-topbtn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(211, 113, 80, 0.55);
+  box-shadow: 0 8px 22px rgba(32, 22, 17, 0.12);
+}
+.landing-topbtn.accent {
+  background: var(--clay, #d37150);
+  border-color: var(--clay, #d37150);
+  color: #fff;
+}
+.landing-topbtn.accent:hover {
+  background: var(--clay-dark, #b95a3d);
+  border-color: var(--clay-dark, #b95a3d);
+}
+@media (max-width: 720px) {
+  .landing-topbtn { padding: 8px 12px; font-size: 0.84rem; }
+}
+
 
 
 

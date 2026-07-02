@@ -32,4 +32,12 @@ export class BatchService {
       throw new Error(`BatchService.saveBatches failed: ${e.message}`);
     }
   }
+
+  static async deleteBatch(id) {
+    try {
+      return await BatchRepository.deleteBatch(id);
+    } catch (e) {
+      throw new Error(`BatchService.deleteBatch failed: ${e.message}`);
+    }
+  }
 }

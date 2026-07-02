@@ -430,10 +430,67 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
 .bx-empty svg { color: var(--clay); opacity: 0.6; }
 .bx-empty h2 { font-family: var(--display); color: var(--ink); margin: 12px 0 6px; }
 .bx-empty p { margin: 0; }
+.bx-headright { display: flex; align-items: center; gap: 22px; }
+.bx-card-actions { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--paper-soft); }
+.bx-card-actions button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 9px;
+  border: 1px solid var(--line-strong); background: var(--paper-card);
+  color: var(--muted); font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.13s ease;
+}
+.bx-card-actions button:hover { border-color: var(--clay); color: var(--clay-dark); }
+.bx-card-actions button.danger:hover { border-color: var(--clay-dark); background: rgba(138, 57, 40, 0.08); color: var(--clay-dark); }
 
 @media (max-width: 720px) {
   .bx-create { grid-template-columns: 1fr; }
+  .bx-headright { flex-direction: column; align-items: flex-start; gap: 14px; }
 }
+
+/* ============================================================
+   Bulk upload modal
+   ============================================================ */
+.bulk-modal { position: relative; width: min(620px, 94vw); max-height: 90vh; overflow-y: auto; }
+.bulk-head h2 { display: flex; align-items: center; gap: 8px; margin: 0 40px 6px 0; font-family: var(--display); font-size: 1.35rem; }
+.bulk-head h2 svg { color: var(--clay-dark); }
+.bulk-head p { margin: 0 0 16px; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+.bulk-head code { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.82em; color: var(--clay-dark); }
+.bulk-tools { display: flex; gap: 8px; margin-bottom: 12px; }
+.bulk-tool {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: var(--paper-card);
+  color: var(--ink); font-weight: 700; font-size: 0.85rem; cursor: pointer;
+}
+.bulk-tool:hover { border-color: var(--clay); }
+.bulk-textarea {
+  width: 100%; min-height: 180px; resize: vertical;
+  padding: 14px; border: 1px solid var(--line-strong); border-radius: 12px;
+  background: var(--paper-soft); font-family: var(--mono, monospace); font-size: 0.84rem; color: var(--ink);
+  line-height: 1.6;
+}
+.bulk-textarea:focus { outline: 2px solid rgba(211, 113, 80, 0.4); border-color: var(--clay); }
+.bulk-parsestat { display: flex; gap: 16px; margin: 12px 0 4px; font-weight: 700; font-size: 0.86rem; }
+.bulk-parsestat .ok { color: #1f7a4d; display: inline-flex; align-items: center; gap: 6px; }
+.bulk-parsestat .warn { color: #9a3b12; display: inline-flex; align-items: center; gap: 6px; }
+.bulk-errors { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.82rem; }
+.bulk-errors li { margin: 2px 0; }
+.bulk-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+.bulk-result { text-align: center; padding: 10px 6px; }
+.bulk-result-icon.ok { color: #1f7a4d; }
+.bulk-result-icon.err { color: #9a3b12; }
+.bulk-result h2 { font-family: var(--display); margin: 10px 0 16px; }
+.bulk-summary { display: flex; justify-content: center; gap: 12px; margin-bottom: 16px; }
+.bulk-summary div {
+  flex: 1; max-width: 130px; padding: 14px; border-radius: 14px;
+  background: var(--paper-soft); border: 1px solid var(--line);
+}
+.bulk-summary strong { display: block; font-family: var(--display); font-size: 1.6rem; color: var(--ink); line-height: 1; }
+.bulk-summary span { font-size: 0.76rem; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.bulk-emailnote { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 0.86rem; margin: 0 0 16px; }
+.bulk-download { margin: 0 auto 6px; }
+.bulk-result .bulk-errors { text-align: left; max-width: 420px; margin: 12px auto 0; }
+.bulk-result .bulk-foot { justify-content: center; }
 
 /* ============================================================
    Content drill-down (chapters → topics → topic editor)

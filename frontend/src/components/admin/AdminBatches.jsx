@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Boxes, Plus, Users, Copy, Check, School } from "lucide-react";
+import { Boxes, Plus, Users, Copy, Check, School, Upload, Trash2, Pause, Play } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
 import { Button } from "../ui/LegacyUI";
+import BulkUploadModal from "./BulkUploadModal";
 
 function genCode() {
   return `IBIS-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
 export default function AdminBatches() {
-  const { batches, updateBatches, students } = useAdminController();
+  const { batches, updateBatches, removeBatch, students, refreshStudentsAndBatches } = useAdminController();
   const list = batches || [];
   const studentList = students || [];
 
@@ -17,6 +18,7 @@ export default function AdminBatches() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const totalInBatches = useMemo(() => list.reduce((n, b) => n + (b.count || 0), 0), [list]);
 
@@ -45,6 +47,17 @@ export default function AdminBatches() {
     } catch { /* clipboard unavailable */ }
   };
 
+  const toggleStatus = (b) => {
+    const next = (b.status || "Active") === "Active" ? "Paused" : "Active";
+    updateBatches(list.map((x) => (x.id === b.id ? { ...x, status: next } : x)));
+  };
+
+  const deleteBatch = (b) => {
+    if (window.confirm(`Delete batch "${b.name}"? Students in it will be unassigned (their accounts stay).`)) {
+      removeBatch(b.id);
+    }
+  };
+
   return (
     <div className="adminx-page">
       <header className="adminx-pagehead">
@@ -52,9 +65,12 @@ export default function AdminBatches() {
           <h1>Batches</h1>
           <p>Organise students into school batches. Share the batch code so enrolments land in the right group.</p>
         </div>
-        <div className="adminx-headstats">
-          <div><strong>{list.length}</strong><span>Batches</span></div>
-          <div><strong>{totalInBatches}</strong><span>Enrolled</span></div>
+        <div className="bx-headright">
+          <div className="adminx-headstats">
+            <div><strong>{list.length}</strong><span>Batches</span></div>
+            <div><strong>{studentList.length}</strong><span>Students</span></div>
+          </div>
+          <Button variant="primary" onClick={() => setBulkOpen(true)}><Upload size={16} /> Bulk add students</Button>
         </div>
       </header>
 
@@ -95,9 +111,22 @@ export default function AdminBatches() {
                   {b.code} {copied === b.code ? <Check size={13} /> : <Copy size={13} />}
                 </button>
               </div>
+              <div className="bx-card-actions">
+                <button onClick={() => toggleStatus(b)} title={(b.status || "Active") === "Active" ? "Pause batch" : "Activate batch"}>
+                  {(b.status || "Active") === "Active" ? <><Pause size={13} /> Pause</> : <><Play size={13} /> Activate</>}
+                </button>
+                <button className="danger" onClick={() => deleteBatch(b)} title="Delete batch"><Trash2 size={13} /> Delete</button>
+              </div>
             </article>
           ))}
         </div>
+      )}
+
+      {bulkOpen && (
+        <BulkUploadModal
+          onClose={() => setBulkOpen(false)}
+          onComplete={refreshStudentsAndBatches}
+        />
       )}
     </div>
   );

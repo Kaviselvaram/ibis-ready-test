@@ -49,4 +49,18 @@ export class BatchRepository {
 
     return true;
   }
+
+  // Delete a batch. Detach any students first so the delete never fails on a
+  // foreign-key reference (and students simply become batch-less).
+  static async deleteBatch(id) {
+    const supabase = getServiceSupabase();
+
+    const { error: detachError } = await supabase
+      .from('profiles').update({ batch_id: null }).eq('batch_id', id);
+    if (detachError) throw new RepositoryError(detachError.message, detachError, 'deleteBatch.detach');
+
+    const { error } = await supabase.from('batches').delete().eq('id', id);
+    if (error) throw new RepositoryError(error.message, error, 'deleteBatch');
+    return { id };
+  }
 }

@@ -16,6 +16,11 @@ export const deleteStudent = async ({ req }) => {
   return { success: true };
 };
 
+export const bulkCreateStudents = async ({ validatedData }) => {
+  const { rows, sendEmail } = validatedData;
+  return await StudentService.bulkCreateStudents(rows, { sendEmail });
+};
+
 export const getLeaderboard = async ({ req }) => {
   return await StudentService.getLeaderboard(req.user.sub);
 };

@@ -8,3 +8,8 @@ export const saveBatches = async ({ validatedData }) => {
   await BatchService.saveBatches(validatedData);
   return { success: true };
 };
+
+export const deleteBatch = async ({ req }) => {
+  await BatchService.deleteBatch(req.params.id);
+  return { success: true };
+};

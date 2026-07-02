@@ -1,5 +1,6 @@
 import { StudentRepository } from "../repositories/StudentRepository.js";
 import { cached, CACHE_KEYS } from "../utils/cache.js";
+import { sendMail, isMailConfigured, credentialsEmail } from "../utils/mailer.js";
 
 export class StudentService {
   static async getStudents() {
@@ -76,6 +77,43 @@ export class StudentService {
       return await StudentRepository.deleteStudent(id);
     } catch (e) {
       throw new Error(`StudentService.deleteStudent failed: ${e.message}`);
+    }
+  }
+
+  // Create students in bulk and (best-effort) email each their credentials.
+  // Always returns the full per-row result so the UI can offer a credentials
+  // CSV even when SMTP isn't configured.
+  static async bulkCreateStudents(rows, { sendEmail = true } = {}) {
+    try {
+      const results = await StudentRepository.bulkCreate(rows);
+      const mailReady = sendEmail && isMailConfigured();
+
+      if (mailReady) {
+        await Promise.all(results.map(async (r) => {
+          if (r.status !== "created" || !r.password) return;
+          try {
+            const msg = credentialsEmail({ name: r.name, email: r.email, password: r.password });
+            await sendMail({ to: r.email, ...msg });
+            r.emailed = true;
+          } catch (e) {
+            r.emailed = false;
+            r.emailError = e.message;
+          }
+        }));
+      } else {
+        results.forEach((r) => { if (r.status === "created") r.emailed = false; });
+      }
+
+      const created = results.filter((r) => r.status === "created").length;
+      const skipped = results.filter((r) => r.status === "skipped").length;
+      const failed = results.filter((r) => r.status === "error").length;
+
+      return {
+        summary: { total: results.length, created, skipped, failed, emailSent: mailReady },
+        results
+      };
+    } catch (e) {
+      throw new Error(`StudentService.bulkCreateStudents failed: ${e.message}`);
     }
   }
 

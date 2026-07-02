@@ -3,8 +3,8 @@ import React, { useRef } from 'react';
 import { Menu } from 'lucide-react';
 import { TimelineContent } from '../ui/timeline-animation';
 import { AwardBadge } from '../ui/award-badge';
+import { ArrowLeft } from 'lucide-react';
 import { Brand, Button } from '../ui/LegacyUI';
-import RockerSwitch from '../ui/RockerSwitch';
 import TesplePill from '../ui/TesplePill';
 
 export default function WhyIbisView({ onBack: sessionOnBack }) {
@@ -65,7 +65,7 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
 
       {/* Floating Top-Right Actions */}
       <div style={{ position: "absolute", top: "24px", right: "24px", zIndex: 50, display: "flex", alignItems: "center", gap: "16px" }}>
-        <RockerSwitch checked={true} onChange={(val) => { if (!val) onBack(); }} />
+        <button className="landing-topbtn" onClick={onBack}><ArrowLeft size={15} /> Home</button>
         <TesplePill />
         <Button className="icon-btn subtle" style={{ visibility: "hidden" }} aria-hidden="true"><Menu size={18} /></Button>
       </div>

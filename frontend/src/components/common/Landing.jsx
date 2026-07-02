@@ -6,7 +6,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight, BookOpen, Layers3, Play, Users, Zap, Lock, ArrowUp, ArrowDown, Menu, FileText, CalendarDays, Trophy } from 'lucide-react';
 import AnimatedLayerButton, { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
 import PortalBadge from '../ui/PortalBadge';
-import RockerSwitch from '../ui/RockerSwitch';
 import TesplePill from '../ui/TesplePill';
 import TextReveal from '../ui/TextReveal';
 import ChapterImage from '../shared/ChapterImage';
@@ -198,7 +197,10 @@ export default function Landing({ onWhyIbis: sessionOnWhyIbis }) {
 
       {/* Floating Top-Right Actions */}
       <div style={{ position: "absolute", top: "24px", right: "24px", zIndex: 100, display: "flex", alignItems: "center", gap: "16px" }}>
-        <RockerSwitch checked={false} onChange={(val) => { if (val) onWhyIbis(); }} />
+        {/* Clean, clearly-labeled entries (replacing the old rocker switch). Both
+            lead to the mentor's story page, which covers Why Ibis + the teacher. */}
+        <button className="landing-topbtn" onClick={onWhyIbis}>Why Ibis</button>
+        <button className="landing-topbtn accent" onClick={onWhyIbis}>Meet the teacher</button>
         <TesplePill />
         <div className="glass-dropdown-wrapper">
           <Button className="icon-btn subtle" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>

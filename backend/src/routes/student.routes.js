@@ -1,7 +1,18 @@
 import { Router } from "express";
 import { withHandler } from "../utils/routeBuilder.js";
-import { getStudents, saveStudents, deleteStudent, getLeaderboard } from "../controllers/student.controller.js";
+import { getStudents, saveStudents, deleteStudent, bulkCreateStudents, getLeaderboard } from "../controllers/student.controller.js";
 import { z } from "zod";
+
+const bulkSchema = z.object({
+  sendEmail: z.boolean().optional().default(true),
+  rows: z.array(z.object({
+    full_name: z.string().trim().max(200).optional().default(""),
+    email: z.string().trim().email(),
+    phone: z.string().trim().max(40).optional().default(""),
+    grade: z.string().trim().max(40).optional().default(""),
+    batch_code: z.string().trim().max(40).optional().default("")
+  })).min(1).max(1000)
+});
 
 const router = Router();
 
@@ -26,6 +37,13 @@ router.post("/", withHandler({
   requireAuth: true,
   roles: ["admin"]
 }, saveStudents));
+
+router.post("/bulk", withHandler({
+  method: "POST",
+  schema: bulkSchema,
+  requireAuth: true,
+  roles: ["admin"]
+}, bulkCreateStudents));
 
 router.delete("/:id", withHandler({
   method: "DELETE",

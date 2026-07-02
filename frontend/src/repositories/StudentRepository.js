@@ -39,5 +39,8 @@ export const StudentRepository = {
   deleteStudent: async (id) => {
     await api.delete(`/student/${id}`);
     return true;
+  },
+  bulkUpload: async (rows, sendEmail = true) => {
+    return await api.post('/student/bulk', { rows, sendEmail });
   }
 };

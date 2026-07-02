@@ -70,8 +70,25 @@ export const useAdminController = () => {
   const updateBatches = async (newBatches) => {
     try {
       await BatchRepository.saveBatches(newBatches);
-      setBatches(newBatches);
+      // Refetch so freshly-created batches carry their DB-generated id (and
+      // accurate student counts) — needed for later delete/status-by-id calls.
+      const fresh = await BatchRepository.getBatches();
+      setBatches(fresh || newBatches);
     } catch (e) { console.error(e); }
+  };
+  const removeBatch = async (id) => {
+    try {
+      await BatchRepository.deleteBatch(id);
+      setBatches(batches.filter((b) => b.id !== id));
+      return true;
+    } catch (e) { console.error("Delete batch failed:", e); return false; }
+  };
+  const refreshStudentsAndBatches = async () => {
+    try {
+      const [s, b] = await Promise.all([StudentRepository.getStudents(), BatchRepository.getBatches()]);
+      if (s) setStudents(s);
+      if (b) setBatches(b);
+    } catch (e) { console.error("Refresh failed:", e); }
   };
 
   // Re-pull the student list from the backend (reflects DB tier/status changes
@@ -83,5 +100,5 @@ export const useAdminController = () => {
     } catch (e) { console.error("Refresh students failed:", e); }
   };
 
-  return { questionBank, updateQuestionBank, students, updateStudents, removeStudent, batches, updateBatches, refreshStudents };
+  return { questionBank, updateQuestionBank, students, updateStudents, removeStudent, batches, updateBatches, removeBatch, refreshStudents, refreshStudentsAndBatches };
 };

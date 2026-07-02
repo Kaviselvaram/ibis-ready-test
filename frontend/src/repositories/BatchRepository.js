@@ -7,5 +7,9 @@ export const BatchRepository = {
   saveBatches: async (batches) => {
     await api.post('/batch', batches);
     return true;
+  },
+  deleteBatch: async (id) => {
+    await api.delete(`/batch/${id}`);
+    return true;
   }
 };

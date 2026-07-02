@@ -67,6 +67,77 @@ export class StudentRepository {
     return true;
   }
 
+  // Bulk-create students from parsed CSV rows. For each row we create a real
+  // Supabase auth user with a generated temp password, ensure a profile, and
+  // attach phone/grade/batch. Returns a per-row result carrying the temp
+  // password so the caller can hand back a credentials CSV (and email it).
+  static async bulkCreate(rows) {
+    const supabase = getServiceSupabase();
+
+    // Resolve batch codes → ids once up front.
+    const codes = [...new Set(rows.map((r) => (r.batch_code || "").trim()).filter(Boolean))];
+    const batchByCode = {};
+    if (codes.length) {
+      const { data: batches } = await supabase.from('batches').select('id, code').in('code', codes);
+      (batches || []).forEach((b) => { batchByCode[b.code] = b.id; });
+    }
+
+    const results = [];
+    for (const row of rows) {
+      const email = (row.email || "").trim().toLowerCase();
+      const name = (row.full_name || "").trim();
+      const entry = { email, name, status: "created", password: null, error: null };
+
+      if (!email) { entry.status = "error"; entry.error = "Missing email"; results.push(entry); continue; }
+
+      const password = StudentRepository._tempPassword();
+      try {
+        const { data, error } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: name }
+        });
+        if (error) {
+          entry.status = "skipped";
+          entry.error = /already/i.test(error.message) ? "Email already registered" : error.message;
+          results.push(entry);
+          continue;
+        }
+
+        const batchId = batchByCode[(row.batch_code || "").trim()] || null;
+        const profilePatch = {
+          id: data.user.id,
+          email,
+          full_name: name || null,
+          is_admin: false,
+          phone: (row.phone || "").trim() || null,
+          grade: (row.grade || "").trim() || null
+        };
+        if (batchId) profilePatch.batch_id = batchId;
+
+        const { error: pErr } = await supabase.from('profiles').upsert(profilePatch, { onConflict: 'id' });
+        if (pErr) console.error(`Bulk profile upsert failed for ${email}:`, pErr.message);
+
+        entry.password = password;
+        results.push(entry);
+      } catch (e) {
+        entry.status = "error";
+        entry.error = e.message;
+        results.push(entry);
+      }
+    }
+    return results;
+  }
+
+  // Readable, policy-safe temp password: Ibis-XXXXXX (letters+digits).
+  static _tempPassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnpqrstuvwxyz";
+    let s = "";
+    for (let i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return `Ibis-${s}`;
+  }
+
   // Permanently remove a student. Deleting the auth user cascades to the
   // profile (and its subscriptions/attempts via FK), so this is the single
   // source-of-truth deletion. Guard against removing an admin account.
