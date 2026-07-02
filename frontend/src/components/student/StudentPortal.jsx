@@ -4,6 +4,8 @@ import { useCourseController } from "../../hooks/useCourseController";
 import { useAccessContext } from "../../contexts/AccessContext";
 import { useAccessController } from "../../hooks/useAccessController";
 import { useUI } from "../../contexts/UIContext";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
+import { BatchRepository } from "../../repositories/BatchRepository";
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays } from 'lucide-react';
@@ -328,17 +330,43 @@ export function Paywall({ onPay, onClose }) {
 
 export function BatchModal({ onClose }) {
   const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const { setMyBatch } = useUI();
+  const { setLeaderboard } = useCourseContext();
+  const toast = useToast();
+
+  const join = async () => {
+    const clean = code.trim();
+    if (!clean || busy) return;
+    setBusy(true);
+    try {
+      const batch = await BatchRepository.joinBatch(clean);
+      setMyBatch(batch);
+      setLeaderboard([]); // force a batch-scoped leaderboard refetch
+      toast.success(`Joined ${batch.school ? batch.school + " · " : ""}${batch.name}`);
+      onClose();
+    } catch (e) {
+      toast.error(friendlyMessage(e, "Couldn’t join that batch. Check the code."));
+      setBusy(false);
+    }
+  };
 
   return (
-    <div className="overlay">
-      <section className="modal">
+    <div className="overlay" onClick={onClose}>
+      <section className="modal" onClick={(e) => e.stopPropagation()}>
         <Button className="icon-btn close-btn" aria-label="Close" onClick={onClose}><X size={16} /></Button>
         <h2>Enter Batch Code</h2>
-        <p>Link your account to a teacher-controlled school batch.</p>
-        <input value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} placeholder="IBIS-26A" />
+        <p>Link your account to a teacher-controlled school batch. You’ll rank against your batch peers.</p>
+        <input
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          onKeyDown={(e) => { if (e.key === "Enter") join(); }}
+          placeholder="e.g. DPS-XII-2026"
+          autoFocus
+        />
         <div className="modal-actions">
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={onClose}><Check size={16} /> Link batch</Button>
+          <Button variant="primary" onClick={join} disabled={busy || !code.trim()}><Check size={16} /> {busy ? "Joining…" : "Link batch"}</Button>
         </div>
       </section>
     </div>
@@ -351,8 +379,15 @@ export default function StudentPortal() {
   const { access } = useAccessContext();
   const { initiateSignup } = useAccessController();
   const { signOut, user } = useAuthenticationController();
-  const { setBatchOpen, paywall: showPaywall, setPaywall } = useUI();
+  const { setBatchOpen, paywall: showPaywall, setPaywall, myBatch, setMyBatch } = useUI();
   const navigate = useNavigate();
+
+  // Load the student's connected batch once (undefined = not yet fetched).
+  useEffect(() => {
+    if (myBatch === undefined) {
+      BatchRepository.getMyBatch().then((b) => setMyBatch(b || null)).catch(() => setMyBatch(null));
+    }
+  }, [myBatch, setMyBatch]);
 
   const onBatch = () => setBatchOpen(true);
   const onTakeTest = () => navigate("/test-center");
@@ -369,7 +404,15 @@ export default function StudentPortal() {
     <section className="app-shell">
       <header className="topbar portal-bar">
         <strong className="student-name">{user?.name || "Student"}</strong>
-        <Button variant="ghost" onClick={onBatch}><Clipboard size={16} /> Enter batch code</Button>
+        {myBatch ? (
+          <button className="portal-batch-chip" onClick={onBatch} title="Change batch">
+            <Users size={14} />
+            <span>{myBatch.school ? `${myBatch.school} · ` : ""}{myBatch.name}</span>
+            <small>{myBatch.code}</small>
+          </button>
+        ) : (
+          <Button variant="ghost" onClick={onBatch}><Clipboard size={16} /> Enter batch code</Button>
+        )}
         <Button variant="primary" onClick={onTakeTest}><ClipboardList size={16} /> Take Test</Button>
         <Button onClick={onLogout}><LogOut size={16} /> Log out</Button>
       </header>

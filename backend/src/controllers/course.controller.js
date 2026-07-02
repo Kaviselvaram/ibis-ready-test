@@ -43,5 +43,14 @@ export const addVideo = async ({ validatedData }) => {
   }
 };
 
+export const updateVideo = async ({ req, validatedData }) => {
+  try {
+    return await CourseService.updateVideo(req.params.id, validatedData);
+  } catch (e) {
+    if (e.statusCode === 400) throw new AppError(e.message, 400, "BAD_INPUT");
+    throw e;
+  }
+};
+
 export const deleteVideo = async ({ req }) =>
   await CourseService.deleteVideo(req.params.id);

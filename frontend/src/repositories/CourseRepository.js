@@ -27,5 +27,6 @@ export const CourseRepository = {
   reorderTopics: (orderedIds) => api.patch('/course/topics/reorder', { orderedIds }),
 
   addVideo: (payload) => api.post('/course/videos', payload),
+  updateVideo: (id, patch) => api.patch(`/course/videos/${id}`, patch),
   deleteVideo: (id) => api.delete(`/course/videos/${id}`)
 };

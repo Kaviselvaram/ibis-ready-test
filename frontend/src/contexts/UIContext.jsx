@@ -6,6 +6,8 @@ export const UIProvider = ({ children }) => {
   const [pricingSource, setPricingSource] = useState("signup");
   const [batchOpen, setBatchOpen] = useState(false);
   const [paywall, setPaywall] = useState(false);
+  // The student's connected batch: undefined = not loaded, null = none, object = joined.
+  const [myBatch, setMyBatch] = useState(undefined);
 
   return (
     <UIContext.Provider
@@ -16,7 +18,9 @@ export const UIProvider = ({ children }) => {
         setBatchOpen,
         paywall,
         setPaywall,
-      }), [pricingSource, batchOpen, paywall])}
+        myBatch,
+        setMyBatch,
+      }), [pricingSource, batchOpen, paywall, myBatch])}
     >
       {children}
     </UIContext.Provider>

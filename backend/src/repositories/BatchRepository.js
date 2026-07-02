@@ -64,6 +64,30 @@ export class BatchRepository {
     return { id };
   }
 
+  // Link a student to a batch by its code. Returns the batch, or null when the
+  // code doesn't match any batch.
+  static async joinByCode(userId, code) {
+    const supabase = getServiceSupabase();
+    const { data: batch, error } = await supabase
+      .from('batches').select('id, code, name, school, status').ilike('code', code).maybeSingle();
+    if (error) throw new RepositoryError(error.message, error, 'joinByCode.lookup');
+    if (!batch) return null;
+
+    const { error: upErr } = await supabase
+      .from('profiles').update({ batch_id: batch.id }).eq('id', userId);
+    if (upErr) throw new RepositoryError(upErr.message, upErr, 'joinByCode.update');
+    return batch;
+  }
+
+  // The batch a given student currently belongs to (or null).
+  static async getMyBatch(userId) {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from('profiles').select('batch_id, batches ( id, code, name, school, status )').eq('id', userId).single();
+    if (error) return null;
+    return data?.batches || null;
+  }
+
   // On-demand analytics for a single batch — only queried when an admin opens
   // the batch, never as part of the default batch list.
   static async getBatchAnalytics(id) {

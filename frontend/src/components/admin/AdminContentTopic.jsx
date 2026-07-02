@@ -1,18 +1,17 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ChevronRight, ArrowLeft, Video, FileText, PlayCircle, Unlock, Lock } from "lucide-react";
+import { ChevronRight, ArrowLeft, Video, FileText, Unlock, Lock } from "lucide-react";
 import { useContentAdmin } from "../../hooks/useContentAdmin";
 import { AdminVideos, AdminNotes } from "./ContentEditors";
 
 const TABS = [
   { key: "videos", label: "Videos", icon: Video },
-  { key: "worked", label: "Worked examples", icon: PlayCircle },
   { key: "notes", label: "Notes", icon: FileText }
 ];
 
 export default function AdminContentTopic() {
   const { chapterId, topicId } = useParams();
-  const { chapters, updateTopic, addVideo, deleteVideo, setTopicFree } = useContentAdmin();
+  const { chapters, updateTopic, addVideo, updateVideo, deleteVideo, setTopicFree } = useContentAdmin();
   const [tab, setTab] = useState("videos");
 
   const chapter = chapters.find((c) => c.id === chapterId);
@@ -68,10 +67,9 @@ export default function AdminContentTopic() {
             <AdminNotes topic={topic} updateTopic={boundUpdateTopic} />
           ) : (
             <AdminVideos
-              type={tab}
               topic={topic}
-              updateTopic={boundUpdateTopic}
               onAddVideo={addVideo}
+              onUpdateVideo={updateVideo}
               onDeleteVideo={deleteVideo}
             />
           )}

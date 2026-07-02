@@ -41,6 +41,24 @@ export class BatchService {
     }
   }
 
+  // Student joins a batch by code. Throws a 400 AppError-style error the
+  // controller maps to a clean message when the code is wrong.
+  static async joinBatch(userId, code) {
+    const clean = String(code || "").trim();
+    if (!clean) { const e = new Error("Enter a batch code."); e.statusCode = 400; throw e; }
+    const batch = await BatchRepository.joinByCode(userId, clean);
+    if (!batch) { const e = new Error("That batch code doesn’t exist. Check it with your teacher."); e.statusCode = 404; throw e; }
+    return { id: batch.id, code: batch.code, name: batch.name, school: batch.school, status: batch.status };
+  }
+
+  static async getMyBatch(userId) {
+    try {
+      return await BatchRepository.getMyBatch(userId);
+    } catch (e) {
+      throw new Error(`BatchService.getMyBatch failed: ${e.message}`);
+    }
+  }
+
   // Compute batch analytics + a batch-scoped ranking from raw rows.
   static async getBatchAnalytics(id) {
     try {

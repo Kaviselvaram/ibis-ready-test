@@ -4,7 +4,7 @@ import {
   getChapters, getStudyData,
   createChapter, updateChapter, deleteChapter, reorderChapters,
   createTopic, updateTopic, deleteTopic, reorderTopics,
-  addVideo, deleteVideo
+  addVideo, updateVideo, deleteVideo
 } from "../controllers/course.controller.js";
 import { z } from "zod";
 
@@ -76,6 +76,13 @@ router.post("/videos", admin(
     title: z.string().trim().max(200).optional()
   }),
   addVideo
+));
+router.patch("/videos/:id", admin(
+  z.object({
+    title: z.string().trim().min(1).max(200).optional(),
+    url: z.string().trim().min(1).optional()
+  }),
+  updateVideo
 ));
 router.delete("/videos/:id", admin(z.object({}).strict(), deleteVideo));
 

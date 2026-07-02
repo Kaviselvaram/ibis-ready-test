@@ -123,6 +123,16 @@ export class CourseRepository {
     return data;
   }
 
+  static async updateVideo(id, patch) {
+    const supabase = getServiceSupabase();
+    const allowed = {};
+    if (patch.title !== undefined) allowed.title = patch.title;
+    if (patch.youtube_video_id !== undefined) allowed.youtube_video_id = patch.youtube_video_id;
+    const { data, error } = await supabase.from('youtubes').update(allowed).eq('id', id).select().single();
+    if (error) throw new RepositoryError(error.message, error, 'updateVideo');
+    return data;
+  }
+
   static async deleteVideo(id) {
     const supabase = getServiceSupabase();
     const { error } = await supabase.from('youtubes').delete().eq('id', id);

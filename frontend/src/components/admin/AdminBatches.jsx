@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Boxes, Plus, Users, Copy, Check, School, Upload, Trash2, Pause, Play, Hash, BarChart3 } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { Button } from "../ui/LegacyUI";
 import BulkUploadModal from "./BulkUploadModal";
 
@@ -12,6 +13,7 @@ const normCode = (s) => s.trim().toUpperCase().replace(/\s+/g, "-");
 
 export default function AdminBatches() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { batches, updateBatches, removeBatch, students, refreshStudentsAndBatches } = useAdminController();
   const list = batches || [];
   const studentList = students || [];
@@ -37,7 +39,11 @@ export default function AdminBatches() {
     try {
       // New batch has no id — the backend generates the uuid on insert.
       const next = [...list, { code: finalCode, name: name.trim(), school: school.trim(), status: "Active", count: 0 }];
-      await updateBatches(next);
+      await toast.promise(() => updateBatches(next), {
+        loading: "Creating batch…",
+        success: `Batch “${name.trim()}” created`,
+        error: (e) => friendlyMessage(e, "Couldn’t create the batch.")
+      });
       setSchool(""); setName(""); setCode("");
     } catch (e) {
       setError("Could not create batch. Please try again.");
@@ -52,13 +58,18 @@ export default function AdminBatches() {
 
   const toggleStatus = (b) => {
     const next = (b.status || "Active") === "Active" ? "Paused" : "Active";
-    updateBatches(list.map((x) => (x.id === b.id ? { ...x, status: next } : x)));
+    toast.promise(() => updateBatches(list.map((x) => (x.id === b.id ? { ...x, status: next } : x))), {
+      loading: "Updating…", success: `Batch ${next === "Active" ? "activated" : "paused"}`,
+      error: (e) => friendlyMessage(e, "Couldn’t update the batch.")
+    }).catch(() => {});
   };
 
-  const deleteBatch = (b) => {
-    if (window.confirm(`Delete batch "${b.name}"? Students in it will be unassigned (their accounts stay).`)) {
-      removeBatch(b.id);
-    }
+  const deleteBatch = async (b) => {
+    if (!window.confirm(`Delete batch "${b.name}"? Students in it will be unassigned (their accounts stay).`)) return;
+    await toast.promise(async () => { const ok = await removeBatch(b.id); if (!ok) throw new Error("Delete failed"); }, {
+      loading: "Deleting batch…", success: `Batch “${b.name}” deleted`,
+      error: (e) => friendlyMessage(e, "Couldn’t delete the batch.")
+    }).catch(() => {});
   };
 
   return (

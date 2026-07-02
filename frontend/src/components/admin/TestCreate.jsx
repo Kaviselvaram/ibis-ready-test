@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Plus, CircleDot, Circle, ArrowLeft, ChevronRight } from "lucide-react";
 import { TestRepository, TEST_TYPES } from "../../repositories/TestRepository";
 import { CourseRepository } from "../../repositories/CourseRepository";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { Button } from "../ui/LegacyUI";
 
 const emptyDraft = () => ({
@@ -16,6 +17,7 @@ const emptyDraft = () => ({
 
 export default function TestCreate() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [chapters, setChapters] = useState([]);
   const [draft, setDraft] = useState(emptyDraft());
   const [saving, setSaving] = useState(false);
@@ -37,14 +39,17 @@ export default function TestCreate() {
     if (!valid) return;
     setSaving(true);
     try {
-      await TestRepository.createTest({
+      await toast.promise(() => TestRepository.createTest({
         ...draft,
         title: draft.title.trim(),
         question_count: Number(draft.question_count),
         duration_minutes: Number(draft.duration_minutes)
+      }), {
+        loading: "Creating test…", success: `Test “${draft.title.trim()}” created`,
+        error: (e) => friendlyMessage(e, "Couldn’t create the test.")
       });
       navigate("/admin/tests");
-    } catch (e) { console.error("Create test failed:", e); setSaving(false); }
+    } catch (e) { setSaving(false); }
   };
 
   return (

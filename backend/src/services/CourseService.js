@@ -139,5 +139,19 @@ export class CourseService {
     }
     return CourseService._write(CourseRepository.addVideo({ topic_id, youtube_video_id, title: title || "New lesson" }));
   }
+  static updateVideo(id, { title, url }) {
+    const patch = {};
+    if (title !== undefined) patch.title = title;
+    if (url !== undefined) {
+      const youtube_video_id = CourseService.extractYouTubeId(url);
+      if (!youtube_video_id) {
+        const err = new Error("Invalid YouTube URL or video id");
+        err.statusCode = 400;
+        throw err;
+      }
+      patch.youtube_video_id = youtube_video_id;
+    }
+    return CourseService._write(CourseRepository.updateVideo(id, patch));
+  }
   static deleteVideo(id) { return CourseService._write(CourseRepository.deleteVideo(id)); }
 }

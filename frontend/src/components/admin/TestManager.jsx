@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { ClipboardList, Plus, Trash2, Radio, Clock, Layers, Database } from "lucide-react";
 import { TestRepository, testTypeLabel } from "../../repositories/TestRepository";
 import { CourseRepository } from "../../repositories/CourseRepository";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { Button } from "../ui/LegacyUI";
 
 export default function TestManager() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [tests, setTests] = useState(null);
   const [chapters, setChapters] = useState([]);
 
@@ -23,14 +25,18 @@ export default function TestManager() {
   const chapterName = (id) => chapters.find((c) => c.id === id)?.name || "—";
 
   const toggleLive = async (t) => {
-    try { await TestRepository.updateTest(t.id, { is_live: !t.is_live }); await load(); }
-    catch (e) { console.error("Toggle live failed:", e); }
+    await toast.promise(async () => { await TestRepository.updateTest(t.id, { is_live: !t.is_live }); await load(); }, {
+      loading: "Updating…", success: t.is_live ? "Test unpublished" : "Test is now live",
+      error: (e) => friendlyMessage(e, "Couldn’t update the test.")
+    }).catch(() => {});
   };
 
   const removeTest = async (t) => {
     if (!window.confirm(`Delete test "${t.title}"?`)) return;
-    try { await TestRepository.deleteTest(t.id); await load(); }
-    catch (e) { console.error("Delete test failed:", e); }
+    await toast.promise(async () => { await TestRepository.deleteTest(t.id); await load(); }, {
+      loading: "Deleting test…", success: `Test “${t.title}” deleted`,
+      error: (e) => friendlyMessage(e, "Couldn’t delete the test.")
+    }).catch(() => {});
   };
 
   const liveCount = (tests || []).filter((t) => t.is_live).length;

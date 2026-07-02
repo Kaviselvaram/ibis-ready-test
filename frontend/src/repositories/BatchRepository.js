@@ -15,5 +15,12 @@ export const BatchRepository = {
   // On-demand — only called when an admin opens a batch's analytics page.
   getBatchAnalytics: async (id) => {
     return await api.get(`/batch/${id}/analytics`);
+  },
+  // Student-facing.
+  joinBatch: async (code) => {
+    return await api.post('/batch/join', { code });
+  },
+  getMyBatch: async () => {
+    return await api.get('/batch/mine');
   }
 };

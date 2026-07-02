@@ -8,6 +8,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import React, { useEffect, useMemo, useState, useRef, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 
 import {
   ArrowDown,
@@ -165,17 +166,19 @@ const RootApp = () => {
   return (
     <React.StrictMode>
       <BrowserRouter>
-        <AuthProvider>
-          <UIProvider>
-            <AdminProvider>
-              <AccessProvider>
-                <CourseProvider>
-                  <App />
-                </CourseProvider>
-              </AccessProvider>
-            </AdminProvider>
-          </UIProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <UIProvider>
+              <AdminProvider>
+                <AccessProvider>
+                  <CourseProvider>
+                    <App />
+                  </CourseProvider>
+                </AccessProvider>
+              </AdminProvider>
+            </UIProvider>
+          </AuthProvider>
+        </ToastProvider>
       </BrowserRouter>
     </React.StrictMode>
   );

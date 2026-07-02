@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { ArrowDown, ArrowUp, FileText, Trash2, Upload, Video, Play, Check, X } from "lucide-react";
+import { FileText, Trash2, Upload, Play, Check, X } from "lucide-react";
 import { getYouTubeThumbnail, getYouTubeId, getYouTubeEmbed } from "../../utils/youtube";
-import { reorder } from "../../hooks/useContentAdmin";
 import { Button } from "../ui/LegacyUI";
 
 // Lightweight preview so an admin can confirm the right (often unlisted) video
@@ -25,102 +24,112 @@ function VideoPreviewModal({ videoId, title, onClose }) {
   );
 }
 
-/**
- * Video / worked-example editor for a single topic.
- * `updateTopic(topicId, updater)` performs an optimistic local edit; videos
- * additionally persist to the youtubes table via onAddVideo/onDeleteVideo.
- */
-export function AdminVideos({ type, topic, updateTopic, onAddVideo, onDeleteVideo }) {
-  const field = type === "worked" ? "examples" : "videos";
-  const label = type === "worked" ? "worked example" : "video";
-  // The "videos" tab persists to Supabase (youtubes). "Worked examples" stay
-  // local until the schema gains a discriminator (handled in a later phase).
-  const persists = type === "video";
-  const [url, setUrl] = useState("");
-  const [preview, setPreview] = useState(null); // { videoId, title } for the play modal
+// A single saved video row with an inline, persisted title editor.
+function VideoRow({ item, onPreview, onSaveTitle, onDelete }) {
+  const [title, setTitle] = useState(item.title || "");
+  const dirty = title.trim() !== (item.title || "").trim() && title.trim().length > 0;
 
-  // Auto-process the pasted link: a valid YouTube URL resolves to an 11-char id.
+  const save = () => { if (dirty) onSaveTitle(item.id, title.trim()); };
+
+  return (
+    <article className="vid-row">
+      <button type="button" className="vid-thumb" onClick={() => onPreview({ videoId: item.url, title: item.title })} title="Preview video">
+        <img src={getYouTubeThumbnail(item.url)} alt="" />
+        <i><Play size={14} /></i>
+      </button>
+      <input
+        className="vid-title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
+        placeholder="Lesson title"
+      />
+      {dirty && <button type="button" className="vid-save" onClick={save}>Save</button>}
+      <button type="button" className="vid-del" aria-label="Delete video" onClick={() => onDelete(item.id)}><Trash2 size={15} /></button>
+    </article>
+  );
+}
+
+/**
+ * Lesson-video editor for a single topic — fully persisted to the youtubes table.
+ * Admin pastes a URL and a title together; edits and deletes hit the backend and
+ * reflect on the student side immediately.
+ */
+export function AdminVideos({ topic, onAddVideo, onUpdateVideo, onDeleteVideo }) {
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState(null);
+
   const detectedId = getYouTubeId(url);
   const urlDirty = url.trim().length > 0;
   const urlValid = detectedId.length === 11;
+  const canAdd = urlValid && title.trim().length > 0 && !busy;
+  const videos = topic.videos || [];
 
-  const updateMedia = (id, patch) => {
-    updateTopic(topic.id, (topicItem) => ({
-      ...topicItem,
-      [field]: topicItem[field].map((item) => item.id === id ? { ...item, ...patch } : item)
-    }));
-  };
-
-  const addMedia = () => {
-    if (!urlValid) return;
-    if (persists) {
-      onAddVideo?.(topic.id, url.trim());
-      setUrl("");
-      return;
-    }
-    updateTopic(topic.id, (topicItem) => ({
-      ...topicItem,
-      [field]: [
-        ...topicItem[field],
-        { id: `${field}-${Date.now()}`, label: "New worked example", title: "Editable title field", url, duration: "10 min" }
-      ]
-    }));
-    setUrl("");
-  };
-
-  const removeMedia = (id) => {
-    if (persists) { onDeleteVideo?.(id); return; }
-    updateTopic(topic.id, (topicItem) => ({ ...topicItem, [field]: topicItem[field].filter((item) => item.id !== id) }));
-  };
-
-  const moveMedia = (index, direction) => {
-    updateTopic(topic.id, (topicItem) => ({ ...topicItem, [field]: reorder(topicItem[field], index, direction) }));
+  const add = async () => {
+    if (!canAdd) return;
+    setBusy(true);
+    const ok = await onAddVideo?.(topic.id, url.trim(), title.trim());
+    setBusy(false);
+    if (ok) { setUrl(""); setTitle(""); }
   };
 
   return (
-    <div className="editor-body">
-      <div className="input-row">
-        <input
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter" && urlValid) addMedia(); }}
-          placeholder={`Paste YouTube link for a ${label}...`}
-        />
-        <Button variant="primary" onClick={addMedia} disabled={!urlValid}>Add</Button>
+    <div className="vid-editor">
+      <div className="vid-add">
+        <div className="vid-add-fields">
+          <label className="vid-field">
+            <span>YouTube link</span>
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Paste an unlisted or public YouTube link…"
+            />
+          </label>
+          <label className="vid-field">
+            <span>Lesson title</span>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && canAdd) add(); }}
+              placeholder="e.g. Concept core — Biot–Savart law"
+            />
+          </label>
+        </div>
+        <Button variant="primary" onClick={add} disabled={!canAdd}>{busy ? "Saving…" : "Add video"}</Button>
       </div>
 
-      {/* Auto-process feedback: parsed thumbnail + confirmation, or an error. */}
       {urlDirty && (
         urlValid ? (
           <div className="yt-detect ok">
             <img className="yt-detect-thumb" src={getYouTubeThumbnail(detectedId)} alt="" />
             <div className="yt-detect-info">
               <strong><Check size={14} /> Video detected</strong>
-              <small>Ready to add. The link is stored privately — students only ever see the player.</small>
+              <small>{title.trim() ? "Ready to add." : "Add a lesson title to save it."} The link is stored privately — students only see the player.</small>
             </div>
-            <button type="button" className="yt-detect-play" onClick={() => setPreview({ videoId: detectedId, title: "New video" })}>
+            <button type="button" className="yt-detect-play" onClick={() => setPreview({ videoId: detectedId, title: title || "New video" })}>
               <Play size={14} /> Preview
             </button>
           </div>
         ) : (
-          <div className="yt-detect err"><X size={14} /> That doesn't look like a valid YouTube link.</div>
+          <div className="yt-detect err"><X size={14} /> That doesn’t look like a valid YouTube link.</div>
         )
       )}
 
-      {topic[field].length === 0 && <p className="editor-empty">No {label}s yet. Paste a YouTube link above to add one.</p>}
-      {topic[field].map((item, index) => (
-        <article className="editable-card" key={item.id}>
-          <button type="button" className="thumb thumb-btn" onClick={() => setPreview({ videoId: item.url, title: item.title || item.label })} title="Preview video">
-            <img src={getYouTubeThumbnail(item.url)} alt="" />
-            <i><Play size={14} /></i>
-          </button>
-          <input value={item.label} onChange={(event) => updateMedia(item.id, { label: event.target.value })} />
-          <input value={item.title} onChange={(event) => updateMedia(item.id, { title: event.target.value })} />
-          <button aria-label="Move up" onClick={() => moveMedia(index, -1)}><ArrowUp size={14} /></button>
-          <button aria-label="Move down" onClick={() => moveMedia(index, 1)}><ArrowDown size={14} /></button>
-          <button aria-label="Delete" onClick={() => removeMedia(item.id)}><Trash2 size={14} /></button>
-        </article>
-      ))}
+      <div className="vid-list">
+        {videos.length === 0 && <p className="editor-empty">No videos yet. Paste a link and title above to add the first lesson.</p>}
+        {videos.map((item) => (
+          <VideoRow
+            key={item.id}
+            item={item}
+            onPreview={setPreview}
+            onSaveTitle={(id, t) => onUpdateVideo?.(id, { title: t })}
+            onDelete={(id) => onDeleteVideo?.(id)}
+          />
+        ))}
+      </div>
 
       {preview && <VideoPreviewModal videoId={preview.videoId} title={preview.title} onClose={() => setPreview(null)} />}
     </div>

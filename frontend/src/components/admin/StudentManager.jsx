@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, Edit3, Mail, Phone, Save, Search, Trash2, X, School, GraduationCap, Users } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 
 const PAGE_SIZE = 25;
 const initials = (name) => (name || "").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
@@ -27,6 +28,7 @@ const FILTERS = [
 
 export function StudentManager({ batches, batchFilter }) {
   const navigate = useNavigate();
+  const toast = useToast();
   const { students, updateStudents, removeStudent } = useAdminController();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -61,13 +63,17 @@ export function StudentManager({ batches, batchFilter }) {
   const save = (student) => {
     const exists = students.some((s) => s.id === student.id);
     const next = exists ? students.map((s) => (s.id === student.id ? student : s)) : [...students, student];
-    updateStudents(next);
     setEditing(null);
+    toast.promise(() => updateStudents(next), {
+      loading: "Saving…", success: "Student updated", error: (e) => friendlyMessage(e, "Couldn’t save changes.")
+    }).catch(() => {});
   };
 
   const remove = async (s) => {
     if (!window.confirm(`Permanently delete ${s.name || s.email}? This removes their account and cannot be undone.`)) return;
-    await removeStudent(s.id);
+    await toast.promise(async () => { const ok = await removeStudent(s.id); if (!ok) throw new Error("Delete failed"); }, {
+      loading: "Deleting student…", success: `${s.name || "Student"} deleted`, error: (e) => friendlyMessage(e, "Couldn’t delete the student.")
+    }).catch(() => {});
   };
 
   return (
