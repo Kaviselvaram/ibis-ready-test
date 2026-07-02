@@ -175,22 +175,29 @@ export function TestTab() {
 export default function ChapterView() {
   const { activeChapter: chapter, topicIndex, setTopicIndex, tab, setTab } = useCourseContext();
   const { access } = useAccessContext();
-  const { initiateSignup } = useAccessController();
-  const { goToStudentPortal } = useNavigationController();
-  
-  const onBack = goToStudentPortal;
-  const onPay = () => initiateSignup("signup");
+  const { goToStudentPortal, goToCheckout } = useNavigationController();
 
-  const availableTopics = access === "full" ? chapter.topics : chapter.topics.filter((topic) => topic.isFree);
-  const topic = availableTopics[topicIndex] || availableTopics[0] || chapter.topics[0];
+  // Chapter-level access: you can view the whole chapter only if you have full
+  // access or this is the free chapter. Otherwise it's premium → pricing.
+  const hasAccess = access === "full" || chapter?.isFree === true;
+
+  useEffect(() => {
+    if (!chapter) { goToStudentPortal(); return; }
+    if (!hasAccess) goToCheckout();
+  }, [chapter, hasAccess]);
+
+  if (!chapter || !hasAccess) return null;
+
+  const topics = chapter.topics || [];
+  const topic = topics[topicIndex] || topics[0];
 
   return (
     <section className="learning-shell">
       <header className="chapter-top">
-        <GlassButton type="button" size="icon" onClick={onBack}><ArrowLeft size={18} /></GlassButton>
+        <GlassButton type="button" size="icon" onClick={goToStudentPortal}><ArrowLeft size={18} /></GlassButton>
         <ChapterImage chapter={chapter} className="tiny-cover" />
         <strong>{chapter.name}</strong>
-        <Pill tone={access === "full" ? "accent" : "warning"}>{access === "full" ? "full access" : "free topics only"}</Pill>
+        <Pill tone="accent">{access === "full" ? "full access" : "free chapter"}</Pill>
       </header>
       <nav className="tabs" aria-label="Chapter tabs">
         {["content", "notes", "test"].map((item) => (
@@ -203,24 +210,20 @@ export default function ChapterView() {
       <div className="chapter-layout">
         <aside className="topic-list">
           <h3>Topics</h3>
-          {chapter.topics.map((item) => {
-            const locked = access !== "full" && !item.isFree;
-            const visibleIndex = availableTopics.findIndex((topicItem) => topicItem.id === item.id);
-            return (
-              <button
-                key={item.id}
-                className={item.id === topic?.id ? "active" : ""}
-                onClick={() => (locked ? onPay() : setTopicIndex(visibleIndex))}
-              >
-                <span>{item.name}</span>
-                <small>{locked ? "Premium locked" : `${item.videos.length} videos · ${item.notes.length} notes`}</small>
-              </button>
-            );
-          })}
+          {topics.map((item, idx) => (
+            <button
+              key={item.id}
+              className={item.id === topic?.id ? "active" : ""}
+              onClick={() => setTopicIndex(idx)}
+            >
+              <span>{item.name}</span>
+              <small>{item.videos.length} videos · {item.notes.length} notes</small>
+            </button>
+          ))}
         </aside>
         <section className="topic-content">
-          {tab === "content" && <ContentTab topic={topic} />}
-          {tab === "notes" && <NotesTab topic={topic} />}
+          {tab === "content" && topic && <ContentTab topic={topic} />}
+          {tab === "notes" && topic && <NotesTab topic={topic} />}
           {tab === "test" && <StudentTest chapter={chapter} />}
         </section>
       </div>

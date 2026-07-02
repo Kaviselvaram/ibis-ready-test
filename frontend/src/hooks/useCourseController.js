@@ -9,7 +9,7 @@ export const useCourseController = () => {
   const { chapters, setChapters, chapterIndex, setChapterIndex, setTopicIndex, setTab, activeChapter, studyData, setStudyData, leaderboard, setLeaderboard } = useCourseContext();
   const { access } = useAccessContext();
   const { setPaywall } = useUI();
-  const { goToChapter } = useNavigationController();
+  const { goToChapter, goToCheckout } = useNavigationController();
   
   useEffect(() => {
     const initCourse = async () => {
@@ -45,10 +45,11 @@ export const useCourseController = () => {
   };
 
   const openChapter = () => {
-    console.log("openChapter called!");
-    const freeTopicAvailable = activeChapter.topics.some((topic) => topic.isFree);
-    if (access !== "full" && !freeTopicAvailable) {
-      setPaywall(true);
+    // Chapter-level access: trial students get exactly the free chapter;
+    // any other chapter is premium → send them to the pricing page.
+    const chapterFree = activeChapter?.isFree === true;
+    if (access !== "full" && !chapterFree) {
+      goToCheckout();
       return;
     }
     setTopicIndex(0);

@@ -1,12 +1,22 @@
-import React from "react";
-import { Users } from "lucide-react";
+import React, { useEffect } from "react";
 import { useAdminController } from "../../hooks/useAdminController";
 import { StudentManager } from "./StudentManager";
 
 export default function AdminStudents() {
-  const { students, batches } = useAdminController();
+  const { students, batches, refreshStudents } = useAdminController();
   const list = students || [];
   const fullCount = list.filter((s) => s.access === "full").length;
+
+  // Keep the roster in sync with the DB: refetch when the tab regains focus.
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === "visible") refreshStudents(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [refreshStudents]);
 
   return (
     <div className="adminx-page">

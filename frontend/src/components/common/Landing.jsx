@@ -47,7 +47,8 @@ export function StudentChapterShowcase({
   const activeChapter = chapters[activeIndex] || chapters[0];
   if (!activeChapter) return null;
   
-  const activeLocked = access !== "full" && !activeChapter.topics.some((topic) => topic.isFree);
+  // Chapter-level access: locked unless the student has full access or this is the free chapter.
+  const activeLocked = access !== "full" && activeChapter.isFree !== true;
   const directionClass = direction < 0 ? "from-previous" : "from-next";
 
   const moveChapter = (step) => {

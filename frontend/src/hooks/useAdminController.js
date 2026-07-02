@@ -64,5 +64,14 @@ export const useAdminController = () => {
     } catch (e) { console.error(e); }
   };
 
-  return { questionBank, updateQuestionBank, students, updateStudents, batches, updateBatches };
+  // Re-pull the student list from the backend (reflects DB tier/status changes
+  // made outside the app). Called on focus so the admin view stays in sync.
+  const refreshStudents = async () => {
+    try {
+      const data = await StudentRepository.getStudents();
+      if (data) setStudents(data);
+    } catch (e) { console.error("Refresh students failed:", e); }
+  };
+
+  return { questionBank, updateQuestionBank, students, updateStudents, batches, updateBatches, refreshStudents };
 };

@@ -8,7 +8,7 @@ export class CourseRepository {
     const { data, error } = await supabase
       .from('chapters')
       .select(`
-        id, title, description, order_index, is_published, created_at,
+        id, title, description, order_index, is_published, is_free, created_at,
         topics (
           id, title, order_index, is_free, created_at,
           youtubes (

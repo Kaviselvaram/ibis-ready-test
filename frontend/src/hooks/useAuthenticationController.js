@@ -46,6 +46,16 @@ export const useAuthenticationController = () => {
     goToHome();
   };
 
+  // Re-issues the JWT from the live DB (plan/role/subscription recomputed
+  // server-side) and updates the user. Used to keep tier/access in sync when an
+  // admin changes a student's plan directly in the database. Never signs the
+  // user out on a transient failure (returns null → keep current session).
+  const resyncSession = async () => {
+    const activeUser = await AuthenticationRepository.refreshSession();
+    if (activeUser) setUser(activeUser);
+    return activeUser;
+  };
+
   return {
     user,
     loading,
@@ -54,6 +64,7 @@ export const useAuthenticationController = () => {
     signIn,
     signUp,
     signOut,
+    resyncSession,
     initializeSession
   };
 };

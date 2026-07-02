@@ -77,11 +77,29 @@ const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage
 const FaultyTerminal = React.lazy(() => import("./components/ui/FaultyTerminal"));
 
 function App() {
-  const { initializeSession } = useAuthenticationController();
-  
+  const { initializeSession, resyncSession, isSignedIn } = useAuthenticationController();
+
   useEffect(() => {
     initializeSession();
   }, []);
+
+  // Keep tier/access in sync with the database: re-issue the session token when
+  // the tab regains focus and periodically while active. So if an admin flips a
+  // student Free→Paid in the DB, the student's access updates without a manual
+  // re-login (and the admin dashboard picks up changes the same way).
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const onFocus = () => resyncSession();
+    const onVisible = () => { if (document.visibilityState === "visible") resyncSession(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const iv = setInterval(() => { if (document.visibilityState !== "hidden") resyncSession(); }, 60000);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(iv);
+    };
+  }, [isSignedIn, resyncSession]);
 
   const { batchOpen, setBatchOpen } = useUI();
   

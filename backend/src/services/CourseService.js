@@ -50,6 +50,7 @@ export class CourseService {
         id: ch.id,
         name: ch.title,
         image: chapterImage(ch.title, ch.order_index),
+        isFree: ch.is_free === true,
         progress: 0, // Compute from user test_attempts if context allows
         topics: (ch.topics || []).map(t => ({
           id: t.id,
