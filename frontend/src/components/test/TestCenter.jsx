@@ -83,7 +83,11 @@ export default function TestCenter() {
         </GlassButton>
         <div>
           <h1>Take a Test</h1>
-          <p>Choose a live test below. Each is timed and gives you a full performance report.</p>
+          <p>
+            {tests && tests.length > 0
+              ? `${tests.length} live test${tests.length === 1 ? "" : "s"} available. Each is timed and gives you a full performance report.`
+              : "Choose a live test below. Each is timed and gives you a full performance report."}
+          </p>
         </div>
         <Button variant="ghost" onClick={() => navigate("/test-history")} className="tc-history-btn">
           <History size={16} /> My History
