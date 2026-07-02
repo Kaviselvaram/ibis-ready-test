@@ -57,6 +57,16 @@ export const useAdminController = () => {
       setStudents(newStudents);
     } catch (e) { console.error(e); }
   };
+
+  // Permanently delete a student (auth user + profile) via the backend, then
+  // drop them from local state. Returns true on success so the UI can react.
+  const removeStudent = async (id) => {
+    try {
+      await StudentRepository.deleteStudent(id);
+      setStudents(students.filter((s) => s.id !== id));
+      return true;
+    } catch (e) { console.error("Delete student failed:", e); return false; }
+  };
   const updateBatches = async (newBatches) => {
     try {
       await BatchRepository.saveBatches(newBatches);
@@ -73,5 +83,5 @@ export const useAdminController = () => {
     } catch (e) { console.error("Refresh students failed:", e); }
   };
 
-  return { questionBank, updateQuestionBank, students, updateStudents, batches, updateBatches, refreshStudents };
+  return { questionBank, updateQuestionBank, students, updateStudents, removeStudent, batches, updateBatches, refreshStudents };
 };

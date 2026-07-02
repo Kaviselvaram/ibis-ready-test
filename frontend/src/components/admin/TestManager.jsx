@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { ClipboardList, Plus, Trash2, Radio, CircleDot, Circle, Clock, Layers } from "lucide-react";
+import { ClipboardList, Plus, Trash2, Radio, CircleDot, Circle, Clock, Layers, X } from "lucide-react";
 import { TestRepository, TEST_TYPES, testTypeLabel } from "../../repositories/TestRepository";
 import { CourseRepository } from "../../repositories/CourseRepository";
 import { useAdminController } from "../../hooks/useAdminController";
@@ -18,8 +18,7 @@ const emptyDraft = () => ({
 export default function TestManager() {
   const [tests, setTests] = useState(null);
   const [chapters, setChapters] = useState([]);
-  const [draft, setDraft] = useState(emptyDraft());
-  const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
   const { questionBank, updateQuestionBank } = useAdminController();
 
   const load = useCallback(async () => {
@@ -34,27 +33,6 @@ export default function TestManager() {
 
   const chapterName = (id) => chapters.find((c) => c.id === id)?.name || "—";
 
-  const toggleChapter = (id) => setDraft((d) => ({
-    ...d,
-    chapter_ids: d.chapter_ids.includes(id) ? d.chapter_ids.filter((x) => x !== id) : [...d.chapter_ids, id]
-  }));
-
-  const createTest = async () => {
-    if (!draft.title.trim() || draft.chapter_ids.length === 0) return;
-    setSaving(true);
-    try {
-      await TestRepository.createTest({
-        ...draft,
-        title: draft.title.trim(),
-        question_count: Number(draft.question_count),
-        duration_minutes: Number(draft.duration_minutes)
-      });
-      setDraft(emptyDraft());
-      await load();
-    } catch (e) { console.error("Create test failed:", e); }
-    finally { setSaving(false); }
-  };
-
   const toggleLive = async (t) => {
     try { await TestRepository.updateTest(t.id, { is_live: !t.is_live }); await load(); }
     catch (e) { console.error("Toggle live failed:", e); }
@@ -66,22 +44,112 @@ export default function TestManager() {
     catch (e) { console.error("Delete test failed:", e); }
   };
 
+  const liveCount = (tests || []).filter((t) => t.is_live).length;
+
   return (
     <div className="adminx-page">
       <header className="adminx-pagehead">
         <div>
           <h1>Tests</h1>
-          <p>Create tests from your chapters and publish them live. Students only see tests you set to Live.</p>
+          <p>Build tests from your chapters and publish them live. Students only see tests you set to Live.</p>
+        </div>
+        <div className="adminx-headstats">
+          <div><strong>{tests?.length ?? "—"}</strong><span>Tests</span></div>
+          <div><strong>{liveCount}</strong><span>Live</span></div>
         </div>
       </header>
 
-      <div className="tm-grid">
-        {/* Create panel */}
-        <section className="tm-card tm-create">
-          <h2><Plus size={16} /> New test</h2>
+      <div className="tmx-actions">
+        <Button variant="primary" onClick={() => setCreating(true)}><Plus size={16} /> New test</Button>
+      </div>
+
+      <section className="tmx-list">
+        {!tests && <p className="tmx-empty">Loading…</p>}
+        {tests && tests.length === 0 && (
+          <div className="tmx-emptystate">
+            <ClipboardList size={32} />
+            <h2>No tests yet</h2>
+            <p>Create your first test to publish it to students.</p>
+          </div>
+        )}
+        {(tests || []).map((t) => (
+          <article key={t.id} className={`tmx-row ${t.is_live ? "live" : ""}`}>
+            <div className="tmx-row-main">
+              <div className="tmx-row-title">
+                <strong>{t.title}</strong>
+                <span className="tmx-type">{testTypeLabel(t.test_type)}</span>
+              </div>
+              <div className="tmx-row-meta">
+                <span><Layers size={13} /> {t.chapter_ids?.length || 0} chapters</span>
+                <span><ClipboardList size={13} /> {t.question_count} questions</span>
+                <span><Clock size={13} /> {t.duration_minutes} min</span>
+              </div>
+              <div className="tmx-row-chapters">{(t.chapter_ids || []).map(chapterName).join(" · ") || "No chapters"}</div>
+            </div>
+            <div className="tmx-row-actions">
+              <button className={`tmx-livebtn ${t.is_live ? "on" : ""}`} onClick={() => toggleLive(t)} title={t.is_live ? "Live — click to unpublish" : "Draft — click to publish"}>
+                <Radio size={14} /> {t.is_live ? "Live" : "Draft"}
+              </button>
+              <button className="tmx-del" aria-label="Delete test" onClick={() => removeTest(t)}><Trash2 size={15} /></button>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="tmx-bank">
+        <div className="tmx-bank-head">
+          <h2><ClipboardList size={16} /> Question bank</h2>
+          <p>Tests draw questions from this bank, filtered by the chapters you pick.</p>
+        </div>
+        <AdminQuestionBank questionBank={questionBank} setQuestionBank={updateQuestionBank} />
+      </section>
+
+      {creating && (
+        <TestCreator
+          chapters={chapters}
+          onClose={() => setCreating(false)}
+          onCreated={async () => { setCreating(false); await load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function TestCreator({ chapters, onClose, onCreated }) {
+  const [draft, setDraft] = useState(emptyDraft());
+  const [saving, setSaving] = useState(false);
+
+  const toggleChapter = (id) => setDraft((d) => ({
+    ...d,
+    chapter_ids: d.chapter_ids.includes(id) ? d.chapter_ids.filter((x) => x !== id) : [...d.chapter_ids, id]
+  }));
+
+  const valid = draft.title.trim() && draft.chapter_ids.length > 0;
+
+  const createTest = async () => {
+    if (!valid) return;
+    setSaving(true);
+    try {
+      await TestRepository.createTest({
+        ...draft,
+        title: draft.title.trim(),
+        question_count: Number(draft.question_count),
+        duration_minutes: Number(draft.duration_minutes)
+      });
+      await onCreated();
+    } catch (e) { console.error("Create test failed:", e); setSaving(false); }
+  };
+
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal tmx-modal" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="smx-modal-close" aria-label="Close" onClick={onClose}><X size={18} /></button>
+        <div className="tmx-modal-head"><h2><Plus size={18} /> New test</h2></div>
+
+        <div className="tmx-modal-body">
           <label className="tm-field">
             <span>Title</span>
-            <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Electrostatics — Full Chapter" />
+            <input value={draft.title} autoFocus onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Electrostatics — Full Chapter" />
           </label>
 
           <div className="tm-field-row">
@@ -105,12 +173,7 @@ export default function TestManager() {
             <span>Chapters <small>({draft.chapter_ids.length} selected)</small></span>
             <div className="tm-chapter-picker">
               {chapters.map((c) => (
-                <button
-                  type="button"
-                  key={c.id}
-                  className={`tm-chip ${draft.chapter_ids.includes(c.id) ? "on" : ""}`}
-                  onClick={() => toggleChapter(c.id)}
-                >
+                <button type="button" key={c.id} className={`tm-chip ${draft.chapter_ids.includes(c.id) ? "on" : ""}`} onClick={() => toggleChapter(c.id)}>
                   {draft.chapter_ids.includes(c.id) ? <CircleDot size={13} /> : <Circle size={13} />}
                   {c.name}
                 </button>
@@ -123,47 +186,15 @@ export default function TestManager() {
             <input type="checkbox" checked={draft.is_live} onChange={(e) => setDraft({ ...draft, is_live: e.target.checked })} />
             <span>Publish live immediately</span>
           </label>
+        </div>
 
-          <Button variant="primary" onClick={createTest} disabled={saving || !draft.title.trim() || draft.chapter_ids.length === 0}>
-            <Plus size={16} /> Create test
-          </Button>
-        </section>
-
-        {/* List panel */}
-        <section className="tm-card tm-list">
-          <h2><ClipboardList size={16} /> Tests {tests ? `(${tests.length})` : ""}</h2>
-          {!tests && <p className="tm-empty">Loading…</p>}
-          {tests && tests.length === 0 && <p className="tm-empty">No tests yet. Create one on the left.</p>}
-          <div className="tm-rows">
-            {(tests || []).map((t) => (
-              <article key={t.id} className={`tm-row ${t.is_live ? "live" : ""}`}>
-                <div className="tm-row-main">
-                  <strong>{t.title}</strong>
-                  <div className="tm-row-meta">
-                    <span className="tm-tag">{testTypeLabel(t.test_type)}</span>
-                    <span><Layers size={12} /> {t.chapter_ids?.length || 0} ch</span>
-                    <span><ClipboardList size={12} /> {t.question_count} Q</span>
-                    <span><Clock size={12} /> {t.duration_minutes}m</span>
-                  </div>
-                  <div className="tm-row-chapters">{(t.chapter_ids || []).map(chapterName).join(" · ") || "No chapters"}</div>
-                </div>
-                <div className="tm-row-actions">
-                  <button className={`tm-livebtn ${t.is_live ? "on" : ""}`} onClick={() => toggleLive(t)} title={t.is_live ? "Live — click to unpublish" : "Draft — click to publish"}>
-                    <Radio size={14} /> {t.is_live ? "Live" : "Draft"}
-                  </button>
-                  <button className="tm-del" aria-label="Delete test" onClick={() => removeTest(t)}><Trash2 size={14} /></button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <div className="tmx-modal-foot">
+          <button type="button" className="smx-btn-ghost" onClick={onClose}>Cancel</button>
+          <button type="button" className="smx-btn-primary" onClick={createTest} disabled={saving || !valid}>
+            <Plus size={16} /> {saving ? "Creating…" : "Create test"}
+          </button>
+        </div>
       </div>
-
-      <section className="tm-card tm-bank">
-        <h2><ClipboardList size={16} /> Question bank</h2>
-        <p className="tm-bank-note">Tests draw their questions from this bank, filtered by the chapters you pick above.</p>
-        <AdminQuestionBank questionBank={questionBank} setQuestionBank={updateQuestionBank} />
-      </section>
     </div>
   );
 }

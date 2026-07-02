@@ -71,6 +71,14 @@ export class StudentService {
     }
   }
 
+  static async deleteStudent(id) {
+    try {
+      return await StudentRepository.deleteStudent(id);
+    } catch (e) {
+      throw new Error(`StudentService.deleteStudent failed: ${e.message}`);
+    }
+  }
+
   // Public read hit by every student on the portal. The ranked board is global
   // (user-agnostic); only the `isMe` flag differs per requester. So we cache the
   // computed global board (60s) and stamp `isMe`/reorder per request in memory —

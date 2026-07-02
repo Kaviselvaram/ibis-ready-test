@@ -1,217 +1,200 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  CheckCircle2, ClipboardList, Edit3, Mail, Phone, Plus, Save, Search, Trash2, TrendingUp, UserPlus, X,
-} from "lucide-react";
-import { blankStudent, ACCESS_LEVELS, PAYMENT_STATES } from "../../repositories/StudentRepository";
+import { ClipboardList, Edit3, Mail, Phone, Save, Search, Trash2, X, School, GraduationCap, Users } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
 
-const initials = (name) => name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
+const PAGE_SIZE = 25;
+const initials = (name) => (name || "").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
+
+// Map a student's paymentStatus to a coarse status bucket used by the filters.
+function statusOf(s) {
+  if (s.paymentStatus === "Paid" || s.access === "full") return "paid";
+  if (s.paymentStatus === "Unpaid" || s.paymentStatus === "Refunded") return "pending";
+  return "trial";
+}
+const STATUS_META = {
+  paid: { label: "Paid", cls: "paid" },
+  trial: { label: "Trial", cls: "trial" },
+  pending: { label: "Pending Approval", cls: "pending" }
+};
+
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "paid", label: "Paid" },
+  { key: "trial", label: "Trial" },
+  { key: "pending", label: "Pending Approval" }
+];
 
 export function StudentManager({ batches, batchFilter }) {
   const navigate = useNavigate();
-  const { students, updateStudents } = useAdminController();
-  const setStudents = updateStudents;
+  const { students, updateStudents, removeStudent } = useAdminController();
   const [query, setQuery] = useState("");
-  const [editing, setEditing] = useState(null); // student object being edited (or new)
-  const [isNew, setIsNew] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [editing, setEditing] = useState(null);
 
-  
+  // Reset pagination whenever the filter/search/roster changes.
+  useEffect(() => { setVisible(PAGE_SIZE); }, [query, filter, batchFilter, students.length]);
+
+  const counts = useMemo(() => {
+    const base = students.filter((s) => !batchFilter || s.batchCode === batchFilter);
+    return {
+      all: base.length,
+      paid: base.filter((s) => statusOf(s) === "paid").length,
+      trial: base.filter((s) => statusOf(s) === "trial").length,
+      pending: base.filter((s) => statusOf(s) === "pending").length
+    };
+  }, [students, batchFilter]);
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return students.filter((s) => {
       if (batchFilter && s.batchCode !== batchFilter) return false;
-      if (!query.trim()) return true;
-      const q = query.toLowerCase();
+      if (filter !== "all" && statusOf(s) !== filter) return false;
+      if (!q) return true;
       return s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.batchCode || "").toLowerCase().includes(q);
     });
-  }, [students, query, batchFilter]);
+  }, [students, query, filter, batchFilter]);
 
-  const openEdit = (student) => { setEditing(JSON.parse(JSON.stringify(student))); setIsNew(false); };
-  const openNew = () => { setEditing(blankStudent()); setIsNew(true); };
+  const page = filtered.slice(0, visible);
 
   const save = (student) => {
     const exists = students.some((s) => s.id === student.id);
-    const newStudents = exists ? students.map((s) => (s.id === student.id ? student : s)) : [...students, student];
-    setStudents(newStudents);
+    const next = exists ? students.map((s) => (s.id === student.id ? student : s)) : [...students, student];
+    updateStudents(next);
     setEditing(null);
   };
 
-  const remove = (id) => {
-    if (window.confirm("Remove this student permanently?")) {
-      const newStudents = students.filter((s) => s.id !== id);
-      setStudents(newStudents);
-    }
+  const remove = async (s) => {
+    if (!window.confirm(`Permanently delete ${s.name || s.email}? This removes their account and cannot be undone.`)) return;
+    await removeStudent(s.id);
   };
 
   return (
-    <section className="student-table">
-      <div className="sm-head">
-        <div>
-          <h2>Student records</h2>
-          <small>{filtered.length} student{filtered.length !== 1 ? "s" : ""}{batchFilter ? ` · ${batchFilter}` : " · all batches"} · full edit access</small>
+    <section className="smx">
+      <div className="smx-toolbar">
+        <div className="smx-filters">
+          {FILTERS.map((f) => (
+            <button key={f.key} className={`smx-filter ${filter === f.key ? "active" : ""}`} onClick={() => setFilter(f.key)}>
+              {f.label} <span className="smx-filter-count">{counts[f.key]}</span>
+            </button>
+          ))}
         </div>
-        <div className="sm-head-actions">
-          <div className="sm-search">
-            <Search size={15} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, batch" />
-          </div>
-          <button type="button" className="sm-add-btn" onClick={openNew}><UserPlus size={16} /> Add student</button>
+        <div className="smx-search">
+          <Search size={15} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email or batch…" />
         </div>
       </div>
 
-      <div className="sm-list">
-        {filtered.length === 0 && <p className="sm-empty">No students match.</p>}
-        {filtered.map((s) => (
-          <article key={s.id} className="sm-row">
-            <span className="sm-avatar">{initials(s.name)}</span>
-            <div className="sm-main">
-              <strong>{s.name || "Unnamed"}</strong>
-              <span className="sm-sub">{s.email || "no email"} · {s.batchCode || "no batch"}</span>
-            </div>
-            <div className="sm-metrics">
-              <span><b>{s.accuracy}%</b>accuracy</span>
-              <span><b>{s.avgScore}</b>avg score</span>
-              <span><b>{s.testsTaken}</b>tests</span>
-            </div>
-            <span className={`sm-pill ${s.access === "full" ? "full" : "trial"}`}>{s.access}</span>
-            <span className={`sm-pay sm-pay-${s.paymentStatus.toLowerCase()}`}>{s.paymentStatus}</span>
-            <div className="sm-row-actions">
-              <button type="button" aria-label="View test history" title="Test history"
-                onClick={() => navigate(`/test-history?student=${s.id}&name=${encodeURIComponent(s.name || "Student")}`)}>
-                <ClipboardList size={15} />
-              </button>
-              <button type="button" aria-label="Edit student" onClick={() => openEdit(s)}><Edit3 size={15} /></button>
-              <button type="button" aria-label="Delete student" onClick={() => remove(s.id)}><Trash2 size={15} /></button>
-            </div>
-          </article>
-        ))}
+      <div className="smx-table">
+        <div className="smx-thead">
+          <span className="smx-col-student">Student</span>
+          <span className="smx-col-batch">Batch</span>
+          <span className="smx-col-tests">Tests</span>
+          <span className="smx-col-status">Status</span>
+          <span className="smx-col-actions" />
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="smx-empty"><Users size={30} /><p>No students match this view.</p></div>
+        ) : (
+          page.map((s) => {
+            const st = STATUS_META[statusOf(s)];
+            return (
+              <div key={s.id} className="smx-row">
+                <div className="smx-col-student">
+                  <span className="smx-avatar">{initials(s.name)}</span>
+                  <div className="smx-ident">
+                    <strong>{s.name || "Unnamed"}</strong>
+                    <small>{s.email || "no email"}</small>
+                  </div>
+                </div>
+                <div className="smx-col-batch">{s.batchCode || <span className="smx-muted">—</span>}</div>
+                <div className="smx-col-tests">{s.testsTaken || 0}</div>
+                <div className="smx-col-status"><span className={`smx-status ${st.cls}`}>{st.label}</span></div>
+                <div className="smx-col-actions">
+                  <button aria-label="Test history" title="Test history"
+                    onClick={() => navigate(`/test-history?student=${s.id}&name=${encodeURIComponent(s.name || "Student")}`)}>
+                    <ClipboardList size={15} />
+                  </button>
+                  <button aria-label="Edit" title="Edit" onClick={() => setEditing(JSON.parse(JSON.stringify(s)))}><Edit3 size={15} /></button>
+                  <button aria-label="Delete" title="Delete" className="danger" onClick={() => remove(s)}><Trash2 size={15} /></button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
+
+      {filtered.length > 0 && (
+        <div className="smx-foot">
+          <span>Showing {page.length} of {filtered.length}</span>
+          {visible < filtered.length && (
+            <button className="smx-loadmore" onClick={() => setVisible((v) => v + PAGE_SIZE)}>Load more</button>
+          )}
+        </div>
+      )}
 
       {editing && (
-        <StudentEditor
-          student={editing}
-          isNew={isNew}
-          batches={batches}
-          onCancel={() => setEditing(null)}
-          onSave={save}
-        />
+        <StudentEditor student={editing} batches={batches} onCancel={() => setEditing(null)} onSave={save} />
       )}
     </section>
   );
 }
 
-function StudentEditor({ student, isNew, batches, onCancel, onSave }) {
+function StudentEditor({ student, batches, onCancel, onSave }) {
   const [draft, setDraft] = useState(student);
   const set = (key, value) => setDraft((d) => ({ ...d, [key]: value }));
-  const setNum = (key, value) => set(key, Number(value) || 0);
-
-  const setProgress = (i, key, value) =>
-    setDraft((d) => ({ ...d, progress: d.progress.map((p, idx) => (idx === i ? { ...p, [key]: key === "percent" ? Number(value) || 0 : value } : p)) }));
-  const addProgress = () => setDraft((d) => ({ ...d, progress: [...d.progress, { chapter: "", percent: 0 }] }));
-  const removeProgress = (i) => setDraft((d) => ({ ...d, progress: d.progress.filter((_, idx) => idx !== i) }));
 
   return (
     <div className="overlay" onClick={onCancel}>
-      <div className="modal sm-modal" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="sm-modal-close" aria-label="Close" onClick={onCancel}><X size={18} /></button>
-        <div className="sm-modal-head">
-          <span className="sm-avatar lg">{initials(draft.name || "?")}</span>
+      <div className="modal smx-modal" onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="smx-modal-close" aria-label="Close" onClick={onCancel}><X size={18} /></button>
+        <div className="smx-modal-head">
+          <span className="smx-avatar lg">{initials(draft.name || "?")}</span>
           <div>
-            <h2>{isNew ? "Add student" : "Edit student"}</h2>
-            <small>All fields are editable by the admin.</small>
+            <h2>Edit student</h2>
+            <small>Changes save to the student's profile.</small>
           </div>
         </div>
 
-        <div className="sm-modal-body">
-          <div className="sm-grid">
-            <Field label="Full name"><input value={draft.name} onChange={(e) => set("name", e.target.value)} /></Field>
-            <Field label="Email"><div className="sm-input-ico"><Mail size={14} /><input value={draft.email} onChange={(e) => set("email", e.target.value)} /></div></Field>
-            <Field label="Phone"><div className="sm-input-ico"><Phone size={14} /><input value={draft.phone} onChange={(e) => set("phone", e.target.value)} /></div></Field>
-            <Field label="School"><input value={draft.school} onChange={(e) => set("school", e.target.value)} /></Field>
-            <Field label="Grade"><input value={draft.grade} onChange={(e) => set("grade", e.target.value)} /></Field>
-            <Field label="Batch">
-              <select value={draft.batchCode} onChange={(e) => set("batchCode", e.target.value)}>
-                <option value="">— none —</option>
-                {batches?.map((b) => <option key={b.code} value={b.code}>{b.code} · {b.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Access level">
-              <select value={draft.access} onChange={(e) => set("access", e.target.value)}>
-                {Object.values(ACCESS_LEVELS).map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </Field>
-            <Field label="Payment status">
-              <select value={draft.paymentStatus} onChange={(e) => set("paymentStatus", e.target.value)}>
-                {Object.values(PAYMENT_STATES).map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </Field>
-            <Field label="Join date"><input type="date" value={draft.joinDate} onChange={(e) => set("joinDate", e.target.value)} /></Field>
-            <Field label="Last active"><input value={draft.lastActive} onChange={(e) => set("lastActive", e.target.value)} /></Field>
-          </div>
-
-          <div className="sm-section-title"><TrendingUp size={15} /> Performance</div>
-          <div className="sm-grid sm-grid-tight">
-            <Field label="Accuracy %"><input type="number" value={draft.accuracy} onChange={(e) => setNum("accuracy", e.target.value)} /></Field>
-            <Field label="Avg score"><input type="number" value={draft.avgScore} onChange={(e) => setNum("avgScore", e.target.value)} /></Field>
-            <Field label="Rank"><input type="number" value={draft.rank} onChange={(e) => setNum("rank", e.target.value)} /></Field>
-            <Field label="Tests taken"><input type="number" value={draft.testsTaken} onChange={(e) => setNum("testsTaken", e.target.value)} /></Field>
-            <Field label="Study (hrs)"><input type="number" value={draft.studyTimeHrs} onChange={(e) => setNum("studyTimeHrs", e.target.value)} /></Field>
-            <Field label="Badges"><input type="number" value={draft.badges} onChange={(e) => setNum("badges", e.target.value)} /></Field>
-          </div>
-
-          <label className="sm-toggle">
-            <input type="checkbox" checked={draft.notesUnlocked} onChange={(e) => set("notesUnlocked", e.target.checked)} />
-            <span>Notes &amp; downloadable files unlocked for this student</span>
+        <div className="smx-modal-body">
+          <label className="smx-field">
+            <span>Full name</span>
+            <input value={draft.name} onChange={(e) => set("name", e.target.value)} />
           </label>
-
-          <div className="sm-section-title">
-            <span>Chapter progress</span>
-            <button type="button" className="sm-mini-add" onClick={addProgress}><Plus size={13} /> Add</button>
-          </div>
-          {draft.progress.length === 0 && <p className="sm-empty">No progress recorded.</p>}
-          {draft.progress.map((p, i) => (
-            <div key={i} className="sm-progress-row">
-              <input className="sm-progress-name" value={p.chapter} placeholder="Chapter name" onChange={(e) => setProgress(i, "chapter", e.target.value)} />
-              <input className="sm-progress-pct" type="number" value={p.percent} onChange={(e) => setProgress(i, "percent", e.target.value)} />
-              <span>%</span>
-              <button type="button" aria-label="Remove" onClick={() => removeProgress(i)}><Trash2 size={13} /></button>
-            </div>
-          ))}
-
-          {draft.testHistory.length > 0 && (
-            <>
-              <div className="sm-section-title">Test history</div>
-              <div className="sm-history">
-                {draft.testHistory.map((t, i) => (
-                  <div key={i} className="sm-history-row">
-                    <CheckCircle2 size={13} />
-                    <span>{t.name}</span>
-                    <i>{t.date}</i>
-                    <b>{t.score}/{t.total}</b>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+          <label className="smx-field">
+            <span>Email <em>(read-only)</em></span>
+            <div className="smx-input-ico"><Mail size={14} /><input value={draft.email} readOnly disabled /></div>
+          </label>
+          <label className="smx-field">
+            <span>Phone</span>
+            <div className="smx-input-ico"><Phone size={14} /><input value={draft.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+          </label>
+          <label className="smx-field">
+            <span>School</span>
+            <div className="smx-input-ico"><School size={14} /><input value={draft.school} onChange={(e) => set("school", e.target.value)} /></div>
+          </label>
+          <label className="smx-field">
+            <span>Grade</span>
+            <div className="smx-input-ico"><GraduationCap size={14} /><input value={draft.grade} onChange={(e) => set("grade", e.target.value)} /></div>
+          </label>
+          <label className="smx-field">
+            <span>Batch</span>
+            <select value={draft.batchCode} onChange={(e) => set("batchCode", e.target.value)}>
+              <option value="">— none —</option>
+              {batches?.map((b) => <option key={b.code} value={b.code}>{b.code} · {b.name}</option>)}
+            </select>
+          </label>
         </div>
 
-        <div className="sm-modal-foot">
-          <button type="button" className="qt-nav-btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="sm-save-btn" onClick={() => onSave(draft)} disabled={!draft.name.trim()}>
-            <Save size={16} /> {isNew ? "Add student" : "Save changes"}
+        <div className="smx-modal-foot">
+          <button type="button" className="smx-btn-ghost" onClick={onCancel}>Cancel</button>
+          <button type="button" className="smx-btn-primary" onClick={() => onSave(draft)} disabled={!draft.name.trim()}>
+            <Save size={16} /> Save changes
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="sm-field">
-      <span>{label}</span>
-      {children}
-    </label>
   );
 }

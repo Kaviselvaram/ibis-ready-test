@@ -11,6 +11,11 @@ export const saveStudents = async ({ validatedData }) => {
   return { success: true };
 };
 
+export const deleteStudent = async ({ req }) => {
+  await StudentService.deleteStudent(req.params.id);
+  return { success: true };
+};
+
 export const getLeaderboard = async ({ req }) => {
   return await StudentService.getLeaderboard(req.user.sub);
 };

@@ -5,7 +5,8 @@ import { StudentManager } from "./StudentManager";
 export default function AdminStudents() {
   const { students, batches, refreshStudents } = useAdminController();
   const list = students || [];
-  const fullCount = list.filter((s) => s.access === "full").length;
+  const paidCount = list.filter((s) => s.paymentStatus === "Paid" || s.access === "full").length;
+  const pendingCount = list.filter((s) => s.paymentStatus === "Unpaid" || s.paymentStatus === "Refunded").length;
 
   // Keep the roster in sync with the DB: refetch when the tab regains focus.
   useEffect(() => {
@@ -27,14 +28,12 @@ export default function AdminStudents() {
         </div>
         <div className="adminx-headstats">
           <div><strong>{list.length}</strong><span>Total</span></div>
-          <div><strong>{fullCount}</strong><span>Full access</span></div>
-          <div><strong>{list.length - fullCount}</strong><span>Trial</span></div>
+          <div><strong>{paidCount}</strong><span>Paid</span></div>
+          <div><strong>{pendingCount}</strong><span>Pending</span></div>
         </div>
       </header>
 
-      <div className="adminx-panel">
-        <StudentManager batches={batches} batchFilter={null} />
-      </div>
+      <StudentManager batches={batches} batchFilter={null} />
     </div>
   );
 }

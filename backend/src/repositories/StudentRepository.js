@@ -67,9 +67,25 @@ export class StudentRepository {
     return true;
   }
 
+  // Permanently remove a student. Deleting the auth user cascades to the
+  // profile (and its subscriptions/attempts via FK), so this is the single
+  // source-of-truth deletion. Guard against removing an admin account.
+  static async deleteStudent(id) {
+    const supabase = getServiceSupabase();
+
+    const { data: profile, error: pErr } = await supabase
+      .from('profiles').select('id, is_admin').eq('id', id).single();
+    if (pErr) throw new RepositoryError(`Student not found: ${pErr.message}`, pErr, 'deleteStudent.lookup');
+    if (profile.is_admin) throw new RepositoryError('Refusing to delete an admin account', null, 'deleteStudent.admin');
+
+    const { error } = await supabase.auth.admin.deleteUser(id);
+    if (error) throw new RepositoryError(`Auth delete failed: ${error.message}`, error, 'deleteStudent.auth');
+    return { id };
+  }
+
   static async getLeaderboard(userId) {
     const supabase = getServiceSupabase();
-    
+
     const { data: profiles, error: pError } = await supabase
       .from('profiles')
       .select('id, full_name')

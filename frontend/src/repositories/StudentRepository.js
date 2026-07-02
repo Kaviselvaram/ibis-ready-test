@@ -35,5 +35,9 @@ export const StudentRepository = {
   saveStudents: async (students) => {
     await api.post('/student', students);
     return true;
+  },
+  deleteStudent: async (id) => {
+    await api.delete(`/student/${id}`);
+    return true;
   }
 };
