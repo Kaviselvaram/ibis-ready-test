@@ -197,9 +197,7 @@ export default function Landing({ onWhyIbis: sessionOnWhyIbis }) {
 
       {/* Floating Top-Right Actions */}
       <div style={{ position: "absolute", top: "24px", right: "24px", zIndex: 100, display: "flex", alignItems: "center", gap: "16px" }}>
-        {/* Clean, clearly-labeled entries (replacing the old rocker switch). Both
-            lead to the mentor's story page, which covers Why Ibis + the teacher. */}
-        <button className="landing-topbtn" onClick={onWhyIbis}>Why Ibis</button>
+        {/* Single clean entry to the mentor's story page. */}
         <button className="landing-topbtn accent" onClick={onWhyIbis}>Meet the teacher</button>
         <TesplePill />
         <div className="glass-dropdown-wrapper">
