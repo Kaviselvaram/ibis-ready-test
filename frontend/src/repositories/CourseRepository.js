@@ -16,7 +16,7 @@ export const CourseRepository = {
   },
 
   // ---- Admin CRUD (persists to Supabase) ----
-  createChapter: (title) => api.post('/course/chapters', { title }),
+  createChapter: (title, image_url = null) => api.post('/course/chapters', { title, image_url }),
   updateChapter: (id, patch) => api.patch(`/course/chapters/${id}`, patch),
   deleteChapter: (id) => api.delete(`/course/chapters/${id}`),
   reorderChapters: (orderedIds) => api.patch('/course/chapters/reorder', { orderedIds }),

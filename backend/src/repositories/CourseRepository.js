@@ -8,7 +8,7 @@ export class CourseRepository {
     const { data, error } = await supabase
       .from('chapters')
       .select(`
-        id, title, description, order_index, is_published, is_free, created_at,
+        id, title, description, order_index, is_published, is_free, image_url, created_at,
         topics (
           id, title, order_index, is_free, created_at,
           youtubes (
@@ -39,12 +39,12 @@ export class CourseRepository {
     return (data && data[0] ? data[0].order_index : 0) + 1;
   }
 
-  static async createChapter({ title }) {
+  static async createChapter({ title, image_url = null }) {
     const supabase = getServiceSupabase();
     const order_index = await this.nextOrderIndex('chapters');
     const { data, error } = await supabase
       .from('chapters')
-      .insert({ title, order_index, is_published: true })
+      .insert({ title, order_index, is_published: true, image_url: image_url || null })
       .select()
       .single();
     if (error) throw new RepositoryError(error.message, error, 'createChapter');
@@ -58,6 +58,7 @@ export class CourseRepository {
     if (patch.description !== undefined) allowed.description = patch.description;
     if (patch.is_published !== undefined) allowed.is_published = patch.is_published;
     if (patch.is_free !== undefined) allowed.is_free = patch.is_free;
+    if (patch.image_url !== undefined) allowed.image_url = patch.image_url;
     const { data, error } = await supabase.from('chapters').update(allowed).eq('id', id).select().single();
     if (error) throw new RepositoryError(error.message, error, 'updateChapter');
     return data;

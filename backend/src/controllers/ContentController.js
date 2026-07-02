@@ -1,9 +1,20 @@
 import { AppError } from "../errors/AppError.js";
 import { verifyAccess, getSecureMediaLink, getProtectedVideo, getPricing } from "../services/ContentService.js";
+import { UploadService } from "../services/UploadService.js";
 import { logger } from "../utils/logger.js";
 
 export const getPricingController = async () => {
   return getPricing();
+};
+
+export const createUploadUrl = async ({ validatedData }) => {
+  try {
+    const { kind, filename } = validatedData;
+    return await UploadService.createSignedUploadUrl(kind, filename);
+  } catch (error) {
+    logger.error("Upload URL error:", error);
+    throw new AppError("Could not start the upload. Please try again.", 500, "UPLOAD_ERROR");
+  }
 };
 
 export const getMedia = async ({ validatedData, user }) => {

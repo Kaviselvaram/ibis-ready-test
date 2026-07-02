@@ -49,7 +49,10 @@ export class CourseService {
       return chapters.map(ch => ({
         id: ch.id,
         name: ch.title,
-        image: chapterImage(ch.title, ch.order_index),
+        // Admin-uploaded thumbnail wins; otherwise fall back to the deterministic
+        // generated illustration so tiles always have an image.
+        image: ch.image_url || chapterImage(ch.title, ch.order_index),
+        imageUrl: ch.image_url || null,
         isFree: ch.is_free === true,
         isPublished: ch.is_published === true,
         progress: 0, // Compute from user test_attempts if context allows

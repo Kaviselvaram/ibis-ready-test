@@ -28,7 +28,10 @@ router.get("/study-data", withHandler({
 
 // ---- Chapters (admin) ----  (reorder before :id so it isn't captured as an id)
 router.post("/chapters", admin(
-  z.object({ title: z.string().trim().min(1).max(200) }),
+  z.object({
+    title: z.string().trim().min(1).max(200),
+    image_url: z.string().trim().url().max(1000).nullable().optional()
+  }),
   createChapter
 ));
 router.patch("/chapters/reorder", admin(
@@ -40,7 +43,8 @@ router.patch("/chapters/:id", admin(
     title: z.string().trim().min(1).max(200).optional(),
     description: z.string().max(2000).optional(),
     is_published: z.boolean().optional(),
-    is_free: z.boolean().optional()
+    is_free: z.boolean().optional(),
+    image_url: z.string().trim().url().max(1000).nullable().optional()
   }),
   updateChapter
 ));

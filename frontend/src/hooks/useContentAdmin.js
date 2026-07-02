@@ -53,12 +53,19 @@ export function useContentAdmin() {
   }, [setChapters]);
 
   // ---- Chapters ----
-  const addChapter = useCallback((name) => {
+  const addChapter = useCallback((name, imageUrl = null) => {
     const title = (name || "").trim();
     if (!title) return Promise.resolve(false);
-    return run(() => CourseRepository.createChapter(title),
+    return run(() => CourseRepository.createChapter(title, imageUrl),
       { loading: "Adding chapter…", success: `Chapter “${title}” added`, error: "Couldn’t add the chapter." });
   }, [run]);
+
+  const setChapterImage = useCallback((id, imageUrl) =>
+    run(() => CourseRepository.updateChapter(id, { image_url: imageUrl }),
+      { loading: imageUrl ? "Updating thumbnail…" : "Removing thumbnail…",
+        success: imageUrl ? "Thumbnail updated" : "Thumbnail removed",
+        error: "Couldn’t update the thumbnail." }),
+  [run]);
 
   const renameChapter = useCallback((id, name) => {
     const title = (name || "").trim();
@@ -141,7 +148,7 @@ export function useContentAdmin() {
 
   return {
     chapters, refresh, updateTopic,
-    addChapter, renameChapter, deleteChapter, moveChapter, setChapterFree, setChapterPublished,
+    addChapter, renameChapter, deleteChapter, moveChapter, setChapterFree, setChapterPublished, setChapterImage,
     addTopic, renameTopic, deleteTopic, moveTopic, setTopicFree,
     addVideo, updateVideo, deleteVideo
   };
