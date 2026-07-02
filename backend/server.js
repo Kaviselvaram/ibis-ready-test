@@ -30,11 +30,17 @@ app.use(helmet({
 // Falls back to the primary domain if unset. Dev allows any localhost port.
 const prodOrigins = (process.env.FRONTEND_ORIGIN || "https://ibisphysics.com")
   .split(",").map((s) => s.trim()).filter(Boolean);
+// Also allow every Cloudflare Pages URL for this project — the main domain AND
+// the per-deploy/branch preview subdomains (e.g. 44e59c35.ibis-frontend.pages.dev)
+// — so signup/login work no matter which deploy URL is open.
+const pagesPreviewPattern = /^https:\/\/([a-z0-9-]+\.)?ibis-frontend\.pages\.dev$/i;
 app.use(cors({
   origin: env.NODE_ENV === "production"
     ? (origin, callback) => {
         // Allow same-origin/non-browser (no Origin header) and any allow-listed origin.
-        if (!origin || prodOrigins.includes(origin)) return callback(null, true);
+        if (!origin || prodOrigins.includes(origin) || pagesPreviewPattern.test(origin)) {
+          return callback(null, true);
+        }
         return callback(new Error("Not allowed by CORS"));
       }
     : (origin, callback) => {
