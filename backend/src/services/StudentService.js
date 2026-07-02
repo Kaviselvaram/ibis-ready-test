@@ -121,14 +121,18 @@ export class StudentService {
   // (user-agnostic); only the `isMe` flag differs per requester. So we cache the
   // computed global board (60s) and stamp `isMe`/reorder per request in memory —
   // turning an O(all users + all attempts) scan-per-request into one scan / 60s.
+  // Batch-scoped when the requester belongs to a batch (they rank only against
+  // their batch peers); global cohort otherwise. Each board is cached (60s).
   static async getLeaderboard(userId) {
-    const board = await cached(CACHE_KEYS.leaderboard, 60, () => StudentService._buildLeaderboard());
+    const batchId = await StudentRepository.getUserBatchId(userId);
+    const key = batchId ? CACHE_KEYS.leaderboardBatch(batchId) : CACHE_KEYS.leaderboard;
+    const board = await cached(key, 60, () => StudentService._buildLeaderboard(batchId));
     return (board || []).map((s) => ({ ...s, isMe: s.id === userId }));
   }
 
-  static async _buildLeaderboard() {
+  static async _buildLeaderboard(batchId = null) {
     try {
-      const { profiles, attempts } = await StudentRepository.getLeaderboard(null);
+      const { profiles, attempts } = await StudentRepository.getLeaderboard(batchId);
       
       const statsMap = (attempts || []).reduce((acc, att) => {
         if (!acc[att.profile_id]) acc[att.profile_id] = { totalScore: 0, count: 0, timeTaken: 0, badges: 0 };

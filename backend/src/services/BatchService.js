@@ -40,4 +40,39 @@ export class BatchService {
       throw new Error(`BatchService.deleteBatch failed: ${e.message}`);
     }
   }
+
+  // Compute batch analytics + a batch-scoped ranking from raw rows.
+  static async getBatchAnalytics(id) {
+    try {
+      const { batch, profiles, attempts } = await BatchRepository.getBatchAnalytics(id);
+
+      const byStudent = {};
+      (attempts || []).forEach((a) => {
+        const s = byStudent[a.profile_id] || (byStudent[a.profile_id] = { total: 0, count: 0 });
+        s.total += parseFloat(a.score) || 0;
+        s.count += 1;
+      });
+
+      const ranking = (profiles || []).map((p) => {
+        const s = byStudent[p.id] || { total: 0, count: 0 };
+        const avg = s.count ? Math.round(s.total / s.count) : 0;
+        return { id: p.id, name: p.full_name || "Unnamed", email: p.email, avgScore: avg, tests: s.count };
+      }).sort((a, b) => b.avgScore - a.avgScore || b.tests - a.tests)
+        .map((r, i) => ({ ...r, rank: i + 1 }));
+
+      const activeStudents = ranking.filter((r) => r.tests > 0).length;
+      const totalAttempts = (attempts || []).length;
+      const avgScore = totalAttempts
+        ? Math.round((attempts.reduce((n, a) => n + (parseFloat(a.score) || 0), 0)) / totalAttempts)
+        : 0;
+
+      return {
+        batch,
+        stats: { students: (profiles || []).length, activeStudents, totalAttempts, avgScore },
+        ranking
+      };
+    } catch (e) {
+      throw new Error(`BatchService.getBatchAnalytics failed: ${e.message}`);
+    }
+  }
 }

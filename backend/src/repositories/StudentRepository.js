@@ -154,19 +154,34 @@ export class StudentRepository {
     return { id };
   }
 
-  static async getLeaderboard(userId) {
+  // Look up which batch (if any) a student belongs to — drives batch-scoped
+  // rankings. Returns the batch_id or null.
+  static async getUserBatchId(userId) {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase.from('profiles').select('batch_id').eq('id', userId).single();
+    if (error) return null;
+    return data?.batch_id || null;
+  }
+
+  // Leaderboard source rows. When batchId is given, only that batch's students
+  // are included (batch-scoped ranking); otherwise the whole cohort.
+  static async getLeaderboard(batchId = null) {
     const supabase = getServiceSupabase();
 
-    const { data: profiles, error: pError } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .neq('is_admin', true);
+    let q = supabase.from('profiles').select('id, full_name').neq('is_admin', true);
+    if (batchId) q = q.eq('batch_id', batchId);
+    const { data: profiles, error: pError } = await q;
     if (pError) throw new RepositoryError(pError.message, pError, 'getLeaderboard.profiles');
 
-    const { data: attempts, error: aError } = await supabase
-      .from('test_attempts')
-      .select('profile_id, score, time_taken_seconds');
-    if (aError) throw new RepositoryError(aError.message, aError, 'getLeaderboard.test_attempts');
+    const ids = (profiles || []).map((p) => p.id);
+    let attempts = [];
+    if (!batchId || ids.length) {
+      let aq = supabase.from('test_attempts').select('profile_id, score, time_taken_seconds');
+      if (batchId) aq = aq.in('profile_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
+      const { data, error: aError } = await aq;
+      if (aError) throw new RepositoryError(aError.message, aError, 'getLeaderboard.test_attempts');
+      attempts = data || [];
+    }
 
     return { profiles, attempts };
   }

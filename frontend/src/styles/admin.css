@@ -18,19 +18,32 @@
   display: flex;
   align-items: center;
   gap: clamp(12px, 2vw, 28px);
-  height: 62px;
+  height: 74px;
   flex-shrink: 0;
   padding: 0 clamp(14px, 2.4vw, 28px);
   background: var(--paper-soft);
   border-bottom: 1px solid var(--line);
   z-index: 20;
 }
+/* Gradient chip behind the logo so its white "Physics" wordmark stays legible,
+   while the navy owl/"ibis" still reads. Sized to never clip inside the bar. */
 .adminx-topbar-brand {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #d9825f 0%, #a94e30 100%);
+  box-shadow: 0 6px 16px rgba(138, 57, 40, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
-.adminx-topbar-brand .brand-logo { height: 30px; width: auto; }
+/* High specificity to beat the global `.brand:has(small) .brand-logo` sizing. */
+.adminx-topbar .adminx-topbar-brand .brand-logo {
+  height: 42px;
+  width: auto;
+  border-radius: 0;
+}
+.adminx-topbar .adminx-topbar-brand .brand small { color: rgba(255, 255, 255, 0.9); }
 
 .adminx-topnav {
   display: flex;
@@ -366,7 +379,7 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
    ============================================================ */
 .bx-create {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1.1fr 1.1fr 0.9fr auto;
   gap: 14px;
   align-items: end;
   background: var(--paper-card);
@@ -390,16 +403,23 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
 .bx-create-field input:focus { outline: 2px solid rgba(211, 113, 80, 0.4); border-color: var(--clay); }
 .bx-error { color: #9a3b12; font-weight: 600; font-size: 0.88rem; margin: -8px 0 0; }
 
-.bx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.bx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .bx-card {
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column;
   background: var(--paper-card);
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 20px;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.bx-card:hover { transform: translateY(-2px); border-color: var(--clay); }
+.bx-card:hover { transform: translateY(-2px); border-color: var(--clay); box-shadow: 0 12px 30px rgba(32, 22, 17, 0.08); }
+.bx-card-open {
+  display: flex; flex-direction: column; gap: 8px;
+  width: 100%; text-align: left; cursor: pointer;
+  border: none; background: transparent; padding: 20px 20px 14px;
+  color: inherit; font: inherit;
+}
+.bx-card-open:disabled { cursor: default; }
 .bx-card-head { display: flex; align-items: center; justify-content: space-between; }
 .bx-card-icon {
   display: grid; place-items: center; width: 38px; height: 38px;
@@ -413,9 +433,16 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
 .bx-status.paused, .bx-status.inactive { background: rgba(192, 99, 42, 0.14); color: #9a3b12; }
 .bx-card h3 { font-family: var(--display); font-size: 1.15rem; margin: 6px 0 0; color: var(--ink); }
 .bx-school { color: var(--muted); font-size: 0.86rem; margin: 0; }
-.bx-card-foot {
+.bx-card-count {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line);
+  margin-top: 8px; color: var(--muted); font-size: 0.84rem; font-weight: 700;
+}
+.bx-card-count > span { display: inline-flex; align-items: center; gap: 6px; }
+.bx-card-analytics { color: var(--clay-dark); }
+.bx-card-open:hover .bx-card-analytics { text-decoration: underline; }
+.bx-card-foot {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 12px;
 }
 .bx-count { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.84rem; font-weight: 700; }
 .bx-code {
@@ -445,6 +472,54 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
   .bx-create { grid-template-columns: 1fr; }
   .bx-headright { flex-direction: column; align-items: flex-start; gap: 14px; }
 }
+
+/* ============================================================
+   Batch detail / analytics
+   ============================================================ */
+.bd-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.bd-stat {
+  display: grid; gap: 3px;
+  background: var(--paper-card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 18px;
+}
+.bd-stat-ico {
+  display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 4px;
+  border-radius: 12px; background: rgba(211, 113, 80, 0.14); color: var(--clay-dark);
+}
+.bd-stat strong { font-family: var(--display); font-size: 1.7rem; line-height: 1; color: var(--ink); }
+.bd-stat span { font-size: 0.82rem; color: var(--muted); font-weight: 700; }
+
+.bd-ranking {
+  background: var(--paper-card); border: 1px solid var(--line);
+  border-radius: 20px; padding: 22px;
+}
+.bd-ranking h2 { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-size: 1.2rem; margin: 0 0 16px; }
+.bd-ranking h2 svg { color: var(--clay-dark); }
+.bd-rank-list { display: grid; gap: 2px; }
+.bd-rank-head, .bd-rank-row {
+  display: grid; grid-template-columns: 46px 1fr 70px 70px; align-items: center; gap: 12px;
+  padding: 10px 12px;
+}
+.bd-rank-head {
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+.bd-rank-row { border-radius: 12px; }
+.bd-rank-row:nth-child(even) { background: var(--paper-soft); }
+.bd-rank-num {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: var(--paper-soft); border: 1px solid var(--line);
+  font-family: var(--display); font-weight: 800; color: var(--muted);
+}
+.bd-rank-num.top { background: var(--clay); color: #fff; border-color: var(--clay); }
+.bd-rank-name { min-width: 0; display: grid; gap: 1px; }
+.bd-rank-name strong { font-size: 0.95rem; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-rank-name small { color: var(--muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd-rank-tests { font-weight: 700; color: var(--cocoa); }
+.bd-rank-avg { font-weight: 800; }
+.bd-rank-avg.band-high { color: #1f7a4d; }
+.bd-rank-avg.band-mid { color: var(--clay-dark); }
+.bd-rank-avg.band-low { color: #9a3b12; }
 
 /* ============================================================
    Bulk upload modal
@@ -721,7 +796,14 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
 .smx-search input { border: none; background: transparent; font: inherit; color: var(--ink); width: 100%; outline: none; }
 
 .smx-table {
-  background: var(--paper-card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  background: var(--paper-card); border: 1px solid var(--line); border-radius: 18px;
+  /* Bounded internal scroll so the roster never makes the whole page scroll —
+     filters/search stay fixed above and the header stays pinned. */
+  max-height: calc(100dvh - 366px);
+  overflow-y: auto;
+}
+.smx-thead {
+  position: sticky; top: 0; z-index: 2;
 }
 .smx-thead, .smx-row {
   display: grid;
@@ -831,7 +913,19 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
    Tests (redesigned)
    ============================================================ */
 .tmx-actions { display: flex; justify-content: flex-end; }
+.tmx-headactions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .tmx-list { display: grid; gap: 12px; }
+
+/* Create-test page */
+.tmx-createcard {
+  background: var(--paper-card); border: 1px solid var(--line);
+  border-radius: 20px; padding: 24px;
+  max-width: 760px;
+}
+.tmx-createfoot {
+  display: flex; justify-content: flex-end; gap: 10px;
+  margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line);
+}
 .tmx-empty { color: var(--muted); font-size: 0.9rem; }
 .tmx-emptystate { text-align: center; padding: 52px 20px; color: var(--muted); }
 .tmx-emptystate svg { color: var(--clay); opacity: 0.55; }

@@ -13,3 +13,7 @@ export const deleteBatch = async ({ req }) => {
   await BatchService.deleteBatch(req.params.id);
   return { success: true };
 };
+
+export const getBatchAnalytics = async ({ req }) => {
+  return await BatchService.getBatchAnalytics(req.params.id);
+};

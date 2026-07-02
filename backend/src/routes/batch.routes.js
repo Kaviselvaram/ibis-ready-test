@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { withHandler } from "../utils/routeBuilder.js";
-import { getBatches, saveBatches, deleteBatch } from "../controllers/batch.controller.js";
+import { getBatches, saveBatches, deleteBatch, getBatchAnalytics } from "../controllers/batch.controller.js";
 import { z } from "zod";
 
 const router = Router();
@@ -18,6 +18,13 @@ router.post("/", withHandler({
   requireAuth: true,
   roles: ["admin"]
 }, saveBatches));
+
+router.get("/:id/analytics", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: true,
+  roles: ["admin"]
+}, getBatchAnalytics));
 
 router.delete("/:id", withHandler({
   method: "DELETE",

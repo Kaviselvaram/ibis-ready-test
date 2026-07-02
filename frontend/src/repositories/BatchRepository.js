@@ -11,5 +11,9 @@ export const BatchRepository = {
   deleteBatch: async (id) => {
     await api.delete(`/batch/${id}`);
     return true;
+  },
+  // On-demand — only called when an admin opens a batch's analytics page.
+  getBatchAnalytics: async (id) => {
+    return await api.get(`/batch/${id}/analytics`);
   }
 };

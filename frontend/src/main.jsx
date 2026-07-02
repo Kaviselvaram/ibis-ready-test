@@ -70,9 +70,12 @@ const AdminContentTopic = React.lazy(() => import("./components/admin/AdminConte
 const AdminLayout = React.lazy(() => import("./components/admin/AdminLayout"));
 const AdminDashboard = React.lazy(() => import("./components/admin/AdminDashboard"));
 const TestManager = React.lazy(() => import("./components/admin/TestManager"));
+const TestCreate = React.lazy(() => import("./components/admin/TestCreate"));
+const TestQuestionBank = React.lazy(() => import("./components/admin/TestQuestionBank"));
 const AdminStudents = React.lazy(() => import("./components/admin/AdminStudents"));
 const AdminSettings = React.lazy(() => import("./components/admin/AdminSettings"));
 const AdminBatches = React.lazy(() => import("./components/admin/AdminBatches"));
+const AdminBatchDetail = React.lazy(() => import("./components/admin/AdminBatchDetail"));
 const Signup = React.lazy(() => import("./components/auth/Signup"));
 const Checkout = React.lazy(() => import("./components/auth/Checkout"));
 const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage"));
@@ -134,8 +137,11 @@ function App() {
             <Route path="/admin/content/:chapterId" element={<AdminContentChapter />} />
             <Route path="/admin/content/:chapterId/:topicId" element={<AdminContentTopic />} />
             <Route path="/admin/tests" element={<TestManager />} />
+            <Route path="/admin/tests/new" element={<TestCreate />} />
+            <Route path="/admin/tests/bank" element={<TestQuestionBank />} />
             <Route path="/admin/students" element={<AdminStudents />} />
             <Route path="/admin/batches" element={<AdminBatches />} />
+            <Route path="/admin/batches/:id" element={<AdminBatchDetail />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>
         </Route>

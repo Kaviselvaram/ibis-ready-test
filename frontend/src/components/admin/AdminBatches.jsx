@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Boxes, Plus, Users, Copy, Check, School, Upload, Trash2, Pause, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Boxes, Plus, Users, Copy, Check, School, Upload, Trash2, Pause, Play, Hash, BarChart3 } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
 import { Button } from "../ui/LegacyUI";
 import BulkUploadModal from "./BulkUploadModal";
@@ -7,14 +8,17 @@ import BulkUploadModal from "./BulkUploadModal";
 function genCode() {
   return `IBIS-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
+const normCode = (s) => s.trim().toUpperCase().replace(/\s+/g, "-");
 
 export default function AdminBatches() {
+  const navigate = useNavigate();
   const { batches, updateBatches, removeBatch, students, refreshStudentsAndBatches } = useAdminController();
   const list = batches || [];
   const studentList = students || [];
 
   const [school, setSchool] = useState("");
   const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
@@ -24,14 +28,17 @@ export default function AdminBatches() {
 
   const createBatch = async () => {
     if (!school.trim() || !name.trim()) { setError("School and batch name are required."); return; }
+    const finalCode = code.trim() ? normCode(code) : genCode();
+    if (list.some((b) => (b.code || "").toUpperCase() === finalCode.toUpperCase())) {
+      setError(`Batch code "${finalCode}" is already in use. Pick another.`); return;
+    }
     setError("");
     setSaving(true);
     try {
       // New batch has no id — the backend generates the uuid on insert.
-      const next = [...list, { code: genCode(), name: name.trim(), school: school.trim(), status: "Active", count: 0 }];
+      const next = [...list, { code: finalCode, name: name.trim(), school: school.trim(), status: "Active", count: 0 }];
       await updateBatches(next);
-      setSchool("");
-      setName("");
+      setSchool(""); setName(""); setCode("");
     } catch (e) {
       setError("Could not create batch. Please try again.");
     } finally {
@@ -39,12 +46,8 @@ export default function AdminBatches() {
     }
   };
 
-  const copyCode = async (code) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(code);
-      setTimeout(() => setCopied(""), 1500);
-    } catch { /* clipboard unavailable */ }
+  const copyCode = async (c) => {
+    try { await navigator.clipboard.writeText(c); setCopied(c); setTimeout(() => setCopied(""), 1500); } catch {}
   };
 
   const toggleStatus = (b) => {
@@ -63,7 +66,7 @@ export default function AdminBatches() {
       <header className="adminx-pagehead">
         <div>
           <h1>Batches</h1>
-          <p>Organise students into school batches. Share the batch code so enrolments land in the right group.</p>
+          <p>Group students by school & batch code. Click a batch to see its analytics and ranking.</p>
         </div>
         <div className="bx-headright">
           <div className="adminx-headstats">
@@ -83,6 +86,10 @@ export default function AdminBatches() {
           <span><Boxes size={14} /> Batch name / year</span>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Class XII — 2026" onKeyDown={(e) => e.key === "Enter" && createBatch()} />
         </div>
+        <div className="bx-create-field">
+          <span><Hash size={14} /> Batch code <small>(optional)</small></span>
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Auto if blank" onKeyDown={(e) => e.key === "Enter" && createBatch()} />
+        </div>
         <Button variant="primary" onClick={createBatch} disabled={saving}>
           <Plus size={16} /> {saving ? "Creating…" : "Create batch"}
         </Button>
@@ -99,14 +106,19 @@ export default function AdminBatches() {
         <div className="bx-grid">
           {list.map((b) => (
             <article className="bx-card" key={b.id || b.code}>
-              <div className="bx-card-head">
-                <span className="bx-card-icon"><Boxes size={18} /></span>
-                <span className={`bx-status ${(b.status || "Active").toLowerCase()}`}>{b.status || "Active"}</span>
-              </div>
-              <h3>{b.name}</h3>
-              <p className="bx-school">{b.school}</p>
+              <button className="bx-card-open" onClick={() => b.id && navigate(`/admin/batches/${b.id}`)} disabled={!b.id} title={b.id ? "View batch analytics" : "Saving…"}>
+                <div className="bx-card-head">
+                  <span className="bx-card-icon"><Boxes size={18} /></span>
+                  <span className={`bx-status ${(b.status || "Active").toLowerCase()}`}>{b.status || "Active"}</span>
+                </div>
+                <h3>{b.name}</h3>
+                <p className="bx-school">{b.school}</p>
+                <div className="bx-card-count">
+                  <span><Users size={14} /> {b.count || 0} student{(b.count || 0) === 1 ? "" : "s"}</span>
+                  <span className="bx-card-analytics"><BarChart3 size={13} /> Analytics</span>
+                </div>
+              </button>
               <div className="bx-card-foot">
-                <span className="bx-count"><Users size={14} /> {b.count || 0} student{(b.count || 0) === 1 ? "" : "s"}</span>
                 <button className="bx-code" onClick={() => copyCode(b.code)} title="Copy batch code">
                   {b.code} {copied === b.code ? <Check size={13} /> : <Copy size={13} />}
                 </button>

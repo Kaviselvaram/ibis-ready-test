@@ -73,9 +73,9 @@ export default function AdminLayout() {
         </div>
       </header>
 
-      <main className="adminx-main">
+      <div className="adminx-main">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

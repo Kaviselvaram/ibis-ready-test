@@ -48,5 +48,6 @@ export const CACHE_KEYS = {
   questionBank: "qbank:all",
   profile: (id) => `profile:${id}`,
   subscription: (id) => `sub:${id}`,
-  leaderboard: "lb:global"
+  leaderboard: "lb:global",
+  leaderboardBatch: (id) => `lb:batch:${id}`
 };

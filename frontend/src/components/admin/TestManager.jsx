@@ -1,25 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { ClipboardList, Plus, Trash2, Radio, CircleDot, Circle, Clock, Layers, X } from "lucide-react";
-import { TestRepository, TEST_TYPES, testTypeLabel } from "../../repositories/TestRepository";
+import { useNavigate } from "react-router-dom";
+import { ClipboardList, Plus, Trash2, Radio, Clock, Layers, Database } from "lucide-react";
+import { TestRepository, testTypeLabel } from "../../repositories/TestRepository";
 import { CourseRepository } from "../../repositories/CourseRepository";
-import { useAdminController } from "../../hooks/useAdminController";
-import { AdminQuestionBank } from "../test/AdminQuestionBank";
 import { Button } from "../ui/LegacyUI";
 
-const emptyDraft = () => ({
-  title: "",
-  test_type: "full_chapter",
-  chapter_ids: [],
-  question_count: 20,
-  duration_minutes: 30,
-  is_live: false
-});
-
 export default function TestManager() {
+  const navigate = useNavigate();
   const [tests, setTests] = useState(null);
   const [chapters, setChapters] = useState([]);
-  const [creating, setCreating] = useState(false);
-  const { questionBank, updateQuestionBank } = useAdminController();
 
   const load = useCallback(async () => {
     try {
@@ -53,15 +42,15 @@ export default function TestManager() {
           <h1>Tests</h1>
           <p>Build tests from your chapters and publish them live. Students only see tests you set to Live.</p>
         </div>
-        <div className="adminx-headstats">
-          <div><strong>{tests?.length ?? "—"}</strong><span>Tests</span></div>
-          <div><strong>{liveCount}</strong><span>Live</span></div>
+        <div className="tmx-headactions">
+          <div className="adminx-headstats">
+            <div><strong>{tests?.length ?? "—"}</strong><span>Tests</span></div>
+            <div><strong>{liveCount}</strong><span>Live</span></div>
+          </div>
+          <Button variant="secondary" onClick={() => navigate("/admin/tests/bank")}><Database size={16} /> Question bank</Button>
+          <Button variant="primary" onClick={() => navigate("/admin/tests/new")}><Plus size={16} /> New test</Button>
         </div>
       </header>
-
-      <div className="tmx-actions">
-        <Button variant="primary" onClick={() => setCreating(true)}><Plus size={16} /> New test</Button>
-      </div>
 
       <section className="tmx-list">
         {!tests && <p className="tmx-empty">Loading…</p>}
@@ -70,6 +59,7 @@ export default function TestManager() {
             <ClipboardList size={32} />
             <h2>No tests yet</h2>
             <p>Create your first test to publish it to students.</p>
+            <Button variant="primary" onClick={() => navigate("/admin/tests/new")}><Plus size={16} /> New test</Button>
           </div>
         )}
         {(tests || []).map((t) => (
@@ -95,106 +85,6 @@ export default function TestManager() {
           </article>
         ))}
       </section>
-
-      <section className="tmx-bank">
-        <div className="tmx-bank-head">
-          <h2><ClipboardList size={16} /> Question bank</h2>
-          <p>Tests draw questions from this bank, filtered by the chapters you pick.</p>
-        </div>
-        <AdminQuestionBank questionBank={questionBank} setQuestionBank={updateQuestionBank} />
-      </section>
-
-      {creating && (
-        <TestCreator
-          chapters={chapters}
-          onClose={() => setCreating(false)}
-          onCreated={async () => { setCreating(false); await load(); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function TestCreator({ chapters, onClose, onCreated }) {
-  const [draft, setDraft] = useState(emptyDraft());
-  const [saving, setSaving] = useState(false);
-
-  const toggleChapter = (id) => setDraft((d) => ({
-    ...d,
-    chapter_ids: d.chapter_ids.includes(id) ? d.chapter_ids.filter((x) => x !== id) : [...d.chapter_ids, id]
-  }));
-
-  const valid = draft.title.trim() && draft.chapter_ids.length > 0;
-
-  const createTest = async () => {
-    if (!valid) return;
-    setSaving(true);
-    try {
-      await TestRepository.createTest({
-        ...draft,
-        title: draft.title.trim(),
-        question_count: Number(draft.question_count),
-        duration_minutes: Number(draft.duration_minutes)
-      });
-      await onCreated();
-    } catch (e) { console.error("Create test failed:", e); setSaving(false); }
-  };
-
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal tmx-modal" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="smx-modal-close" aria-label="Close" onClick={onClose}><X size={18} /></button>
-        <div className="tmx-modal-head"><h2><Plus size={18} /> New test</h2></div>
-
-        <div className="tmx-modal-body">
-          <label className="tm-field">
-            <span>Title</span>
-            <input value={draft.title} autoFocus onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Electrostatics — Full Chapter" />
-          </label>
-
-          <div className="tm-field-row">
-            <label className="tm-field">
-              <span>Type</span>
-              <select value={draft.test_type} onChange={(e) => setDraft({ ...draft, test_type: e.target.value })}>
-                {TEST_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </label>
-            <label className="tm-field">
-              <span>Questions</span>
-              <input type="number" min="1" max="200" value={draft.question_count} onChange={(e) => setDraft({ ...draft, question_count: e.target.value })} />
-            </label>
-            <label className="tm-field">
-              <span>Minutes</span>
-              <input type="number" min="1" max="600" value={draft.duration_minutes} onChange={(e) => setDraft({ ...draft, duration_minutes: e.target.value })} />
-            </label>
-          </div>
-
-          <div className="tm-field">
-            <span>Chapters <small>({draft.chapter_ids.length} selected)</small></span>
-            <div className="tm-chapter-picker">
-              {chapters.map((c) => (
-                <button type="button" key={c.id} className={`tm-chip ${draft.chapter_ids.includes(c.id) ? "on" : ""}`} onClick={() => toggleChapter(c.id)}>
-                  {draft.chapter_ids.includes(c.id) ? <CircleDot size={13} /> : <Circle size={13} />}
-                  {c.name}
-                </button>
-              ))}
-              {chapters.length === 0 && <p className="tm-empty">Add chapters in Content first.</p>}
-            </div>
-          </div>
-
-          <label className="tm-live-toggle">
-            <input type="checkbox" checked={draft.is_live} onChange={(e) => setDraft({ ...draft, is_live: e.target.checked })} />
-            <span>Publish live immediately</span>
-          </label>
-        </div>
-
-        <div className="tmx-modal-foot">
-          <button type="button" className="smx-btn-ghost" onClick={onClose}>Cancel</button>
-          <button type="button" className="smx-btn-primary" onClick={createTest} disabled={saving || !valid}>
-            <Plus size={16} /> {saving ? "Creating…" : "Create test"}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -39,6 +39,17 @@ export const useCourseController = () => {
     initCourse();
   }, [chapters.length, setChapters, setStudyData, setLeaderboard]);
 
+  // Fetch the (batch-scoped) leaderboard whenever it's empty — decoupled from the
+  // chapters gate so it still loads on SPA transitions or after joining a batch.
+  useEffect(() => {
+    if (leaderboard.length > 0) return;
+    let active = true;
+    CourseRepository.getLeaderboard()
+      .then((board) => { if (active && Array.isArray(board) && board.length) setLeaderboard(board); })
+      .catch(() => { /* expected when logged out */ });
+    return () => { active = false; };
+  }, [leaderboard.length, setLeaderboard]);
+
   const switchChapter = (direction) => {
     setChapterIndex((current) => (current + direction + chapters.length) % chapters.length);
     setTopicIndex(0);

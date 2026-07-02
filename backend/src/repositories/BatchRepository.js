@@ -63,4 +63,29 @@ export class BatchRepository {
     if (error) throw new RepositoryError(error.message, error, 'deleteBatch');
     return { id };
   }
+
+  // On-demand analytics for a single batch — only queried when an admin opens
+  // the batch, never as part of the default batch list.
+  static async getBatchAnalytics(id) {
+    const supabase = getServiceSupabase();
+
+    const { data: batch, error: bErr } = await supabase
+      .from('batches').select('id, code, name, school, status').eq('id', id).single();
+    if (bErr) throw new RepositoryError(`Batch not found: ${bErr.message}`, bErr, 'getBatchAnalytics.batch');
+
+    const { data: profiles, error: pErr } = await supabase
+      .from('profiles').select('id, full_name, email').eq('batch_id', id);
+    if (pErr) throw new RepositoryError(pErr.message, pErr, 'getBatchAnalytics.profiles');
+
+    const ids = (profiles || []).map((p) => p.id);
+    let attempts = [];
+    if (ids.length) {
+      const { data, error: aErr } = await supabase
+        .from('test_attempts').select('profile_id, score').in('profile_id', ids);
+      if (aErr) throw new RepositoryError(aErr.message, aErr, 'getBatchAnalytics.attempts');
+      attempts = data || [];
+    }
+
+    return { batch, profiles, attempts };
+  }
 }
