@@ -56,7 +56,7 @@ import HomeSession from "./components/common/HomeSession";
 import StudentPortal from "./components/student/StudentPortal";
 import ChapterView from "./components/student/ChapterView";
 import { BatchModal } from "./components/student/StudentPortal";
-import { Routes, Route, BrowserRouter, Navigate } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 
 // Route-level code splitting — admin, test-taking and secondary pages load on
 // demand so a student never downloads admin code (and vice versa).
@@ -70,6 +70,7 @@ const AdminDashboard = React.lazy(() => import("./components/admin/AdminDashboar
 const TestManager = React.lazy(() => import("./components/admin/TestManager"));
 const AdminStudents = React.lazy(() => import("./components/admin/AdminStudents"));
 const AdminSettings = React.lazy(() => import("./components/admin/AdminSettings"));
+const AdminBatches = React.lazy(() => import("./components/admin/AdminBatches"));
 const Signup = React.lazy(() => import("./components/auth/Signup"));
 const Checkout = React.lazy(() => import("./components/auth/Checkout"));
 const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage"));
@@ -123,15 +124,15 @@ function App() {
           <Route path="/test-result/:id" element={<TestResultPage />} />
         </Route>
 
-        {/* Admin Routes — routed dashboard inside a sidebar layout */}
+        {/* Admin Routes — routed dashboard inside a universal top-nav layout */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/content" element={<AdminPanel />} />
             <Route path="/admin/tests" element={<TestManager />} />
             <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/batches" element={<AdminBatches />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/batches" element={<Navigate to="/admin/students" replace />} />
           </Route>
         </Route>
 
