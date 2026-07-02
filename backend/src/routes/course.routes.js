@@ -39,7 +39,8 @@ router.patch("/chapters/:id", admin(
   z.object({
     title: z.string().trim().min(1).max(200).optional(),
     description: z.string().max(2000).optional(),
-    is_published: z.boolean().optional()
+    is_published: z.boolean().optional(),
+    is_free: z.boolean().optional()
   }),
   updateChapter
 ));

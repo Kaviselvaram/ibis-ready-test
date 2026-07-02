@@ -57,6 +57,7 @@ export class CourseRepository {
     if (patch.title !== undefined) allowed.title = patch.title;
     if (patch.description !== undefined) allowed.description = patch.description;
     if (patch.is_published !== undefined) allowed.is_published = patch.is_published;
+    if (patch.is_free !== undefined) allowed.is_free = patch.is_free;
     const { data, error } = await supabase.from('chapters').update(allowed).eq('id', id).select().single();
     if (error) throw new RepositoryError(error.message, error, 'updateChapter');
     return data;
