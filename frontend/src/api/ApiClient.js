@@ -31,8 +31,13 @@ export const api = async (endpoint, options = {}) => {
     config = await interceptor(config);
   }
 
+  // Default 30s. Hosting on a scale-to-zero free tier (Render) means the first
+  // request after idle can take 30-50s to cold-start; a short timeout would abort
+  // mid-wake and surface a false "failed" even though the server completes the
+  // write (e.g. signup would create the account yet show an error). Auth calls
+  // pass a longer timeout (see AuthClient) as they're the usual cold entry point.
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), config.timeout || 15000);
+  const timeoutId = setTimeout(() => controller.abort(), config.timeout || 30000);
   
   let res;
   try {
