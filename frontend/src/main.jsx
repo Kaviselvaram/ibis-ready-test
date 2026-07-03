@@ -65,6 +65,7 @@ const WhyIbisView = React.lazy(() => import("./components/common/WhyIbisView"));
 const TestCenter = React.lazy(() => import("./components/test/TestCenter"));
 const TestHistory = React.lazy(() => import("./components/test/TestHistory"));
 const TestResultPage = React.lazy(() => import("./components/test/TestResultPage"));
+const ProgressDashboard = React.lazy(() => import("./components/student/ProgressDashboard"));
 const AdminContent = React.lazy(() => import("./components/admin/AdminContent"));
 const AdminContentChapter = React.lazy(() => import("./components/admin/AdminContentChapter"));
 const AdminContentTopic = React.lazy(() => import("./components/admin/AdminContentTopic"));
@@ -94,13 +95,22 @@ function App() {
   // the tab regains focus and periodically while active. So if an admin flips a
   // student Free→Paid in the DB, the student's access updates without a manual
   // re-login (and the admin dashboard picks up changes the same way).
+  const lastResync = useRef(0);
   useEffect(() => {
     if (!isSignedIn) return;
-    const onFocus = () => resyncSession();
-    const onVisible = () => { if (document.visibilityState === "visible") resyncSession(); };
+    // Throttle: focus + visibilitychange often fire together (and users alt-tab
+    // rapidly); collapse to at most one resync / 20s so we never storm refresh.
+    const resync = () => {
+      const now = Date.now();
+      if (now - lastResync.current < 20000) return;
+      lastResync.current = now;
+      resyncSession();
+    };
+    const onFocus = () => resync();
+    const onVisible = () => { if (document.visibilityState === "visible") resync(); };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
-    const iv = setInterval(() => { if (document.visibilityState !== "hidden") resyncSession(); }, 60000);
+    const iv = setInterval(() => { if (document.visibilityState !== "hidden") resync(); }, 60000);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
@@ -126,6 +136,7 @@ function App() {
           <Route path="/student" element={<StudentPortal />} />
           <Route path="/chapter" element={<ChapterView />} />
           <Route path="/test-center" element={<TestCenter />} />
+          <Route path="/progress" element={<ProgressDashboard />} />
           <Route path="/test-history" element={<TestHistory />} />
           <Route path="/test-result/:id" element={<TestResultPage />} />
         </Route>

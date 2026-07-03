@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { withHandler } from "../utils/routeBuilder.js";
-import { getStudents, saveStudents, deleteStudent, bulkCreateStudents, getLeaderboard } from "../controllers/student.controller.js";
+import { getStudents, saveStudents, deleteStudent, bulkCreateStudents, getLeaderboard, getProgress } from "../controllers/student.controller.js";
 import { z } from "zod";
 
 const bulkSchema = z.object({
@@ -22,6 +22,13 @@ router.get("/leaderboard", withHandler({
   schema: z.object({}).strict(),
   requireAuth: true
 }, getLeaderboard));
+
+// Personal progress dashboard (student-facing).
+router.get("/progress", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: true
+}, getProgress));
 
 // Roster management is admin-only.
 router.get("/", withHandler({

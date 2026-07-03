@@ -154,6 +154,20 @@ export class StudentRepository {
     return { id };
   }
 
+  // A student's attempts with their stored reports — drives the progress
+  // dashboard (per-chapter mastery, Bloom analysis, streaks, gamification).
+  static async getAttemptsForProgress(profileId) {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from('test_attempts')
+      .select('title, test_type, score, total, correct, wrong, skipped, completed_at, report')
+      .eq('profile_id', profileId)
+      .order('completed_at', { ascending: false })
+      .limit(300);
+    if (error) throw new RepositoryError(error.message, error, 'getAttemptsForProgress');
+    return data || [];
+  }
+
   // Look up which batch (if any) a student belongs to — drives batch-scoped
   // rankings. Returns the batch_id or null.
   static async getUserBatchId(userId) {

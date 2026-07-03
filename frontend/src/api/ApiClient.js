@@ -6,6 +6,28 @@ let memoryToken = null;
 export const setToken = (token) => { memoryToken = token; };
 export const getToken = () => memoryToken;
 
+// Single-flight refresh: when many requests 401 at once (a portal/admin page
+// fires several in parallel), they must NOT each call /auth/refresh — that both
+// trips the rate limit (429) and, because the refresh token rotates on every
+// use, makes the concurrent calls invalidate one another and collapse the
+// session. Instead they all await one shared refresh.
+let refreshInFlight = null;
+export async function refreshAccessToken() {
+  const baseURL = import.meta.env.VITE_API_URL || '/api';
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const res = await fetch(`${baseURL}/auth/refresh`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }
+      });
+      if (!res.ok) throw new ApiError('Session expired', { status: res.status });
+      const { data } = await res.json();
+      setToken(data.access_token);
+      return data.access_token;
+    })().finally(() => { refreshInFlight = null; });
+  }
+  return refreshInFlight;
+}
+
 const requestInterceptors = [];
 const responseInterceptors = [];
 
@@ -51,18 +73,12 @@ export const api = async (endpoint, options = {}) => {
   }
   clearTimeout(timeoutId);
   
-  // Refresh Token Logic
+  // Refresh Token Logic — de-duplicated across concurrent 401s (see above).
   if (res.status === 401 && !config._retry) {
     try {
-      const refreshRes = await fetch(`${baseURL}/auth/refresh`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' } });
-      if (refreshRes.ok) {
-        const { data } = await refreshRes.json();
-        setToken(data.access_token);
-        config.headers['Authorization'] = `Bearer ${data.access_token}`;
-        res = await fetch(url, { ...config, _retry: true });
-      } else {
-        throw new ApiError("Session expired", { status: 401 });
-      }
+      const newToken = await refreshAccessToken(baseURL);
+      config.headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(url, { ...config, _retry: true });
     } catch (err) {
       setToken(null);
       throw new RepositoryError("Session expired", err);

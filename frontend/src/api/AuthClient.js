@@ -1,4 +1,4 @@
-import { api } from './ApiClient';
+import { api, refreshAccessToken } from './ApiClient';
 
 // Auth is typically the first request a visitor makes, so it's the one most
 // likely to hit a cold backend (free-tier scale-to-zero can take 30-50s to wake).
@@ -15,7 +15,10 @@ export const AuthClient = {
   logout: async () => {
     return await api.post('/auth/logout');
   },
+  // Shares the single-flight refresh in ApiClient so the resync loop can't add
+  // to a refresh storm. Returns the same shape callers expect.
   refresh: async () => {
-    return await api.post('/auth/refresh', {}, { _retry: true, timeout: AUTH_TIMEOUT });
+    const access_token = await refreshAccessToken();
+    return { access_token };
   }
 };

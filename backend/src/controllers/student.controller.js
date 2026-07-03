@@ -1,6 +1,7 @@
 import { StudentResponse } from "../../../shared/contracts/v1/student/student.dto.js";
 
 import { StudentService } from "../services/StudentService.js";
+import { ProgressService } from "../services/ProgressService.js";
 
 export const getStudents = async () => {
   return await StudentService.getStudents();
@@ -23,4 +24,8 @@ export const bulkCreateStudents = async ({ validatedData }) => {
 
 export const getLeaderboard = async ({ req }) => {
   return await StudentService.getLeaderboard(req.user.sub);
+};
+
+export const getProgress = async ({ req }) => {
+  return await ProgressService.getProgress(req.user.sub);
 };

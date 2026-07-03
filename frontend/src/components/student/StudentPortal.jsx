@@ -8,7 +8,7 @@ import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { BatchRepository } from "../../repositories/BatchRepository";
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays } from 'lucide-react';
+import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays, TrendingUp } from 'lucide-react';
 import { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
 import TextReveal from '../ui/TextReveal';
 import GradientBlobCard from '../ui/GradientBlobCard';
@@ -391,6 +391,7 @@ export default function StudentPortal() {
 
   const onBatch = () => setBatchOpen(true);
   const onTakeTest = () => navigate("/test-center");
+  const onProgress = () => navigate("/progress");
   const onLogout = signOut;
   const onPay = () => initiateSignup("signup");
   const onClosePaywall = () => setPaywall(false);
@@ -413,6 +414,7 @@ export default function StudentPortal() {
         ) : (
           <Button variant="ghost" onClick={onBatch}><Clipboard size={16} /> Enter batch code</Button>
         )}
+        <Button variant="ghost" onClick={onProgress}><TrendingUp size={16} /> My Progress</Button>
         <Button variant="primary" onClick={onTakeTest}><ClipboardList size={16} /> Take Test</Button>
         <Button onClick={onLogout}><LogOut size={16} /> Log out</Button>
       </header>

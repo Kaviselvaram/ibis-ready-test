@@ -42,5 +42,9 @@ export const StudentRepository = {
   },
   bulkUpload: async (rows, sendEmail = true) => {
     return await api.post('/student/bulk', { rows, sendEmail });
+  },
+  // Student's own progress dashboard (analytics + gamification).
+  getProgress: async () => {
+    return await api.get('/student/progress');
   }
 };
