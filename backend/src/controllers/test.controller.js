@@ -1,5 +1,9 @@
 import { TestEngineService } from "../services/TestEngineService.js";
 
+export const getTestScope = async () => {
+  return await TestEngineService.getScope();
+};
+
 export const generateTest = async ({ validatedData }) => {
   return await TestEngineService.generateTest(validatedData);
 };

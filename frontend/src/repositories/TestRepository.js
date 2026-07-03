@@ -19,6 +19,10 @@ export const TestRepository = {
   // Student
   availableTests: () => api.get('/test/available'),
   startTest: (id) => api.post(`/test/start/${id}`, {}),
+  // Student-built practice tests (questions from the admin JSON bank)
+  getScope: () => api.get('/test/scope'),
+  generatePractice: ({ chapters, topics, count }) => api.post('/test/generate', { chapters, topics, count }),
+  evaluatePractice: ({ questions, answers, meta }) => api.post('/test/evaluate', { questions, answers, meta }),
   // History + results (student owns theirs; admin can pass profileId)
   history: (profileId) => api.get(`/test/history${profileId ? `?profileId=${profileId}` : ''}`),
   getResult: (id) => api.get(`/test/result/${id}`)

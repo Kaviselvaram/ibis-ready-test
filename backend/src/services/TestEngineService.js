@@ -145,11 +145,37 @@ export const submitAttempt = async (userId, attemptId, answers) => {
 };
 
 export class TestEngineService {
-  static async generateTest({ chapter, topic, count }) {
+  // Selectable scope for student-built practice tests: chapters → topics with
+  // question counts, derived from the uploaded bank. No answers ever leave here.
+  static async getScope() {
+    const bank = await QuestionBankService.getBank();
+    const byChapter = {};
+    for (const q of bank) {
+      const cName = q.chapter || "Unknown Chapter";
+      const tName = q.topic || "Unknown Topic";
+      const c = byChapter[cName] || (byChapter[cName] = { name: cName, count: 0, topics: {} });
+      c.count += 1;
+      const t = c.topics[tName] || (c.topics[tName] = { name: tName, count: 0 });
+      t.count += 1;
+    }
+    const chapters = Object.values(byChapter)
+      .map((c) => ({
+        name: c.name,
+        count: c.count,
+        topics: Object.values(c.topics).sort((a, b) => a.name.localeCompare(b.name))
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { total: bank.length, chapters };
+  }
+
+  static async generateTest({ chapter, topic, chapters, topics, count }) {
     const bank = await QuestionBankService.getBank();
     let pool = bank;
-    if (chapter) pool = pool.filter((q) => q.chapter === chapter);
-    if (topic) pool = pool.filter((q) => q.topic === topic);
+    // Accept single (back-compat) or multi-select scope; none → full syllabus mock.
+    const chapterSet = chapters?.length ? new Set(chapters) : (chapter ? new Set([chapter]) : null);
+    const topicSet = topics?.length ? new Set(topics) : (topic ? new Set([topic]) : null);
+    if (chapterSet) pool = pool.filter((q) => chapterSet.has(q.chapter));
+    if (topicSet) pool = pool.filter((q) => topicSet.has(q.topic));
 
     if (pool.length <= count) return secureShuffleArray(pool);
 
@@ -261,10 +287,13 @@ export class TestEngineService {
     let attemptId = null;
     if (userId) {
       try {
-        const { data } = await TestRepository.recordAttempt({
+        // Guard against a foreign-key failure: only attach test_id when the live
+        // test still exists (a deleted live test would otherwise reject the row).
+        const testId = meta?.testId || null;
+        const { data, error } = await TestRepository.recordAttempt({
           profileId: userId,
           topicId: null,
-          testId: meta?.testId || null,
+          testId,
           title: meta?.label || "Test",
           testType: meta?.mode || null,
           score: accuracy,
@@ -272,8 +301,14 @@ export class TestEngineService {
           timeTakenSeconds: meta?.timeTakenSec || 0,
           report
         });
-        attemptId = data?.id || null;
-        await invalidate(CACHE_KEYS.leaderboard);
+        // recordAttempt resolves to { data, error } and does NOT throw — surface
+        // the error instead of silently dropping the attempt.
+        if (error) {
+          console.error("Failed to record test attempt:", error.message, error.details || "", error.code || "");
+        } else {
+          attemptId = data?.id || null;
+          await invalidate(CACHE_KEYS.leaderboard);
+        }
       } catch (e) {
         console.error("Could not record test attempt (non-fatal):", e.message);
       }

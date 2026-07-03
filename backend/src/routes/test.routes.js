@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { withHandler } from "../utils/routeBuilder.js";
 import {
-  generateTest, evaluateTest,
+  getTestScope, generateTest, evaluateTest,
   listTests, createTest, updateTest, deleteTest,
   availableTests, startTest,
   testHistory, testResult
@@ -19,13 +19,20 @@ const admin = (schema, controller) => withHandler({
   rateLimit: { max: 60, windowMs: 60000, name: "admin_tests", byUser: true }
 }, controller);
 
-// ---- Existing engine ----
+// ---- Student practice-test engine (questions from the admin JSON bank) ----
+// Selectable scope (chapters → topics with counts); no answers leave the server.
+router.get("/scope", withHandler({
+  method: "GET", schema: z.object({}).strict(), requireAuth: true
+}, getTestScope));
+
 router.post("/generate", withHandler({
   method: "POST",
   schema: z.object({
     chapter: z.string().nullable().optional(),
     topic: z.string().nullable().optional(),
-    count: z.number().int().positive()
+    chapters: z.array(z.string()).max(50).optional(),   // multi-chapter select
+    topics: z.array(z.string()).max(100).optional(),    // multi-topic select
+    count: z.number().int().positive().max(100)
   }),
   requireAuth: true
 }, generateTest));

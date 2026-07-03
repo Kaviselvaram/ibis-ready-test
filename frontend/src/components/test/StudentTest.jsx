@@ -13,7 +13,9 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTestController } from "../../hooks/useTestController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const SECONDS_PER_QUESTION = 60;
@@ -76,6 +78,8 @@ const TERMS = [
 
 export function StudentTest({ chapter }) {
   const { loadBank, generateTest, submitTest } = useTestController();
+  const navigate = useNavigate();
+  const toast = useToast();
   const [questionBank, setQuestionBank] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -131,6 +135,9 @@ export function StudentTest({ chapter }) {
     }
   };
 
+  // Returns true only when the attempt was submitted AND stored, so the runner
+  // can safely lock. Any failure surfaces a clear message and lets the student
+  // retry without losing their answers.
   const finish = async (answers, timeTakenSec) => {
     try {
       const r = await submitTest(questions, answers, {
@@ -142,10 +149,19 @@ export function StudentTest({ chapter }) {
         timeTakenSec,
         date: new Date(),
       });
+      if (r?.attemptId) {
+        toast.success("Test submitted");
+        navigate(`/test-result/${r.attemptId}`);
+        return true;
+      }
+      // Graded but not stored — show the report, but warn it's not in history.
+      toast.error("Submitted, but your result couldn't be saved to history.");
       setReport(r);
       setPhase("report");
+      return true;
     } catch (e) {
-      console.error(e);
+      toast.error(friendlyMessage(e, "Couldn’t submit — check your connection and try again."));
+      return false;
     }
   };
 
@@ -275,15 +291,24 @@ export function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFin
   const [answers, setAnswers] = useState({});
   const [remaining, setRemaining] = useState(durationSec);
   const [confirming, setConfirming] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [warnings, setWarnings] = useState(0);
   const startRef = useRef(Date.now());
   const submittedRef = useRef(false);
 
-  const submit = () => {
-    if (submittedRef.current) return;
-    submittedRef.current = true;
+  // Await onFinish and only lock the test if it actually succeeded. If the
+  // submit fails (network/server), re-enable so the student can retry — their
+  // answers are never lost.
+  const submit = async () => {
+    if (submittedRef.current || submitting) return;
+    setConfirming(false);
+    setSubmitting(true);
     const taken = Math.round((Date.now() - startRef.current) / 1000);
-    onFinish(answers, Math.min(taken, durationSec));
+    let ok = false;
+    try { ok = await onFinish(answers, Math.min(taken, durationSec)); }
+    catch { ok = false; }
+    if (ok) submittedRef.current = true;
+    else setSubmitting(false);
   };
 
   useEffect(() => {
@@ -374,8 +399,8 @@ export function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFin
                 </button>
               ))}
             </div>
-            <button type="button" className="qt-submit-btn" onClick={() => setConfirming(true)}>
-              Submit test
+            <button type="button" className="qt-submit-btn" onClick={() => setConfirming(true)} disabled={submitting}>
+              {submitting ? "Submitting…" : "Submit test"}
             </button>
           </aside>
         </div>
@@ -405,8 +430,8 @@ export function TestRunner({ questions, durationSec, scopeLabel, onCancel, onFin
               <h3>Submit the test?</h3>
               <p>You answered {answeredCount} of {questions.length} questions. Unanswered questions are marked wrong.</p>
               <div className="qt-confirm-actions">
-                <button type="button" className="qt-nav-btn" onClick={() => setConfirming(false)}>Keep solving</button>
-                <button type="button" className="qt-submit-btn" onClick={submit}>Submit &amp; view report</button>
+                <button type="button" className="qt-nav-btn" onClick={() => setConfirming(false)} disabled={submitting}>Keep solving</button>
+                <button type="button" className="qt-submit-btn" onClick={submit} disabled={submitting}>{submitting ? "Submitting…" : "Submit & view report"}</button>
               </div>
             </div>
           </div>

@@ -3,13 +3,16 @@ import { ArrowLeft, ClipboardList, Clock, Layers, Play, Radio, History } from "l
 import { useNavigate } from "react-router-dom";
 import { TestRepository, testTypeLabel } from "../../repositories/TestRepository";
 import { useTestController } from "../../hooks/useTestController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { TestRunner, TestReport } from "./StudentTest";
+import PracticeBuilder from "./PracticeBuilder";
 import { Button, GlassButton } from "../ui/LegacyUI";
 
 const TYPE_ORDER = ["full_syllabus", "combined", "full_chapter", "half_chapter"];
 
 export default function TestCenter() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { submitTest } = useTestController();
 
   const [tests, setTests] = useState(null);
@@ -43,6 +46,16 @@ export default function TestCenter() {
     }
   };
 
+  // Student-built practice test: the builder hands us a ready { test, questions }.
+  const startPractice = (built) => {
+    setError("");
+    setActive(built);
+    setPhase("active");
+  };
+
+  // Returns true only when the attempt was submitted AND stored (so the runner
+  // locks). On failure it surfaces a clear message and returns false so the
+  // student can retry — answers are preserved by the runner.
   const finish = async (answers, timeTakenSec) => {
     try {
       const durationSec = active.test.duration_minutes * 60;
@@ -56,16 +69,19 @@ export default function TestCenter() {
         timeTakenSec,
         date: new Date()
       });
-      // Go to the dedicated result page (persisted); fall back to inline report
-      // only if the attempt could not be stored.
       if (r?.attemptId) {
+        toast.success("Test submitted");
         navigate(`/test-result/${r.attemptId}`);
-      } else {
-        setReport(r);
-        setPhase("report");
+        return true;
       }
+      // Graded but not stored — show the report but warn it's not in history.
+      toast.error("Submitted, but your result couldn't be saved to history.");
+      setReport(r);
+      setPhase("report");
+      return true;
     } catch (e) {
-      console.error("Evaluate failed:", e);
+      toast.error(friendlyMessage(e, "Couldn’t submit — check your connection and try again."));
+      return false;
     }
   };
 
@@ -96,15 +112,19 @@ export default function TestCenter() {
 
       {error && <div className="tc-error">{error}</div>}
 
+      {phase === "browse" && (
+        <PracticeBuilder onStart={startPractice} defaultMode="mock" />
+      )}
+
       {!tests && <p className="tc-empty">Loading available tests…</p>}
 
       {tests && tests.length === 0 && (
-        <div className="tc-emptystate">
-          <ClipboardList size={40} />
-          <h2>No tests are live yet</h2>
-          <p>Your mentor hasn't published any tests. Check back soon.</p>
+        <div className="tc-livetests-empty">
+          <Radio size={16} /> No live tests from your mentor right now — build your own above.
         </div>
       )}
+
+      {tests && tests.length > 0 && <h3 className="tc-section-title">Live tests from your mentor</h3>}
 
       {grouped.map((g) => (
         <div key={g.type} className="tc-group">
