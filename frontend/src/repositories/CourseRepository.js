@@ -28,5 +28,8 @@ export const CourseRepository = {
 
   addVideo: (payload) => api.post('/course/videos', payload),
   updateVideo: (id, patch) => api.patch(`/course/videos/${id}`, patch),
-  deleteVideo: (id) => api.delete(`/course/videos/${id}`)
+  deleteVideo: (id) => api.delete(`/course/videos/${id}`),
+
+  addNote: (payload) => api.post('/course/notes', payload),
+  deleteNote: (id) => api.delete(`/course/notes/${id}`)
 };

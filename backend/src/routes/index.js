@@ -9,6 +9,7 @@ import batchRoutes from "./batch.routes.js";
 import courseRoutes from "./course.routes.js";
 import questionRoutes from "./question.routes.js";
 import testRoutes from "./test.routes.js";
+import analyticsRoutes from "./analytics.routes.js";
 
 const router = Router();
 
@@ -21,4 +22,5 @@ router.use("/batch", batchRoutes);
 router.use("/course", courseRoutes);
 router.use("/question", questionRoutes);
 router.use("/test", testRoutes);
+router.use("/analytics", analyticsRoutes);
 export default router;

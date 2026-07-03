@@ -54,3 +54,9 @@ export const updateVideo = async ({ req, validatedData }) => {
 
 export const deleteVideo = async ({ req }) =>
   await CourseService.deleteVideo(req.params.id);
+
+export const addNote = async ({ validatedData }) =>
+  await CourseService.addNote(validatedData);
+
+export const deleteNote = async ({ req }) =>
+  await CourseService.deleteNote(req.params.id);

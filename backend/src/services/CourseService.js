@@ -157,4 +157,10 @@ export class CourseService {
     return CourseService._write(CourseRepository.updateVideo(id, patch));
   }
   static deleteVideo(id) { return CourseService._write(CourseRepository.deleteVideo(id)); }
+
+  // ---- Notes (PDF media) ---- persist + invalidate so students sync instantly.
+  static addNote({ topic_id, title, url }) {
+    return CourseService._write(CourseRepository.addNote({ topic_id, title: title || "Notes", url }));
+  }
+  static deleteNote(id) { return CourseService._write(CourseRepository.deleteNote(id)); }
 }

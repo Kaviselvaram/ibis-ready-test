@@ -245,6 +245,132 @@ a.dash-stat:hover { transform: translateY(-2px); border-color: var(--clay); }
 .dash-link span { font-size: 0.83rem; opacity: 0.75; }
 
 /* ============================================================
+   Analytics dashboard (Phase 4)
+   ============================================================ */
+.dash-analytics { display: grid; gap: 20px; }
+.dash-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dash-refresh {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--clay);
+  background: var(--clay);
+  color: #fff;
+  font-weight: 800; font-size: 0.85rem;
+  padding: 9px 16px; border-radius: 12px; cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+  box-shadow: 0 8px 20px -12px rgba(198, 95, 61, 0.7);
+}
+.dash-refresh:hover:not(:disabled) { transform: translateY(-1px); }
+.dash-refresh:disabled { opacity: 0.6; cursor: default; }
+.dash-refresh .spin { animation: nq-spin 0.85s linear infinite; }
+
+.spin { animation: nq-spin 0.85s linear infinite; }
+@keyframes nq-spin { to { transform: rotate(360deg); } }
+
+.dash-loading, .dash-error-state {
+  display: grid; place-items: center; gap: 12px;
+  padding: 60px 20px; color: var(--muted); text-align: center;
+}
+.dash-error-state h3 { margin: 0; color: var(--ink); }
+.dash-error-state p { margin: 0; max-width: 360px; }
+.dash-inline-error {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: 12px;
+  background: rgba(180, 65, 45, 0.08);
+  border: 1px solid rgba(180, 65, 45, 0.3);
+  color: #b4412d; font-weight: 700; font-size: 0.85rem;
+}
+
+/* KPI tiles */
+.kpi-grid {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+.kpi-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 15px;
+  border: 1px solid var(--line);
+  background: var(--paper-card);
+  text-decoration: none; color: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+a.kpi-card:hover { transform: translateY(-2px); border-color: var(--clay); box-shadow: 0 10px 24px -18px rgba(44,31,24,0.5); }
+.kpi-icon {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  background: rgba(44, 31, 24, 0.06); color: var(--ink);
+}
+.kpi-icon.clay { background: rgba(198, 95, 61, 0.14); color: var(--clay-dark); }
+.kpi-icon.sage { background: rgba(79, 111, 94, 0.16); color: #3f5a4c; }
+.kpi-icon.gold { background: rgba(215, 161, 84, 0.2); color: #a9772c; }
+.kpi-body { display: grid; gap: 1px; min-width: 0; }
+.kpi-body strong { font-family: var(--display); font-size: 1.6rem; line-height: 1.05; color: var(--ink); }
+.kpi-body span { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+.kpi-body small { font-size: 0.72rem; color: var(--clay-dark); font-weight: 700; }
+.kpi-arrow { margin-left: auto; color: var(--muted); flex-shrink: 0; }
+
+/* Chart panels */
+.dash-panels {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+.dash-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper-card);
+  padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+  min-width: 0;
+}
+.dash-panel.wide { grid-column: span 2; }
+.dash-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.dash-panel-head h3 { margin: 0; font-size: 1rem; }
+.dash-panel-head span {
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.dash-panel-body { flex: 1; min-height: 130px; display: flex; flex-direction: column; justify-content: center; }
+
+.chart-svg { width: 100%; height: 120px; display: block; }
+.chart-empty {
+  display: grid; place-items: center; gap: 8px; justify-items: center;
+  color: var(--muted); text-align: center; font-size: 0.82rem; font-weight: 600;
+  padding: 20px; min-height: 120px;
+}
+
+/* Vertical bars */
+.chart-bars { display: flex; align-items: flex-end; gap: 10px; height: 150px; padding-top: 6px; }
+.chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; }
+.chart-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.chart-bar-fill {
+  width: 100%; border-radius: 8px 8px 3px 3px; min-height: 3px;
+  position: relative; display: flex; justify-content: center;
+}
+.chart-bar-val { position: absolute; top: -16px; font-size: 0.72rem; font-weight: 800; color: var(--ink); }
+.chart-bar-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); }
+
+/* Donut */
+.chart-donut { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.chart-donut svg { width: 128px; height: 128px; flex-shrink: 0; }
+.donut-value { font-family: var(--display); font-size: 20px; font-weight: 700; fill: var(--ink); }
+.donut-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; fill: var(--muted); }
+.chart-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; flex: 1; min-width: 130px; }
+.chart-legend li { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; color: var(--ink); text-transform: capitalize; }
+.chart-legend i { width: 11px; height: 11px; border-radius: 4px; flex-shrink: 0; }
+.chart-legend b { margin-left: auto; color: var(--muted); }
+
+/* Horizontal ranked bars */
+.chart-rankbars { display: grid; gap: 10px; }
+.rankbar-row { display: grid; grid-template-columns: minmax(90px, 0.4fr) 1fr auto; align-items: center; gap: 10px; }
+.rankbar-label { font-size: 0.8rem; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rankbar-track { height: 12px; border-radius: 999px; background: rgba(44,31,24,0.07); overflow: hidden; }
+.rankbar-fill { height: 100%; border-radius: 999px; }
+.rankbar-val { font-size: 0.8rem; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 720px) {
+  .dash-panel.wide { grid-column: span 1; }
+}
+
+/* ============================================================
    Test manager
    ============================================================ */
 .tm-grid {

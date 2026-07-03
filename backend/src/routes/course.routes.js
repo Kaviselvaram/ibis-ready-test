@@ -4,7 +4,8 @@ import {
   getChapters, getStudyData,
   createChapter, updateChapter, deleteChapter, reorderChapters,
   createTopic, updateTopic, deleteTopic, reorderTopics,
-  addVideo, updateVideo, deleteVideo
+  addVideo, updateVideo, deleteVideo,
+  addNote, deleteNote
 } from "../controllers/course.controller.js";
 import { z } from "zod";
 
@@ -89,5 +90,16 @@ router.patch("/videos/:id", admin(
   updateVideo
 ));
 router.delete("/videos/:id", admin(z.object({}).strict(), deleteVideo));
+
+// ---- Notes / media PDF (admin) ----
+router.post("/notes", admin(
+  z.object({
+    topic_id: z.string().uuid(),
+    title: z.string().trim().min(1).max(300),
+    url: z.string().trim().url().max(2000)
+  }),
+  addNote
+));
+router.delete("/notes/:id", admin(z.object({}).strict(), deleteNote));
 
 export default router;

@@ -8,7 +8,8 @@ import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { BatchRepository } from "../../repositories/BatchRepository";
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays, TrendingUp } from 'lucide-react';
+import { Award, BookOpen, Check, Flame, Layers3, Lock, LogOut, ReceiptIndianRupee, Trophy, Users, X, Zap, Clipboard, ClipboardList, CalendarDays, TrendingUp, Medal, Star, Bell, ShieldCheck, Sparkles, ChevronUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Brand, Button, GlassButton, Pill, ShinyButton } from '../ui/LegacyUI';
 import TextReveal from '../ui/TextReveal';
 import GradientBlobCard from '../ui/GradientBlobCard';
@@ -48,25 +49,40 @@ export function getStudyCalendar(studyDataByDay, baseDate = new Date()) {
 export function CalendarCard({ onClick, isNested = false }) {
   const { studyData } = useCourseContext();
   const { year, today, monthName, days, activeDays, streak } = getStudyCalendar(studyData || {});
-  
+
   const Tag = isNested ? "div" : "button";
   const extraProps = isNested ? {} : { onClick };
 
+  const todayStudied = Boolean((studyData || {})[today]);
+  // A gentle nudge when today's streak isn't logged yet — a real, data-driven cue.
+  const showNudge = !todayStudied && streak > 0;
+
   return (
-    <Tag 
-      className="metric-card calendar-card" 
-      style={isNested ? { background: "transparent", border: "none", boxShadow: "none", padding: "14px 16px 16px" } : {}} 
+    <Tag
+      className="metric-card calendar-card calendar-card-live"
+      style={isNested ? { background: "transparent", border: "none", boxShadow: "none", padding: "14px 16px 16px" } : {}}
       {...extraProps}
     >
       <div className="card-header-row">
         <CalendarDays />
         <span>Study rhythm</span>
+        {showNudge && (
+          <span className="calendar-notif" title="Keep your streak alive today">
+            <Bell size={11} /><i className="calendar-notif-pip" />
+          </span>
+        )}
       </div>
       <div className="calendar-header-title">
         <strong>{monthName} {year}</strong>
-        {streak > 0 && <span className="streak-badge"><Flame size={12} /> {streak} day streak</span>}
+        {streak > 0 && (
+          <span className="streak-badge streak-badge-live">
+            <Flame size={12} className="streak-flame" /> {streak} day streak
+          </span>
+        )}
       </div>
       <div className="calendar-grid-wrapper">
+        {/* Always-on animated beam sweeping across the month — no click needed. */}
+        <span className="calendar-beam" aria-hidden="true" />
         <div className="weekdays-row">
           <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
         </div>
@@ -75,11 +91,14 @@ export function CalendarCard({ onClick, isNested = false }) {
             if (day === null) return <span key={`empty-${idx}`} className="day-cell empty" />;
             const isToday = day === today;
             const data = (studyData || {})[day];
+            // Consecutive active run ending today → highlight as the live streak.
+            const inStreak = streak > 0 && day <= today && day > today - streak;
             let cellClass = "";
-            if (data) cellClass += ` ${data.type}`;
+            if (data) cellClass += ` ${data.type} done`;
+            if (inStreak) cellClass += " in-streak";
             if (isToday) cellClass += " today";
             return (
-              <span key={`day-${day}`} className={`day-cell${cellClass}`}>
+              <span key={`day-${day}`} className={`day-cell${cellClass}`} style={data ? { "--cell-delay": `${(idx % 7) * 0.06}s` } : undefined}>
                 {day}
                 {isToday && <span className="today-dot" />}
               </span>
@@ -88,7 +107,7 @@ export function CalendarCard({ onClick, isNested = false }) {
         </div>
       </div>
       <span className="calendar-card-footer">
-        {activeDays} active days this month · open calendar
+        {showNudge ? "Study today to extend your streak · open calendar" : `${activeDays} active days this month · open calendar`}
       </span>
     </Tag>
   );
@@ -373,8 +392,88 @@ export function BatchModal({ onClose }) {
   );
 }
 
+// Gamification "batches" (tiers) derived entirely from real backend signals:
+// the student's live streak (study calendar), badge count and rank (leaderboard).
+export function computeTiers({ streak = 0, badges = 0, rank = null }) {
+  return [
+    { key: "streak", name: "Streak Keeper", icon: Flame, earned: streak >= 3, hint: streak >= 3 ? `${streak}-day streak` : `${streak}/3 days` },
+    { key: "sharp", name: "Sharpshooter", icon: Star, earned: badges >= 3, hint: badges >= 3 ? `${badges} badges` : `${badges}/3 badges` },
+    { key: "rank", name: "Podium", icon: Medal, earned: !!rank && rank <= 3, hint: rank ? `Rank #${rank}` : "Take a test" },
+    { key: "consistent", name: "Consistency", icon: ShieldCheck, earned: streak >= 7, hint: streak >= 7 ? "7-day run" : `${streak}/7 days` }
+  ];
+}
+
+export function RankStack({ leaderboard, streak, onOpenLeaderboard }) {
+  const [peek, setPeek] = useState(false);
+  const me = leaderboard?.find((s) => s.isMe);
+  const rank = me?.rank || null;
+  const badges = me?.badges || 0;
+  const tiers = computeTiers({ streak, badges, rank });
+  const earned = tiers.filter((t) => t.earned).length;
+
+  return (
+    <div
+      className={`rank-stack ${peek ? "peek" : ""}`}
+      onMouseEnter={() => setPeek(true)}
+      onMouseLeave={() => setPeek(false)}
+    >
+      {/* Card BEHIND the rank card — gamification batches. */}
+      <motion.div
+        className="gamify-card"
+        initial={false}
+        animate={{ y: peek ? -18 : 0, scale: peek ? 1 : 0.965 }}
+        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+      >
+        <div className="gamify-head">
+          <span><Sparkles size={14} /> Gamification badges</span>
+          <b>{earned}/{tiers.length}</b>
+        </div>
+        <div className="gamify-grid">
+          {tiers.map((t) => {
+            const Icon = t.icon;
+            return (
+              <div key={t.key} className={`gamify-tier ${t.earned ? "earned" : "locked"}`}>
+                <span className="gamify-tier-ic"><Icon size={16} /></span>
+                <strong>{t.name}</strong>
+                <small>{t.hint}</small>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Front rank card — reuses the existing GradientBlobCard treatment. */}
+      <motion.div
+        className="rank-front"
+        initial={false}
+        animate={{ y: peek ? 6 : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+      >
+        <GradientBlobCard onClick={onOpenLeaderboard} className="achievement-card">
+          <div className="metric-card" style={{ background: "transparent", border: "none", boxShadow: "none", padding: "16px", cursor: "pointer", display: "grid", gap: "10px", width: "100%" }}>
+            <Trophy />
+            <span>Current rank</span>
+            <strong style={{ fontFamily: "var(--display-accent)" }}>#{rank || '-'}</strong>
+            <small>{badges} badges earned · tap for leaderboard</small>
+            <div className="mini-leaderboard">
+              {leaderboard?.slice(0, 2).map((s) => (
+                <b key={s.id}>#{s.rank} {s.name.split(" ")[0]}</b>
+              ))}
+              <b>#{rank || '-'} You</b>
+            </div>
+          </div>
+        </GradientBlobCard>
+        <button type="button" className="rank-peek-toggle" onClick={(e) => { e.stopPropagation(); setPeek((p) => !p); }}>
+          <ChevronUp size={13} className={peek ? "flip" : ""} /> {earned}/{tiers.length} badges
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function StudentPortal() {
-  const { chapters, chapterIndex, setChapterIndex, leaderboard } = useCourseContext();
+  const { chapters, chapterIndex, setChapterIndex, leaderboard, studyData } = useCourseContext();
+  const { streak } = getStudyCalendar(studyData || {});
   const { switchChapter, openChapter } = useCourseController();
   const { access } = useAccessContext();
   const { initiateSignup } = useAccessController();
@@ -420,26 +519,24 @@ export default function StudentPortal() {
       </header>
 
       <div className="portal-grid">
-        <aside className="student-side">
-          <GradientBlobCard onClick={() => setLeaderboardOpen(true)} className="achievement-card">
-            <div className="metric-card" style={{ background: "transparent", border: "none", boxHighlight: "none", boxShadow: "none", padding: "16px", cursor: "pointer", display: "grid", gap: "10px", width: "100%" }}>
-              <Trophy />
-              <span>Current rank</span>
-              <strong style={{ fontFamily: "var(--display-accent)" }}>#{leaderboard?.find(s => s.isMe)?.rank || '-'}</strong>
-              <small>{leaderboard?.find(s => s.isMe)?.badges || 0} badges earned · tap for leaderboard</small>
-              <div className="mini-leaderboard">
-                {leaderboard?.slice(0, 2).map(s => (
-                  <b key={s.id}>#{s.rank} {s.name.split(" ")[0]}</b>
-                ))}
-                <b>#{leaderboard?.find(s => s.isMe)?.rank || '-'} You</b>
-              </div>
-            </div>
-          </GradientBlobCard>
-          
-          <GradientBlobCard onClick={() => setStatsOpen(true)} className="stat-card">
-            <CalendarCard isNested={true} />
-          </GradientBlobCard>
-        </aside>
+        <motion.aside
+          className="student-side"
+          initial={{ opacity: 0, x: -18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <RankStack
+            leaderboard={leaderboard}
+            streak={streak}
+            onOpenLeaderboard={() => setLeaderboardOpen(true)}
+          />
+
+          <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 300, damping: 24 }}>
+            <GradientBlobCard onClick={() => setStatsOpen(true)} className="stat-card">
+              <CalendarCard isNested={true} />
+            </GradientBlobCard>
+          </motion.div>
+        </motion.aside>
 
         <section className="chapter-switcher">
           <StudentChapterShowcase

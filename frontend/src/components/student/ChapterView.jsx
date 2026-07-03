@@ -9,8 +9,11 @@ import { Button, GlassButton, Pill } from '../ui/LegacyUI';
 import { StudentTest } from "../test/StudentTest";
 import ChapterImage from '../shared/ChapterImage';
 import { AnimatePresence, motion } from "framer-motion";
+import { logActivity } from "../../repositories/AnalyticsRepository";
 
-export function ContentTab({ topic }) {
+const PdfReader = React.lazy(() => import("./PdfReader"));
+
+export function ContentTab({ topic, chapterId }) {
   return (
     <>
       <div className="section-title">
@@ -18,7 +21,7 @@ export function ContentTab({ topic }) {
         <Pill>{topic.videos.length} videos</Pill>
       </div>
       <div className="stack">
-        {topic.videos.map((video) => <VideoCard key={video.id} video={video} />)}
+        {topic.videos.map((video) => <VideoCard key={video.id} video={video} chapterId={chapterId} topicId={topic.id} />)}
       </div>
       {topic.examples.length > 0 && (
         <>
@@ -27,7 +30,7 @@ export function ContentTab({ topic }) {
             <Pill>{topic.examples.length} added</Pill>
           </div>
           <div className="stack">
-            {topic.examples.map((video) => <VideoCard key={video.id} video={video} faint />)}
+            {topic.examples.map((video) => <VideoCard key={video.id} video={video} chapterId={chapterId} topicId={topic.id} faint />)}
           </div>
         </>
       )}
@@ -35,16 +38,21 @@ export function ContentTab({ topic }) {
   );
 }
 
-export function VideoCard({ video, faint = false }) {
+export function VideoCard({ video, faint = false, chapterId, topicId }) {
   const [open, setOpen] = useState(false);
+
+  const openVideo = () => {
+    setOpen(true);
+    logActivity("video_watch", { chapter_id: chapterId || null, topic_id: topicId || null });
+  };
 
   return (
     <>
-      <motion.button 
+      <motion.button
         initial={{ scale: 1 }}
         whileTap={{ scale: 0.98 }}
-        className={`video-card ${faint ? "faint" : ""} group`} 
-        onClick={() => setOpen(true)}
+        className={`video-card ${faint ? "faint" : ""} group`}
+        onClick={openVideo}
         style={{ cursor: "pointer" }}
       >
         <span className="play-thumb">
@@ -113,10 +121,18 @@ export function VideoModal({ video, onClose }) {
   );
 }
 
-export function NotesTab({ topic }) {
-  const [zoom, setZoom] = useState(1);
-  const note = topic.notes[0];
-  if (!note) {
+export function NotesTab({ topic, chapterId }) {
+  const notes = (topic.notes || []).filter((n) => n.url); // only real, persisted PDFs
+  const [activeId, setActiveId] = useState(null);
+
+  const active = notes.find((n) => n.id === activeId) || notes[0];
+
+  // Log a real content-view event when a set of notes is opened.
+  useEffect(() => {
+    if (active?.id) logActivity("note_view", { chapter_id: chapterId || null, topic_id: topic.id || null });
+  }, [active?.id, chapterId, topic.id]);
+
+  if (notes.length === 0) {
     return (
       <div className="empty-state">
         <FileText size={36} />
@@ -126,38 +142,26 @@ export function NotesTab({ topic }) {
     );
   }
 
-  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.2, 3));
-  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.2, 0.5));
-  const handleDownload = () => {
-    const blob = new Blob([note.content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${note.title || "notes"}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   return (
-    <div className="pdf-panel">
-      <div className="pdf-toolbar">
-        <Button className="icon-btn" aria-label="Previous page"><ArrowLeft size={16} /></Button>
-        <span>{note.title} · uploaded PDF</span>
-        <Button className="icon-btn" aria-label="Next page"><ArrowRight size={16} /></Button>
-        <div className="toolbar-end">
-          <Button className="icon-btn" aria-label="Zoom in" onClick={handleZoomIn}><ZoomIn size={16} /></Button>
-          <Button className="icon-btn" aria-label="Zoom out" onClick={handleZoomOut}><ZoomOut size={16} /></Button>
-          <Button className="icon-btn" aria-label="Download" onClick={handleDownload}><Download size={16} /></Button>
+    <div className="notes-tab">
+      {notes.length > 1 && (
+        <div className="notes-tab-switcher" role="tablist" aria-label="Notes documents">
+          {notes.map((n) => (
+            <button
+              key={n.id}
+              role="tab"
+              aria-selected={n.id === active.id}
+              className={n.id === active.id ? "active" : ""}
+              onClick={() => setActiveId(n.id)}
+            >
+              <FileText size={13} /> {n.title}
+            </button>
+          ))}
         </div>
-      </div>
-      <div style={{ overflow: "auto", flex: 1, position: "relative" }}>
-        <article className="pdf-page" style={{ transform: `scale(${zoom})`, transformOrigin: "top left", transition: "transform 0.2s ease" }}>
-          <h2>{topic.name}</h2>
-          <p>{note.content}</p>
-        </article>
-      </div>
+      )}
+      <React.Suspense fallback={<div className="pdf-reader-loading"><FileText size={26} /><span>Preparing reader…</span></div>}>
+        <PdfReader key={active.id} url={active.url} title={active.title} />
+      </React.Suspense>
     </div>
   );
 }
@@ -222,8 +226,8 @@ export default function ChapterView() {
           ))}
         </aside>
         <section className="topic-content">
-          {tab === "content" && topic && <ContentTab topic={topic} />}
-          {tab === "notes" && topic && <NotesTab topic={topic} />}
+          {tab === "content" && topic && <ContentTab topic={topic} chapterId={chapter.id} />}
+          {tab === "notes" && topic && <NotesTab topic={topic} chapterId={chapter.id} />}
           {tab === "test" && <StudentTest chapter={chapter} />}
         </section>
       </div>

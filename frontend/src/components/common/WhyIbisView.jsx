@@ -1,9 +1,8 @@
 import { useNavigationController } from "../../hooks/useNavigationController";
 import React, { useRef } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, ArrowLeft } from 'lucide-react';
 import { TimelineContent } from '../ui/timeline-animation';
 import { AwardBadge } from '../ui/award-badge';
-import { ArrowLeft } from 'lucide-react';
 import { Brand, Button } from '../ui/LegacyUI';
 import TesplePill from '../ui/TesplePill';
 
@@ -11,18 +10,7 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
   const { goToHome } = useNavigationController();
   const onBack = sessionOnBack || goToHome;
 
-  const containerRef = useRef(null);
   const whyIbisHeroRef = useRef(null);
-
-  const handleMouseMove = (event) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    container.style.setProperty("--mouse-x", `${x}px`);
-    container.style.setProperty("--mouse-y", `${y}px`);
-  };
 
   const revealVariants = {
     visible: (i) => ({
@@ -70,10 +58,14 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
         <Button className="icon-btn subtle" style={{ visibility: "hidden" }} aria-hidden="true"><Menu size={18} /></Button>
       </div>
 
-      <div className="why-ibis-split-layout">
-        {/* Left Content Section */}
-        <div className="why-ibis-text-content">
-          <div className="why-ibis-glass-card">
+      {/* Photo removed — full-width editorial layout centred on the Yibis story. */}
+      <div className="why-ibis-single-layout">
+        <div className="why-ibis-stage">
+          <div className="why-ibis-glass-card yibis-card">
+            <span className="yibis-kicker" aria-label="Yibis mentor">
+              <span className="yibis-dot" /> Yibis · your mentor
+            </span>
+
             <TimelineContent
               as="div"
               animationNum={0}
@@ -123,35 +115,7 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
             </div>
           </div>
         </div>
-
-        {/* Right Portrait Section */}
-        <div className="why-ibis-portrait-side">
-          <div
-            ref={containerRef}
-            className="why-ibis-portrait-container-full"
-            onMouseMove={handleMouseMove}
-          >
-            <img
-              src="/ibis-assets/ganesh1.webp?v=20260626"
-              alt="Ganesh sketch portrait"
-              className="mentor-img-base-full"
-              loading="lazy"
-              decoding="async"
-              draggable="false"
-            />
-            <img
-              src="/ibis-assets/ganesh2.webp?v=20260626"
-              alt="Ganesh original portrait"
-              className="mentor-img-reveal-full"
-              loading="lazy"
-              decoding="async"
-              draggable="false"
-            />
-            <div className="reveal-lens-cursor-large" />
-          </div>
-        </div>
       </div>
     </section>
   );
 }
-

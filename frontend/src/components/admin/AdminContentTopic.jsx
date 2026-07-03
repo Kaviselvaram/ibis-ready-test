@@ -11,7 +11,7 @@ const TABS = [
 
 export default function AdminContentTopic() {
   const { chapterId, topicId } = useParams();
-  const { chapters, updateTopic, addVideo, updateVideo, deleteVideo, setTopicFree } = useContentAdmin();
+  const { chapters, addVideo, updateVideo, deleteVideo, setTopicFree, addNote, deleteNote } = useContentAdmin();
   const [tab, setTab] = useState("videos");
 
   const chapter = chapters.find((c) => c.id === chapterId);
@@ -24,9 +24,6 @@ export default function AdminContentTopic() {
       </div>
     );
   }
-
-  // Bind the chapter into the editors' (topicId, updater) signature.
-  const boundUpdateTopic = (tId, updater) => updateTopic(chapter.id, tId, updater);
 
   return (
     <div className="adminx-page">
@@ -64,7 +61,7 @@ export default function AdminContentTopic() {
 
         <div className="topic-editor-panel">
           {tab === "notes" ? (
-            <AdminNotes topic={topic} updateTopic={boundUpdateTopic} />
+            <AdminNotes topic={topic} onAddNote={addNote} onDeleteNote={deleteNote} />
           ) : (
             <AdminVideos
               topic={topic}

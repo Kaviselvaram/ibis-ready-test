@@ -121,6 +121,7 @@ deploy.env                       # deploy tokens (gitignored)
 | `test_attempts` | every submitted attempt (practice + live) | `profile_id`, `test_id`, `title`, `test_type`, `score`, `total/correct/wrong/skipped`, `time_taken_seconds`, `report jsonb`, `completed_at` |
 | `subscriptions` | paid access | `profile_id`, `status`, `valid_until` |
 | `batches` | school batches | `code`, `name`, `school`, `status` |
+| `activity_events` | real engagement log (content views etc.) powering admin analytics | `profile_id`, `event_type` (e.g. `note_view`/`video_watch`), `chapter_id`, `topic_id`, `metadata jsonb`, `created_at` |
 | `audit_log`, `security_events`, `deletion_log`, `processed_events`, `payment_history`, `test_results` | audit / security / payment / webhook‑idempotency scaffolding (mostly unused today) | |
 
 RLS is enabled on all tables; **the backend uses the service role and bypasses RLS** — the
@@ -139,7 +140,9 @@ setting the rotating refresh cookie), `POST /refresh`, `POST /logout`.
 upload URL for thumbnails/notes), `ALL /media`, `ALL /video`.
 **Course** (`/course`): `GET /chapters` (full tree), `GET /study-data`; admin CRUD:
 `POST/PATCH/DELETE /chapters`, `PATCH /chapters/reorder`, `POST/PATCH/DELETE /topics`,
-`PATCH /topics/reorder`, `POST/PATCH/DELETE /videos`.
+`PATCH /topics/reorder`, `POST/PATCH/DELETE /videos`, `POST /notes`, `DELETE /notes/:id`.
+**Analytics** (`/analytics`): `GET /` (admin — backend‑aggregated dashboard, `?force=true`
+bypasses a short cache), `POST /event` (any auth — engagement logging → `activity_events`).
 **Question bank** (`/question`): `GET /` (admin), `POST /` (admin, replace bank).
 **Tests** (`/test`): student practice engine — `GET /scope` (chapters→topics with counts,
 no answers), `POST /generate` (single/multi chapter, single/multi topic, or full‑syllabus),
@@ -241,36 +244,41 @@ other chapters are premium → trial users are redirected to `/checkout`.
 - 429 single‑flight refresh fix + throttled resync.
 - Student **Progress Dashboard** (backend `GET /student/progress` + `/progress` UI).
 
-**Requested & queued — a large UI/UX + analytics overhaul (awaiting an execution plan
-+ explicit approval before coding):**
-1. **Admin Notes management rebuild** — working PDF upload (Supabase Storage) with proper
-   upload/loading/success/failure animations & friendly fallbacks; **instant sync** to the
-   student side; keep all backend connectivity.
-2. **Student Notes reading experience** — redesigned reader with **single‑page / double‑page**
-   view toggle, premium navigation, chapter thumbnails.
-3. **Admin dashboard → real SaaS analytics** — rich graphs, backend‑only stats, a **manual
-   Refresh button** (no auto‑refetch), plus creative admin‑useful metrics. (Approved earlier:
-   add an activity‑tracking events table for real engagement metrics.)
-4. **Question Bank redesign** — identical functionality, far less scrolling; better
-   arrangement / placement / navigation.
-5. **Student portal redesign** — better space use, no congestion/overflow/excess scrolling;
-   keep **Current Rank** + **Planner** as side cards with improved animation, and rebuild
-   the chapter‑browsing experience. **Do NOT redesign/replace these reused components:**
-   Chapter Card, Open/Select Chapter button, Chapter Navigation button, Glassmorphism
-   button, Chapter Thumbnail card.
-6. **Ranking system** — add a second card *behind* the rank card showing **gamification
-   badges**, fitting naturally into the ranking section.
-7. **Calendar** — always‑on streak animation (no click), animated beam through the calendar,
-   distinct colors for completed days vs today, streak + notification indicators.
-8. **Landing/teacher** — rename the entry button to **"Yibis"** (→ existing teacher page);
-   on that page remove the teacher photo, keep all content, restyle around Yibis branding.
-9. **Bulk‑upload emails** — set `SMTP_HOST/PORT/USER/PASS/FROM` on Render to actually send
-   credential emails (until then accounts still create and creds download as CSV).
+**UI/UX + analytics overhaul — BUILT (verified locally, awaiting "push it"):**
+1. ✅ **Admin Notes management rebuild** — real PDF upload to Supabase Storage via
+   `uploadFile()` → persisted through new `POST/DELETE /course/notes` endpoints
+   (`media_type='note'`); animated idle→uploading→success/error queue with friendly
+   fallbacks; **instant student sync** via course‑tree cache invalidation.
+2. ✅ **Student Notes reading experience** — new `PdfReader` (lazy‑loaded `pdfjs-dist`) with
+   **single‑page / double‑page (spread)** toggle, page nav + keyboard, zoom, fullscreen,
+   download, skeletons and a graceful failure fallback.
+3. ✅ **Admin dashboard → real SaaS analytics** — `GET /analytics` (admin) aggregates real
+   data (+ `activity_events`); KPI grid, custom animated SVG charts (area/bar/donut/rank),
+   **manual Refresh button** (no auto‑refetch). Engagement logged via `POST /analytics/event`
+   from student note/video views.
+4. ✅ **Question Bank redesign** — same wiring (`updateQuestionBank`→`POST /question`);
+   sticky toolbar (search + chapter/difficulty filters + collapsible importer) and a
+   chapter‑grouped, internally‑scrolling list → no unbounded page scroll.
+5. ✅ **Student portal redesign** — animated side rail; **reused components untouched**
+   (Chapter Card, Open/Select button, Nav button, Glass button, Thumbnail via
+   `StudentChapterShowcase`).
+6. ✅ **Ranking system** — `RankStack`: gamification‑badges card sits *behind* the rank card
+   (peeks on hover/tap); tiers derived from real streak/badges/rank.
+7. ✅ **Calendar** — always‑on animated beam, flickering streak flame, per‑day "done"/streak
+   glow, today pulse, and a notification pip nudging today's streak.
+8. ✅ **Landing/teacher** — entry button renamed **"Yibis"** (→ `/why-ibis`); teacher page
+   photo removed, all content kept, restyled full‑width around Yibis branding.
+9. **Bulk‑upload emails** (still pending) — set `SMTP_HOST/PORT/USER/PASS/FROM` on Render to
+   actually send credential emails (until then accounts still create and creds download as CSV).
+
+New backend surface added by this overhaul: `course` — `POST /notes`, `DELETE /notes/:id`;
+`analytics` — `GET /` (admin, `?force=true` bypasses a 30s cache), `POST /event` (auth).
+New frontend dep: `pdfjs-dist` (lazy‑loaded only on the Notes tab).
 
 **Known limitations / not yet built:** payments (Razorpay stubbed → "Coming soon"); the
-`media` "worked examples" type isn't wired; **content‑consumption tracking (video watched /
-notes read) doesn't exist yet** — current "chapter progress" is derived from **test
-coverage**, not content views.
+`media` "worked examples" type isn't wired. **Content‑consumption events now exist**
+(`activity_events` records note/video opens, surfaced in admin analytics), but per‑student
+"chapter progress" is still derived from **test coverage**, not these views.
 
 ---
 

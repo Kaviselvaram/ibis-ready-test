@@ -1,5 +1,8 @@
 import React, { useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Edit3, FileUp, Plus, Save, Trash2, Database, X } from "lucide-react";
+import {
+  AlertTriangle, CheckCircle2, Edit3, FileUp, Plus, Save, Trash2, Database, X,
+  Search, ChevronDown, ChevronRight, Upload, ListFilter
+} from "lucide-react";
 import { normalizeUpload, bankSummary, DIFFICULTIES, BLOOM_LEVELS } from "../../repositories/QuestionBankRepository";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -23,12 +26,44 @@ export function AdminQuestionBank({ questionBank, setQuestionBank }) {
   const [raw, setRaw] = useState("");
   const [result, setResult] = useState(null); // { added, errors }
   const [editingId, setEditingId] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [chapterFilter, setChapterFilter] = useState("all");
+  const [difficultyFilter, setDifficultyFilter] = useState("all");
+  const [collapsed, setCollapsed] = useState({}); // chapter name -> true if collapsed
   const fileRef = useRef(null);
 
   const summary = useMemo(() => questionBank ? bankSummary(questionBank) : { total: 0, chapters: [] }, [questionBank]);
 
+  // Filter, then group by chapter so the list is scannable instead of one long scroll.
+  const groups = useMemo(() => {
+    if (!questionBank) return [];
+    const q = query.trim().toLowerCase();
+    const filtered = questionBank.filter((item) => {
+      if (chapterFilter !== "all" && item.chapter !== chapterFilter) return false;
+      if (difficultyFilter !== "all" && item.difficulty !== difficultyFilter) return false;
+      if (!q) return true;
+      return (
+        (item.question || "").toLowerCase().includes(q) ||
+        (item.topic || "").toLowerCase().includes(q) ||
+        (item.chapter || "").toLowerCase().includes(q)
+      );
+    });
+    const byChapter = new Map();
+    filtered.forEach((item) => {
+      if (!byChapter.has(item.chapter)) byChapter.set(item.chapter, []);
+      byChapter.get(item.chapter).push(item);
+    });
+    return [...byChapter.entries()]
+      .map(([name, items]) => ({ name, items }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [questionBank, query, chapterFilter, difficultyFilter]);
+
+  const filteredCount = groups.reduce((n, g) => n + g.items.length, 0);
+  const searching = query.trim() || chapterFilter !== "all" || difficultyFilter !== "all";
+
   if (!questionBank) {
-    return <div className="qbank"><p>Loading question bank...</p></div>;
+    return <div className="qbank2"><p className="qbank-empty">Loading question bank…</p></div>;
   }
 
   const ingest = (text) => {
@@ -75,92 +110,131 @@ export function AdminQuestionBank({ questionBank, setQuestionBank }) {
       setResult(null);
     }
   };
+  const toggleChapter = (name) => setCollapsed((c) => ({ ...c, [name]: !c[name] }));
 
   return (
-    <div className="qbank">
-      <div className="qbank-head">
-        <span className="qbank-kicker"><Database size={15} /> Question Bank</span>
-        <p>Upload questions as JSON (a single object or an array). Each must include chapter, topic, question, options and answer. Stored locally on this device.</p>
-      </div>
-
-      <div className="qbank-stats">
-        <div className="qbank-stat"><b>{summary.total}</b><span>Total questions</span></div>
-        <div className="qbank-stat"><b>{summary.chapters.length}</b><span>Chapters covered</span></div>
-        <button type="button" className="qbank-clear" onClick={clearAll} disabled={!summary.total}>
-          <Trash2 size={14} /> Clear all
-        </button>
-      </div>
-
-      <div className="qbank-upload">
-        <textarea
-          className="qbank-textarea"
-          value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder={SAMPLE}
-          spellCheck={false}
-        />
-        <div className="qbank-upload-actions">
-          <button type="button" className="qbank-btn" onClick={() => fileRef.current?.click()}>
-            <FileUp size={16} /> Upload .json
+    <div className="qbank2">
+      {/* Sticky toolbar: stats + search + filters + import toggle. */}
+      <div className="qbank2-toolbar">
+        <div className="qbank2-stats">
+          <span className="qbank2-kicker"><Database size={14} /> {summary.total} questions</span>
+          <span className="qbank2-kicker sub">{summary.chapters.length} chapters</span>
+        </div>
+        <div className="qbank2-search">
+          <Search size={15} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search question, topic or chapter…"
+          />
+          {query && <button type="button" onClick={() => setQuery("")} aria-label="Clear search"><X size={13} /></button>}
+        </div>
+        <div className="qbank2-filters">
+          <label className="qbank2-select">
+            <ListFilter size={13} />
+            <select value={chapterFilter} onChange={(e) => setChapterFilter(e.target.value)}>
+              <option value="all">All chapters</option>
+              {summary.chapters.map((c) => <option key={c.name} value={c.name}>{c.name} ({c.count})</option>)}
+            </select>
+          </label>
+          <label className="qbank2-select">
+            <select value={difficultyFilter} onChange={(e) => setDifficultyFilter(e.target.value)}>
+              <option value="all">Any difficulty</option>
+              {Object.values(DIFFICULTIES).map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="qbank2-actions">
+          <button type="button" className={`qbank-btn ${importOpen ? "primary" : ""}`} onClick={() => setImportOpen((o) => !o)}>
+            <Upload size={15} /> Import
           </button>
-          <button type="button" className="qbank-btn ghost" onClick={() => setRaw(SAMPLE)}>
-            Load sample
+          <button type="button" className="qbank-clear" onClick={clearAll} disabled={!summary.total} title="Remove all questions">
+            <Trash2 size={14} />
           </button>
-          <button type="button" className="qbank-btn primary" onClick={() => ingest(raw)} disabled={!raw.trim()}>
-            <Plus size={16} /> Add to bank
-          </button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={onUpload} />
         </div>
       </div>
 
-      {result && (
-        <div className="qbank-result">
-          {result.added > 0 && (
-            <p className="qbank-ok"><CheckCircle2 size={15} /> Added {result.added} question{result.added > 1 ? "s" : ""} to the bank.</p>
-          )}
-          {result.errors.length > 0 && (
-            <div className="qbank-errors">
-              <p><AlertTriangle size={15} /> {result.errors.length} entr{result.errors.length > 1 ? "ies" : "y"} skipped:</p>
-              <ul>{result.errors.slice(0, 8).map((er, i) => <li key={i}>{er}</li>)}</ul>
+      {/* Collapsible importer — hidden by default so it never pushes the list down. */}
+      {importOpen && (
+        <div className="qbank2-import">
+          <textarea
+            className="qbank-textarea"
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder={SAMPLE}
+            spellCheck={false}
+          />
+          <div className="qbank-upload-actions">
+            <button type="button" className="qbank-btn" onClick={() => fileRef.current?.click()}>
+              <FileUp size={16} /> Upload .json
+            </button>
+            <button type="button" className="qbank-btn ghost" onClick={() => setRaw(SAMPLE)}>Load sample</button>
+            <button type="button" className="qbank-btn primary" onClick={() => ingest(raw)} disabled={!raw.trim()}>
+              <Plus size={16} /> Add to bank
+            </button>
+            <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={onUpload} />
+          </div>
+          {result && (
+            <div className="qbank-result">
+              {result.added > 0 && (
+                <p className="qbank-ok"><CheckCircle2 size={15} /> Added {result.added} question{result.added > 1 ? "s" : ""} to the bank.</p>
+              )}
+              {result.errors.length > 0 && (
+                <div className="qbank-errors">
+                  <p><AlertTriangle size={15} /> {result.errors.length} entr{result.errors.length > 1 ? "ies" : "y"} skipped:</p>
+                  <ul>{result.errors.slice(0, 8).map((er, i) => <li key={i}>{er}</li>)}</ul>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {summary.chapters.length > 0 && (
-        <div className="qbank-chapters">
-          <h4>Coverage by chapter</h4>
-          {summary.chapters.map((c) => (
-            <div key={c.name} className="qbank-chapter-row">
-              <span>{c.name}</span>
-              <i className="qbank-pill">{c.count}</i>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="qbank-list">
-        <h4>Questions ({questionBank.length})</h4>
-        {questionBank.length === 0 && <p className="qbank-empty">No questions yet. Upload JSON above.</p>}
-        {questionBank.slice(0, 40).map((q) =>
-          editingId === q.id ? (
-            <QuestionEditRow key={q.id} question={q} onSave={(patch) => updateQuestion(q.id, patch)} onCancel={() => setEditingId(null)} />
-          ) : (
-            <article key={q.id} className="qbank-item">
-              <div className="qbank-item-main">
-                <span className="qbank-item-q">{q.question}</span>
-                <span className="qbank-item-tags">{q.chapter} · {q.topic} · {q.difficulty} · {q.bloomLevel}</span>
-              </div>
-              <button type="button" className="qbank-edit" aria-label="Edit question" onClick={() => setEditingId(q.id)}>
-                <Edit3 size={14} />
-              </button>
-              <button type="button" className="qbank-del" aria-label="Delete question" onClick={() => removeQuestion(q.id)}>
-                <Trash2 size={14} />
-              </button>
-            </article>
-          )
+      {/* Grouped, internally-scrolling list — the page itself doesn't grow. */}
+      <div className="qbank2-list">
+        {summary.total === 0 && (
+          <div className="qbank2-empty">
+            <Database size={26} />
+            <p>No questions yet. Use <b>Import</b> to paste or upload JSON.</p>
+          </div>
         )}
-        {questionBank.length > 40 && <p className="qbank-empty">…and {questionBank.length - 40} more.</p>}
+        {summary.total > 0 && filteredCount === 0 && (
+          <div className="qbank2-empty"><Search size={22} /><p>No questions match your search or filters.</p></div>
+        )}
+        {groups.map((group) => {
+          const isCollapsed = collapsed[group.name] && !searching;
+          return (
+            <section key={group.name} className="qbank2-group">
+              <button type="button" className="qbank2-group-head" onClick={() => toggleChapter(group.name)}>
+                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                <span className="qbank2-group-name">{group.name}</span>
+                <i className="qbank-pill">{group.items.length}</i>
+              </button>
+              {!isCollapsed && (
+                <div className="qbank2-group-items">
+                  {group.items.map((q) =>
+                    editingId === q.id ? (
+                      <QuestionEditRow key={q.id} question={q} onSave={(patch) => updateQuestion(q.id, patch)} onCancel={() => setEditingId(null)} />
+                    ) : (
+                      <article key={q.id} className="qbank-item">
+                        <div className="qbank-item-main">
+                          <span className="qbank-item-q">{q.question}</span>
+                          <span className="qbank-item-tags">{q.topic} · {q.difficulty} · {q.bloomLevel}</span>
+                        </div>
+                        <button type="button" className="qbank-edit" aria-label="Edit question" onClick={() => setEditingId(q.id)}>
+                          <Edit3 size={14} />
+                        </button>
+                        <button type="button" className="qbank-del" aria-label="Delete question" onClick={() => removeQuestion(q.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </article>
+                    )
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
     </div>
   );

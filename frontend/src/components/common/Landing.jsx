@@ -197,8 +197,8 @@ export default function Landing({ onWhyIbis: sessionOnWhyIbis }) {
 
       {/* Floating Top-Right Actions */}
       <div style={{ position: "absolute", top: "24px", right: "24px", zIndex: 100, display: "flex", alignItems: "center", gap: "16px" }}>
-        {/* Single clean entry to the mentor's story page. */}
-        <button className="landing-topbtn accent" onClick={onWhyIbis}>Meet the teacher</button>
+        {/* Single clean entry to the mentor's story page (Yibis). */}
+        <button className="landing-topbtn accent" onClick={onWhyIbis}>Yibis</button>
         <TesplePill />
         <div className="glass-dropdown-wrapper">
           <Button className="icon-btn subtle" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>

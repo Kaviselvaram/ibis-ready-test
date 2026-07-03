@@ -141,6 +141,27 @@ export class CourseRepository {
     return { id };
   }
 
+  // ---- Notes / media (PDF) ----
+  // A note is a `media` row with media_type='note'; the Storage public URL is
+  // stored in r2_object_key (same column the course tree reads back as note.url).
+  static async addNote({ topic_id, title, url }) {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from('media')
+      .insert({ topic_id, title, r2_object_key: url, media_type: 'note' })
+      .select()
+      .single();
+    if (error) throw new RepositoryError(error.message, error, 'addNote');
+    return data;
+  }
+
+  static async deleteNote(id) {
+    const supabase = getServiceSupabase();
+    const { error } = await supabase.from('media').delete().eq('id', id);
+    if (error) throw new RepositoryError(error.message, error, 'deleteNote');
+    return { id };
+  }
+
   static async getStudyData(userId) {
     const supabase = getServiceSupabase();
 

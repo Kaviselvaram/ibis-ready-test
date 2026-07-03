@@ -146,10 +146,23 @@ export function useContentAdmin() {
       { loading: "Removing video…", success: "Video removed", error: "Couldn’t remove the video." }),
   [run]);
 
+  // ---- Notes (PDF media) — fully persisted; file is already uploaded to
+  // Storage by the caller, we only persist the returned public URL here. ----
+  const addNote = useCallback((topicId, title, url) =>
+    run(() => CourseRepository.addNote({ topic_id: topicId, title, url }),
+      { loading: "Saving notes…", success: "Notes published", error: "Couldn’t save the notes." }),
+  [run]);
+
+  const deleteNote = useCallback((noteId) =>
+    run(() => CourseRepository.deleteNote(noteId),
+      { loading: "Removing notes…", success: "Notes removed", error: "Couldn’t remove the notes." }),
+  [run]);
+
   return {
     chapters, refresh, updateTopic,
     addChapter, renameChapter, deleteChapter, moveChapter, setChapterFree, setChapterPublished, setChapterImage,
     addTopic, renameTopic, deleteTopic, moveTopic, setTopicFree,
-    addVideo, updateVideo, deleteVideo
+    addVideo, updateVideo, deleteVideo,
+    addNote, deleteNote
   };
 }

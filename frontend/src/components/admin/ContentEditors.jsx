@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { FileText, Trash2, Upload, Play, Check, X } from "lucide-react";
+import { FileText, Trash2, Upload, Play, Check, X, CloudUpload, Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { getYouTubeThumbnail, getYouTubeId, getYouTubeEmbed } from "../../utils/youtube";
 import { Button } from "../ui/LegacyUI";
+import { uploadFile, MAX_PDF_BYTES } from "../../utils/upload";
 
 // Lightweight preview so an admin can confirm the right (often unlisted) video
 // loaded — without ever surfacing or copying the raw URL.
@@ -146,55 +147,143 @@ export function UploadIllustration() {
   );
 }
 
-export function AdminNotes({ topic, updateTopic }) {
+function prettyBytes(n) {
+  if (!n && n !== 0) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * PDF notes manager for a single topic — fully persisted.
+ * Flow per file: validate → upload to Supabase Storage (signed URL) → persist
+ * the returned public URL via the notes endpoint (onAddNote). The course tree is
+ * cache-invalidated on the backend, so students see new notes on their next load.
+ * Surfaces its own animated idle → uploading → success/error states in addition
+ * to the global toast — never shows a raw/developer error string.
+ */
+export function AdminNotes({ topic, onAddNote, onDeleteNote }) {
   const [dragging, setDragging] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState("PDF only · multiple files supported");
+  // Per-file upload queue: { name, size, status: 'uploading'|'success'|'error', message }
+  const [queue, setQueue] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const notes = topic.notes || [];
 
-  const addPdfFiles = (files) => {
-    if (!files.length) return;
-    setUploadMessage(`${files.length} file${files.length > 1 ? "s" : ""} added locally`);
-    updateTopic(topic.id, (topicItem) => ({
-      ...topicItem,
-      notes: [
-        ...topicItem.notes,
-        ...files.map((file) => ({ id: `pdf-${Date.now()}-${file.name}`, title: file.name, type: "pdf", content: "Uploaded PDF preview" }))
-      ]
-    }));
+  const noteTitle = (file) => file.name.replace(/\.pdf$/i, "").slice(0, 300) || "Notes";
+
+  const uploadOne = async (file, index) => {
+    const patch = (fields) => setQueue((q) => q.map((row, i) => (i === index ? { ...row, ...fields } : row)));
+    try {
+      const url = await uploadFile(file, "note");
+      const ok = await onAddNote?.(topic.id, noteTitle(file), url);
+      if (ok) patch({ status: "success", message: "Published to students" });
+      else patch({ status: "error", message: "Couldn’t save. Please try again." });
+    } catch {
+      // Friendly only — the underlying storage/network error is never surfaced.
+      patch({ status: "error", message: "Upload failed. Check your connection and retry." });
+    }
   };
 
-  const addPdf = (event) => addPdfFiles(Array.from(event.target.files || []));
+  const handleFiles = async (files) => {
+    const pdfs = files.filter((f) => f.type === "application/pdf" || /\.pdf$/i.test(f.name));
+    const rejectedType = files.length - pdfs.length;
+    const accepted = [];
+    const rows = [];
+    pdfs.forEach((f) => {
+      if (f.size > MAX_PDF_BYTES) {
+        rows.push({ name: f.name, size: f.size, status: "error", message: `Too large — max ${prettyBytes(MAX_PDF_BYTES)}` });
+      } else {
+        rows.push({ name: f.name, size: f.size, status: "uploading", message: "Uploading…" });
+        accepted.push(f);
+      }
+    });
+    if (rejectedType > 0) {
+      rows.push({ name: `${rejectedType} file${rejectedType > 1 ? "s" : ""} skipped`, size: 0, status: "error", message: "PDF files only" });
+    }
+    if (!rows.length) return;
 
-  const deleteNote = (noteId) => {
-    updateTopic(topic.id, (topicItem) => ({ ...topicItem, notes: topicItem.notes.filter((note) => note.id !== noteId) }));
+    const startAt = queue.length;
+    setQueue((q) => [...q, ...rows]);
+    setBusy(true);
+
+    // Upload accepted files sequentially so slow connections stay ordered.
+    let cursor = startAt;
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].status !== "uploading") continue;
+      const file = accepted.shift();
+      // eslint-disable-next-line no-await-in-loop
+      await uploadOne(file, cursor + i);
+    }
+    setBusy(false);
   };
+
+  const onPick = (event) => {
+    handleFiles(Array.from(event.target.files || []));
+    event.target.value = "";
+  };
+
+  const clearQueue = () => setQueue((q) => q.filter((r) => r.status === "uploading"));
 
   return (
     <div className="notes-editor">
       <section>
-        <h3>Upload PDF notes</h3>
+        <div className="notes-editor-head">
+          <h3>Upload PDF notes</h3>
+          <span className="notes-editor-hint">Saved to database · appears instantly for students</span>
+        </div>
         <label
-          className={`upload-box ${dragging ? "dragging" : ""}`}
+          className={`upload-box notes-dropzone ${dragging ? "dragging" : ""} ${busy ? "busy" : ""}`}
           onDragOver={(event) => { event.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
           onDrop={(event) => {
             event.preventDefault();
             setDragging(false);
-            addPdfFiles(Array.from(event.dataTransfer.files || []).filter((file) => file.type === "application/pdf"));
+            handleFiles(Array.from(event.dataTransfer.files || []));
           }}
         >
-          <UploadIllustration />
-          <span>Drop notes PDFs or choose files</span>
-          <small>{uploadMessage}</small>
-          <input type="file" accept="application/pdf" multiple onChange={addPdf} />
+          <span className={`notes-drop-illus ${busy ? "pulsing" : ""}`} aria-hidden="true">
+            {busy ? <Loader2 className="spin" size={26} /> : <CloudUpload size={26} />}
+          </span>
+          <span className="notes-drop-title">{busy ? "Uploading notes…" : "Drop a PDF here or choose a file"}</span>
+          <small>PDF only · up to {prettyBytes(MAX_PDF_BYTES)} · multiple files supported</small>
+          <input type="file" accept="application/pdf" multiple onChange={onPick} disabled={busy} />
         </label>
+
+        {queue.length > 0 && (
+          <div className="notes-queue">
+            <div className="notes-queue-head">
+              <span>Upload activity</span>
+              <button type="button" className="notes-queue-clear" onClick={clearQueue} disabled={busy}>Clear finished</button>
+            </div>
+            {queue.map((row, i) => (
+              <div key={`${row.name}-${i}`} className={`notes-queue-row ${row.status}`}>
+                <span className="nq-icon">
+                  {row.status === "uploading" && <Loader2 className="spin" size={15} />}
+                  {row.status === "success" && <Check size={15} />}
+                  {row.status === "error" && <AlertTriangle size={15} />}
+                </span>
+                <span className="nq-name">{row.name}{row.size ? <em> · {prettyBytes(row.size)}</em> : null}</span>
+                <span className="nq-msg">{row.message}</span>
+                {row.status === "uploading" && <span className="nq-bar" aria-hidden="true"><i /></span>}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
+
       <div className="note-list">
-        {topic.notes.length === 0 && <p className="editor-empty">No notes uploaded yet.</p>}
-        {topic.notes.map((note) => (
-          <article key={note.id}>
-            <FileText size={16} />
-            <span>{note.title}</span>
-            <Button className="icon-btn" aria-label="Delete note" onClick={() => deleteNote(note.id)}><Trash2 size={14} /></Button>
+        <h4 className="note-list-title">Published notes <span>{notes.length}</span></h4>
+        {notes.length === 0 && <p className="editor-empty">No notes uploaded yet. Add a PDF above — students will see it under the chapter’s Notes tab.</p>}
+        {notes.map((note) => (
+          <article key={note.id} className="note-row">
+            <span className="note-row-icon"><FileText size={16} /></span>
+            <span className="note-row-title">{note.title}</span>
+            {note.url && (
+              <a className="note-row-open" href={note.url} target="_blank" rel="noreferrer" title="Open PDF in a new tab">
+                <ExternalLink size={14} />
+              </a>
+            )}
+            <Button className="icon-btn" aria-label="Delete note" onClick={() => onDeleteNote?.(note.id)}><Trash2 size={14} /></Button>
           </article>
         ))}
       </div>
