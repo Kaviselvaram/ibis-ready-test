@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, Edit3, Mail, Phone, Save, Search, Trash2, X, School, GraduationCap, Users } from "lucide-react";
+import { ClipboardList, Edit3, Mail, Phone, Save, Search, Trash2, X, School, GraduationCap, Users, Award } from "lucide-react";
 import { useAdminController } from "../../hooks/useAdminController";
 import { useToast, friendlyMessage } from "../../contexts/ToastContext";
+import BadgeAdminModal from "./BadgeAdminModal";
 
 const PAGE_SIZE = 25;
 const initials = (name) => (name || "").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase() || "?";
@@ -34,6 +35,7 @@ export function StudentManager({ batches, batchFilter }) {
   const [filter, setFilter] = useState("all");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [editing, setEditing] = useState(null);
+  const [managingBadges, setManagingBadges] = useState(null);
 
   // Reset pagination whenever the filter/search/roster changes.
   useEffect(() => { setVisible(PAGE_SIZE); }, [query, filter, batchFilter, students.length]);
@@ -123,6 +125,7 @@ export function StudentManager({ batches, batchFilter }) {
                     onClick={() => navigate(`/test-history?student=${s.id}&name=${encodeURIComponent(s.name || "Student")}`)}>
                     <ClipboardList size={15} />
                   </button>
+                  <button aria-label="Manage badges" title="Manage badges" onClick={() => setManagingBadges(s)}><Award size={15} /></button>
                   <button aria-label="Edit" title="Edit" onClick={() => setEditing(JSON.parse(JSON.stringify(s)))}><Edit3 size={15} /></button>
                   <button aria-label="Delete" title="Delete" className="danger" onClick={() => remove(s)}><Trash2 size={15} /></button>
                 </div>
@@ -143,6 +146,9 @@ export function StudentManager({ batches, batchFilter }) {
 
       {editing && (
         <StudentEditor student={editing} batches={batches} onCancel={() => setEditing(null)} onSave={save} />
+      )}
+      {managingBadges && (
+        <BadgeAdminModal student={managingBadges} onClose={() => setManagingBadges(null)} />
       )}
     </section>
   );

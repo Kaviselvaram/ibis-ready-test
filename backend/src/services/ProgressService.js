@@ -72,6 +72,8 @@ export class ProgressService {
       tests,
       avgScore: tests ? Math.round(scores.reduce((n, s) => n + s, 0) / tests) : 0,
       bestScore: tests ? Math.round(Math.max(...scores)) : 0,
+      lowestScore: tests ? Math.round(Math.min(...scores)) : 0,
+      testsPassed: attempts.filter((a) => (parseFloat(a.score) || 0) >= 40).length,
       questionsAnswered,
       correct,
       accuracy: questionsAnswered ? Math.round((correct / questionsAnswered) * 100) : 0
@@ -81,6 +83,11 @@ export class ProgressService {
     const byBloom = mergeGroups(attempts, "byBloom");
     const byDifficulty = mergeGroups(attempts, "byDifficulty");
     const topicMap = Object.fromEntries(byTopic.map((t) => [t.name, t]));
+
+    // Strongest / weakest topics (real, from per-topic accuracy with ≥1 attempt).
+    const rankedTopics = byTopic.filter((t) => t.total > 0).sort((a, b) => b.accuracy - a.accuracy);
+    const strongestTopics = rankedTopics.slice(0, 3);
+    const weakestTopics = [...rankedTopics].reverse().slice(0, 3);
 
     // Per-chapter coverage + mastery from the course tree.
     const chapters = (tree || []).map((ch) => {
@@ -120,6 +127,6 @@ export class ProgressService {
       { id: "explorer", label: "Explorer", desc: "Practice across 5 chapters", earned: chaptersAttempted >= 5 }
     ];
 
-    return { totals, streak, level, chapters, byBloom, byDifficulty, trend, badges };
+    return { totals, streak, level, chapters, byBloom, byDifficulty, byTopic, strongestTopics, weakestTopics, trend, badges };
   }
 }

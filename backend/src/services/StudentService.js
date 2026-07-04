@@ -1,4 +1,5 @@
 import { StudentRepository } from "../repositories/StudentRepository.js";
+import { BadgeRepository } from "../repositories/BadgeRepository.js";
 import { cached, CACHE_KEYS } from "../utils/cache.js";
 import { sendMail, isMailConfigured, credentialsEmail } from "../utils/mailer.js";
 
@@ -130,22 +131,39 @@ export class StudentService {
     return (board || []).map((s) => ({ ...s, isMe: s.id === userId }));
   }
 
+  // Rank separation (#9): universal (batch-less) students get a GLOBAL rank and
+  // never a batch rank/batch id; batch students rank within their batch.
+  static async getRankSummary(userId) {
+    const batch = await StudentRepository.getUserBatch(userId);
+    const board = await StudentService.getLeaderboard(userId); // already batch- or global-scoped
+    const me = board.find((s) => s.isMe) || null;
+    return {
+      scope: batch ? "batch" : "global",
+      rank: me?.rank || null,
+      total: board.length,
+      badges: me?.badges || 0,
+      batch: batch ? { id: batch.id, name: batch.name } : null
+    };
+  }
+
   static async _buildLeaderboard(batchId = null) {
     try {
       const { profiles, attempts } = await StudentRepository.getLeaderboard(batchId);
       
       const statsMap = (attempts || []).reduce((acc, att) => {
-        if (!acc[att.profile_id]) acc[att.profile_id] = { totalScore: 0, count: 0, timeTaken: 0, badges: 0 };
+        if (!acc[att.profile_id]) acc[att.profile_id] = { totalScore: 0, count: 0, timeTaken: 0 };
         acc[att.profile_id].totalScore += parseFloat(att.score);
         acc[att.profile_id].count += 1;
         acc[att.profile_id].timeTaken += (att.time_taken_seconds || 0);
-        // Mock a badge calculation (e.g. 1 badge for every 3 tests taken)
-        acc[att.profile_id].badges = Math.floor(acc[att.profile_id].count / 3);
         return acc;
       }, {});
 
+      // Real earned-badge counts (replaces the old mock count/3 heuristic).
+      const badgeCounts = await BadgeRepository.countsByProfiles((profiles || []).map((p) => p.id));
+
       const leaderboard = (profiles || []).map(p => {
-        const stats = statsMap[p.id] || { totalScore: 0, count: 0, timeTaken: 0, badges: 0 };
+        const stats = statsMap[p.id] || { totalScore: 0, count: 0, timeTaken: 0 };
+        const badges = badgeCounts[p.id] || 0;
         const avgScore = stats.count > 0 ? Math.round(stats.totalScore / stats.count) : 0;
         const hrs = Math.floor(stats.timeTaken / 3600);
         const mins = Math.floor((stats.timeTaken % 3600) / 60);
@@ -157,7 +175,7 @@ export class StudentService {
           studyTime: stats.timeTaken === 0 ? "0m" : studyTime,
           accuracy: `${avgScore}%`,
           score: avgScore.toString(),
-          badges: stats.badges,
+          badges,
           active: "Recently", // A real app would use last sign-in
           isMe: false, // stamped per-request by getLeaderboard() from the cached board
           rawScore: avgScore * stats.count // for sorting

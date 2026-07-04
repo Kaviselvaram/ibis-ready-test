@@ -655,6 +655,20 @@ a.kpi-card:hover { transform: translateY(-2px); border-color: var(--clay); box-s
 .bulk-head h2 svg { color: var(--clay-dark); }
 .bulk-head p { margin: 0 0 16px; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
 .bulk-head code { background: var(--paper-soft); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.82em; color: var(--clay-dark); }
+/* Generation-config editor (#7/#8) */
+.set-card-wide { grid-column: 1 / -1; }
+.gencfg-block { margin-top: 12px; }
+.gencfg-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 0.82rem; margin-bottom: 6px; }
+.gencfg-head b.ok { color: #1f7a4d; } .gencfg-head b.warn { color: #b4412d; }
+.gencfg-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.gencfg-row.bloom { grid-template-columns: repeat(6, 1fr); }
+.gencfg-field { display: grid; gap: 3px; }
+.gencfg-field span { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+.gencfg-field input { border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font-weight: 700; background: var(--paper-card); color: var(--ink); }
+.gencfg-save { margin-top: 14px; display: inline-flex; align-items: center; gap: 7px; border: none; background: var(--clay); color: #fff; font-weight: 800; padding: 9px 16px; border-radius: 11px; cursor: pointer; }
+.gencfg-save:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 720px) { .gencfg-row.bloom { grid-template-columns: repeat(3, 1fr); } }
+
 .bulk-tools { display: flex; gap: 8px; margin-bottom: 12px; }
 .bulk-tool {
   display: inline-flex; align-items: center; gap: 7px;

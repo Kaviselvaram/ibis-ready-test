@@ -52,3 +52,61 @@ export function credentialsEmail({ name, email, password, loginUrl }) {
     `</div>`;
   return { subject, text, html };
 }
+
+// ---- Resend (free tier) — used for transactional email like welcome mails ----
+// Activates only when RESEND_API_KEY is set; otherwise callers no-op cleanly.
+export function isResendConfigured() {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
+const MAIL_FROM = () => process.env.MAIL_FROM || "Ibis Physics <no-reply@ibisphysics.com>";
+
+async function sendViaResend({ to, subject, html, text }) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ from: MAIL_FROM(), to, subject, html, text })
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Resend ${res.status}: ${body.slice(0, 200)}`);
+  }
+  return { sent: true };
+}
+
+export function welcomeEmail({ name, loginUrl }) {
+  const url = loginUrl || process.env.FRONTEND_ORIGIN || "https://ibis-frontend.pages.dev";
+  const subject = "Welcome to Ibis Physics 🦉";
+  const text =
+    `Hi ${name || "there"},\n\n` +
+    `Welcome to Ibis Physics! Your account is ready.\n\n` +
+    `Jump back in anytime: ${url}\n\n` +
+    `Watch curated lessons, read notes, take practice tests, earn badges and climb the leaderboard.\n\n` +
+    `— Ganesh & the Ibis Physics team`;
+  const html =
+    `<div style="font-family:system-ui,Arial,sans-serif;max-width:520px;margin:auto;color:#20160f">` +
+    `<h2 style="font-family:Georgia,serif">Welcome to Ibis Physics 🦉</h2>` +
+    `<p>Hi ${name || "there"}, your account is ready — let's make physics click.</p>` +
+    `<p style="color:#5c4a3c">Watch curated lessons, read notes, take smart practice tests, earn badges and climb the leaderboard.</p>` +
+    `<p style="margin:20px 0"><a href="${url}" style="display:inline-block;background:#c95f42;color:#fff;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:700">Open Ibis Physics</a></p>` +
+    `<p style="color:#7a6a5f;font-size:13px">— Ganesh &amp; the Ibis Physics team</p>` +
+    `</div>`;
+  return { subject, text, html };
+}
+
+// Send a welcome email (best-effort). Prefers Resend (free tier), falls back to
+// SMTP if that's the only thing configured. Returns a status; never throws for
+// the caller — signup must succeed even if email delivery is unavailable.
+export async function sendWelcomeEmail({ name, email, loginUrl }) {
+  const msg = welcomeEmail({ name, loginUrl });
+  try {
+    if (isResendConfigured()) { await sendViaResend({ to: email, ...msg }); return { sent: true, via: "resend" }; }
+    if (isMailConfigured()) { await sendMail({ to: email, ...msg }); return { sent: true, via: "smtp" }; }
+    return { sent: false, skipped: true, reason: "No mail provider configured" };
+  } catch (e) {
+    return { sent: false, error: e.message };
+  }
+}

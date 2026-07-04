@@ -4,8 +4,8 @@ export const getTestScope = async () => {
   return await TestEngineService.getScope();
 };
 
-export const generateTest = async ({ validatedData }) => {
-  return await TestEngineService.generateTest(validatedData);
+export const generateTest = async ({ validatedData, user }) => {
+  return await TestEngineService.generateTest(validatedData, user?.sub || null);
 };
 
 export const evaluateTest = async ({ validatedData, user }) => {
@@ -34,8 +34,25 @@ export const availableTests = async () => {
   return await TestEngineService.listAvailableTests();
 };
 
-export const startTest = async ({ req }) => {
-  return await TestEngineService.startTest(req.params.id);
+export const startTest = async ({ req, user }) => {
+  return await TestEngineService.startTest(req.params.id, user?.sub || null);
+};
+
+// ---- Admin: generation distribution config (#7/#8) ----
+export const getGenConfig = async () => {
+  return await TestEngineService.getGenerationConfig();
+};
+
+export const updateGenConfig = async ({ validatedData }) => {
+  try {
+    return await TestEngineService.updateGenerationConfig(validatedData);
+  } catch (e) {
+    if (e.statusCode === 400) {
+      const { AppError } = await import("../errors/AppError.js");
+      throw new AppError(e.message, 400, "BAD_INPUT");
+    }
+    throw e;
+  }
 };
 
 // ---- Test history + single result ----

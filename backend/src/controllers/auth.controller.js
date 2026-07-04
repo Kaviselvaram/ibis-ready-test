@@ -1,4 +1,17 @@
 import { login, refresh, logout, signup } from "../services/AuthService.js";
+import { AnalyticsRepository } from "../repositories/AnalyticsRepository.js";
+
+// Fire-and-forget login event → feeds the daily login streak (gamification).
+// Never blocks or fails the auth response. `sub` is decoded from the freshly
+// minted (already-trusted) access token, no verification needed here.
+function logLogin(accessToken) {
+  try {
+    const payload = JSON.parse(Buffer.from(accessToken.split(".")[1], "base64url").toString("utf8"));
+    if (payload?.sub) {
+      AnalyticsRepository.logEvent({ profile_id: payload.sub, event_type: "login" }).catch(() => {});
+    }
+  } catch { /* non-fatal */ }
+}
 
 // Refresh-token cookie options.
 // When the frontend and backend are on DIFFERENT domains (e.g. Cloudflare Pages
@@ -21,12 +34,14 @@ export const signupController = async ({ req, res, validatedData }) => {
   await signup(validatedData);
   const { accessToken, refreshToken } = await login({ email: validatedData.email, password: validatedData.password });
   setRefreshCookie(res, refreshToken);
+  logLogin(accessToken);
   return { access_token: accessToken };
 };
 
 export const loginController = async ({ req, res, validatedData }) => {
   const { accessToken, refreshToken } = await login(validatedData);
   setRefreshCookie(res, refreshToken);
+  logLogin(accessToken);
   return { access_token: accessToken };
 };
 

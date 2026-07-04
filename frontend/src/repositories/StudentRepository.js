@@ -46,5 +46,9 @@ export const StudentRepository = {
   // Student's own progress dashboard (analytics + gamification).
   getProgress: async () => {
     return await api.get('/student/progress');
+  },
+  // Rank summary — global for universal students, batch for batch students (#9).
+  getRank: async () => {
+    return await api.get('/student/rank');
   }
 };

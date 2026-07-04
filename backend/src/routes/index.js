@@ -10,6 +10,7 @@ import courseRoutes from "./course.routes.js";
 import questionRoutes from "./question.routes.js";
 import testRoutes from "./test.routes.js";
 import analyticsRoutes from "./analytics.routes.js";
+import badgeRoutes from "./badge.routes.js";
 
 const router = Router();
 
@@ -23,4 +24,5 @@ router.use("/course", courseRoutes);
 router.use("/question", questionRoutes);
 router.use("/test", testRoutes);
 router.use("/analytics", analyticsRoutes);
+router.use("/badges", badgeRoutes);
 export default router;

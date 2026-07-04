@@ -26,6 +26,11 @@ export const getLeaderboard = async ({ req }) => {
   return await StudentService.getLeaderboard(req.user.sub);
 };
 
+// Global-vs-batch rank separation (#9).
+export const getRank = async ({ req }) => {
+  return await StudentService.getRankSummary(req.user.sub);
+};
+
 export const getProgress = async ({ req }) => {
   return await ProgressService.getProgress(req.user.sub);
 };

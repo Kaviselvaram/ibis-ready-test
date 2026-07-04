@@ -4,7 +4,8 @@ import {
   getTestScope, generateTest, evaluateTest,
   listTests, createTest, updateTest, deleteTest,
   availableTests, startTest,
-  testHistory, testResult
+  testHistory, testResult,
+  getGenConfig, updateGenConfig
 } from "../controllers/test.controller.js";
 import { z } from "zod";
 
@@ -70,6 +71,16 @@ router.get("/result/:id", withHandler({
   requireAuth: true,
   roles: ["student", "admin"]
 }, testResult));
+
+// ---- Admin: generation distribution config (#7/#8) ----
+router.get("/config", admin(z.object({}).strict(), getGenConfig));
+router.put("/config", admin(
+  z.object({
+    difficulty: z.record(z.string(), z.number().min(0).max(100)).optional(),
+    bloom: z.record(z.string(), z.number().min(0).max(100)).optional()
+  }),
+  updateGenConfig
+));
 
 // ---- Admin: manage tests ----
 router.get("/manage", admin(z.object({}).strict(), listTests));

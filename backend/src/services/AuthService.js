@@ -3,6 +3,7 @@ import { PaymentRepository } from "../repositories/PaymentRepository.js";
 import { AppError } from "../errors/AppError.js";
 import { generateTokens, verifyRefreshToken } from "../utils/jwt.js";
 import { getRedisClient } from "../config/redis.js";
+import { sendWelcomeEmail } from "../utils/mailer.js";
 
 export const signup = async ({ email, password, name }) => {
   const { data, error } = await UserRepository.signUp(email, password, { full_name: name });
@@ -22,6 +23,12 @@ export const signup = async ({ email, password, name }) => {
     // Don't fail signup over this — log loudly; trigger/backfill will reconcile.
     console.error("Profile creation failed after signup:", profileError.message);
   }
+
+  // Fire-and-forget welcome email (#4). Env-gated on RESEND_API_KEY; a delivery
+  // failure must never affect the signup response.
+  sendWelcomeEmail({ name, email: data.user.email })
+    .then((r) => { if (r?.error) console.warn("Welcome email not sent:", r.error); })
+    .catch((e) => console.warn("Welcome email error (non-fatal):", e.message));
 
   return { id: data.user.id, email: data.user.email };
 };

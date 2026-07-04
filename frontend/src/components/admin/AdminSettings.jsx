@@ -1,12 +1,77 @@
 import React, { useEffect, useState } from "react";
-import { User, Mail, ShieldCheck, Server, CheckCircle2, AlertCircle, CreditCard, BookOpen, Users, ClipboardList, Database, ExternalLink } from "lucide-react";
+import { User, Mail, ShieldCheck, Server, CheckCircle2, AlertCircle, CreditCard, BookOpen, Users, ClipboardList, Database, ExternalLink, Sliders, Save } from "lucide-react";
 import { useAuthenticationController } from "../../hooks/useAuthenticationController";
 import { useCourseContext } from "../../contexts/CourseContext";
 import { useAdminController } from "../../hooks/useAdminController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { api } from "../../api/ApiClient";
 import { isSupabaseConfigured } from "../../lib/supabaseClient";
 
 const money = (n, cur) => `${cur === "INR" ? "₹" : ""}${Number(n).toLocaleString("en-IN")}`;
+
+const DIFF_KEYS = ["Easy", "Medium", "Hard"];
+const BLOOM_KEYS = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"];
+
+// Admin editor for the test-generation distribution (#7/#8). Reads and writes
+// the backend config — never hardcoded. Backend normalizes proportionally, so
+// the values are relative weights (shown as %); a live sum helps the admin.
+function GenerationConfigCard() {
+  const toast = useToast();
+  const [cfg, setCfg] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { api.get("/test/config").then(setCfg).catch(() => {}); }, []);
+
+  const setVal = (axis, key, v) => {
+    const n = Math.max(0, Math.min(100, Number(v) || 0));
+    setCfg((c) => ({ ...c, [axis]: { ...c[axis], [key]: n } }));
+  };
+  const sum = (axis) => (cfg ? Object.values(cfg[axis] || {}).reduce((a, b) => a + Number(b || 0), 0) : 0);
+
+  const save = async () => {
+    if (!cfg || busy) return;
+    setBusy(true);
+    try {
+      const saved = await api.put("/test/config", { difficulty: cfg.difficulty, bloom: cfg.bloom });
+      setCfg(saved);
+      toast.success("Generation distribution saved");
+    } catch (e) {
+      toast.error(friendlyMessage(e, "Couldn’t save the distribution."));
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <section className="set-card set-card-wide">
+      <h2><Sliders size={16} /> Test generation distribution</h2>
+      <p className="set-muted">How every generated paper is balanced. Applies to 50Q and 100Q papers.</p>
+      {!cfg ? <p className="set-muted">Loading…</p> : (
+        <>
+          <div className="gencfg-block">
+            <div className="gencfg-head"><span>Difficulty</span><b className={sum("difficulty") === 100 ? "ok" : "warn"}>{sum("difficulty")}%</b></div>
+            <div className="gencfg-row">
+              {DIFF_KEYS.map((k) => (
+                <label key={k} className="gencfg-field"><span>{k}</span>
+                  <input type="number" min="0" max="100" value={cfg.difficulty?.[k] ?? 0} onChange={(e) => setVal("difficulty", k, e.target.value)} /></label>
+              ))}
+            </div>
+          </div>
+          <div className="gencfg-block">
+            <div className="gencfg-head"><span>Bloom's taxonomy</span><b className={sum("bloom") === 100 ? "ok" : "warn"}>{sum("bloom")}%</b></div>
+            <div className="gencfg-row bloom">
+              {BLOOM_KEYS.map((k) => (
+                <label key={k} className="gencfg-field"><span>{k}</span>
+                  <input type="number" min="0" max="100" value={cfg.bloom?.[k] ?? 0} onChange={(e) => setVal("bloom", k, e.target.value)} /></label>
+              ))}
+            </div>
+          </div>
+          <button type="button" className="gencfg-save" onClick={save} disabled={busy}>
+            <Save size={15} /> {busy ? "Saving…" : "Save distribution"}
+          </button>
+        </>
+      )}
+    </section>
+  );
+}
 
 export default function AdminSettings() {
   const { user } = useAuthenticationController();
@@ -86,6 +151,8 @@ export default function AdminSettings() {
             <div className="set-stat"><Users size={16} /><strong>{students?.length || 0}</strong><span>Students</span></div>
           </div>
         </section>
+
+        <GenerationConfigCard />
 
         <section className="set-card">
           <h2><ExternalLink size={16} /> Quick links</h2>

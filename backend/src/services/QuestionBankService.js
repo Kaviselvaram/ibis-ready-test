@@ -40,13 +40,15 @@ export class QuestionBankService {
   static async saveBank(questions) {
     try {
       const topicsData = await QuestionBankRepository.getTopicsData();
-      
+
+      // Case-insensitive keys (#13): "Mechanics"/"mechanics" map to one chapter.
+      const norm = (s) => String(s || "").trim().toLowerCase();
       const topicMap = {};
       const chapterMap = {};
       for (const t of topicsData) {
         if (t.chapters) {
-          topicMap[`${t.chapters.title}:${t.title}`] = t.id;
-          chapterMap[t.chapters.title] = t.chapter_id;
+          topicMap[`${norm(t.chapters.title)}:${norm(t.title)}`] = t.id;
+          chapterMap[norm(t.chapters.title)] = t.chapter_id;
         }
       }
 
@@ -62,19 +64,21 @@ export class QuestionBankService {
       for (const q of questions) {
         const chapterTitle = q.chapter;
         const topicTitle = q.topic;
-        
-        let chapterId = chapterMap[chapterTitle];
+        const cKey = norm(chapterTitle);
+        const tKey = `${cKey}:${norm(topicTitle)}`;
+
+        let chapterId = chapterMap[cKey];
         if (!chapterId) {
           chapterId = await QuestionBankRepository.upsertChapter(chapterTitle);
-          chapterMap[chapterTitle] = chapterId;
+          chapterMap[cKey] = chapterId;
         }
-        
-        let topicId = topicMap[`${chapterTitle}:${topicTitle}`];
+
+        let topicId = topicMap[tKey];
         if (!topicId) {
           topicId = await QuestionBankRepository.upsertTopic(chapterId, topicTitle);
-          topicMap[`${chapterTitle}:${topicTitle}`] = topicId;
+          topicMap[tKey] = topicId;
         }
-        
+
         const isNew = q.id.startsWith('seed-') || q.id.startsWith('q-');
         const dbId = isNew ? crypto.randomUUID() : q.id;
 
@@ -83,7 +87,12 @@ export class QuestionBankService {
           topic_id: topicId,
           prompt: q.question,
           options: q.options,
-          difficulty_level: diffMap[q.difficulty] || 2
+          difficulty_level: diffMap[q.difficulty] || 2,
+          // Persist Bloom + metadata so the Bloom's distribution (#8) has real data.
+          bloom_level: q.bloomLevel || 'Understand',
+          question_type: q.questionType || 'MCQ',
+          explanation: q.explanation || null,
+          source: q.source || 'Uploaded'
         });
 
         answersToUpsert.push({

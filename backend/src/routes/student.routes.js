@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { withHandler } from "../utils/routeBuilder.js";
-import { getStudents, saveStudents, deleteStudent, bulkCreateStudents, getLeaderboard, getProgress } from "../controllers/student.controller.js";
+import { getStudents, saveStudents, deleteStudent, bulkCreateStudents, getLeaderboard, getProgress, getRank } from "../controllers/student.controller.js";
 import { z } from "zod";
 
 const bulkSchema = z.object({
   sendEmail: z.boolean().optional().default(true),
+  // Email is validated per-row inside the service so ONE bad row doesn't reject
+  // the whole import — invalid/duplicate rows are reported, not blocking (#12).
   rows: z.array(z.object({
     full_name: z.string().trim().max(200).optional().default(""),
-    email: z.string().trim().email(),
+    email: z.string().trim().max(200).optional().default(""),
     phone: z.string().trim().max(40).optional().default(""),
     grade: z.string().trim().max(40).optional().default(""),
     batch_code: z.string().trim().max(40).optional().default("")
@@ -29,6 +31,13 @@ router.get("/progress", withHandler({
   schema: z.object({}).strict(),
   requireAuth: true
 }, getProgress));
+
+// Rank summary — global for universal students, batch for batch students (#9).
+router.get("/rank", withHandler({
+  method: "GET",
+  schema: z.object({}).strict(),
+  requireAuth: true
+}, getRank));
 
 // Roster management is admin-only.
 router.get("/", withHandler({

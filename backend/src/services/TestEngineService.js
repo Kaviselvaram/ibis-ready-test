@@ -4,6 +4,9 @@ import { TestRepository } from "../repositories/TestRepository.js";
 import { getRedisClient } from "../config/redis.js";
 import { AppError } from "../errors/AppError.js";
 import { QuestionBankService } from "./QuestionBankService.js";
+import { GenerationService } from "./GenerationService.js";
+import { QuestionHistoryRepository } from "../repositories/QuestionHistoryRepository.js";
+import { BadgeService } from "./BadgeService.js";
 import { DIFFICULTIES } from "../../../shared/contracts/v1/question/QuestionEnums.js";
 import { invalidate, CACHE_KEYS } from "../utils/cache.js";
 
@@ -168,7 +171,16 @@ export class TestEngineService {
     return { total: bank.length, chapters };
   }
 
-  static async generateTest({ chapter, topic, chapters, topics, count }) {
+  /**
+   * Intelligent, fully backend-driven test generation (#6/#7/#8).
+   *  - Prefers questions the user has NOT seen (per-user question_history).
+   *  - When there aren't enough unseen questions to fill the paper, the user's
+   *    history is auto-reset and a fresh cycle begins.
+   *  - Selection honours BOTH the admin-configurable difficulty distribution and
+   *    the Bloom's-taxonomy distribution simultaneously.
+   *  - Records the served questions so the next paper stays fresh.
+   */
+  static async generateTest({ chapter, topic, chapters, topics, count }, userId = null) {
     const bank = await QuestionBankService.getBank();
     let pool = bank;
     // Accept single (back-compat) or multi-select scope; none → full syllabus mock.
@@ -177,40 +189,59 @@ export class TestEngineService {
     if (chapterSet) pool = pool.filter((q) => chapterSet.has(q.chapter));
     if (topicSet) pool = pool.filter((q) => topicSet.has(q.topic));
 
-    if (pool.length <= count) return secureShuffleArray(pool);
+    if (!pool.length) return [];
 
-    const buckets = { Easy: [], Medium: [], Hard: [] };
-    pool.forEach((q) => {
-      const diffLabel = Object.keys(DIFFICULTIES).find(k => DIFFICULTIES[k] === q.difficulty) || 'Medium';
-      (buckets[diffLabel] || (buckets[diffLabel] = [])).push(q);
-    });
-    Object.keys(buckets).forEach((k) => (buckets[k] = secureShuffleArray(buckets[k])));
+    const picked = await TestEngineService._pickForUser(pool, count, userId);
 
-    const targets = {
-      Easy: Math.round(count * 0.3),
-      Medium: Math.round(count * 0.45),
-    };
-    targets.Hard = count - targets.Easy - targets.Medium;
-
-    let picked = [];
-    ["Easy", "Medium", "Hard"].forEach((level) => {
-      picked.push(...(buckets[level] || []).slice(0, Math.max(0, targets[level])));
-    });
-
-    if (picked.length < count) {
-      const chosen = new Set(picked.map((q) => q.id));
-      const remaining = secureShuffleArray(pool.filter((q) => !chosen.has(q.id)));
-      picked.push(...remaining.slice(0, count - picked.length));
-    }
-
-    // Strip answers before sending to client
-    const testQuestions = secureShuffleArray(picked).slice(0, count).map(q => {
+    // Strip answers/explanations before sending to the client.
+    return picked.map((q) => {
       const { answer, explanation, ...safeQ } = q;
       return safeQ;
     });
-    
-    return testQuestions;
   }
+
+  /**
+   * Shared intelligent selection used by BOTH practice generation and live-test
+   * start, so every generated paper is fresh + distribution-balanced.
+   * Returns the picked questions WITH answers (caller strips as needed).
+   */
+  static async _pickForUser(pool, count, userId) {
+    // No-repeat cycle: prefer unseen; reset when we can't fill a fresh paper.
+    let effectivePool = pool;
+    if (userId) {
+      try {
+        const seen = await QuestionHistoryRepository.getSeenIds(userId);
+        const unseen = pool.filter((q) => !seen.has(q.id));
+        if (unseen.length >= Math.min(count, pool.length)) {
+          effectivePool = unseen;
+        } else if (seen.size > 0) {
+          // Every (or nearly every) in-scope question has been served → new cycle.
+          await QuestionHistoryRepository.reset(userId);
+          effectivePool = pool;
+        } else {
+          effectivePool = unseen.length ? unseen : pool;
+        }
+      } catch (e) {
+        // History is an enhancement, never a blocker — fall back to the full pool.
+        console.error("question_history lookup failed (non-fatal):", e.message);
+        effectivePool = pool;
+      }
+    }
+
+    const config = await GenerationService.getConfig();
+    const picked = GenerationService.selectByDistribution(effectivePool, count, config);
+
+    // Remember what we served so future papers stay fresh (best-effort).
+    if (userId && picked.length) {
+      QuestionHistoryRepository.recordSeen(userId, picked.map((q) => q.id))
+        .catch((e) => console.error("question_history record failed (non-fatal):", e.message));
+    }
+    return picked;
+  }
+
+  // ---- Admin: generation distribution config (#7/#8) ----
+  static getGenerationConfig() { return GenerationService.getConfig(); }
+  static updateGenerationConfig(patch) { return GenerationService.updateConfig(patch); }
 
   static async evaluateTest({ questions, answers, meta }, userId = null) {
     const bank = await QuestionBankService.getBank();
@@ -308,6 +339,10 @@ export class TestEngineService {
         } else {
           attemptId = data?.id || null;
           await invalidate(CACHE_KEYS.leaderboard);
+          // Re-evaluate badges (new attempt/correct answers may earn some).
+          // Fire-and-forget — must never delay or fail the student's report.
+          BadgeService.getForUser(userId).catch((e) =>
+            console.error("badge evaluation failed (non-fatal):", e.message));
         }
       } catch (e) {
         console.error("Could not record test attempt (non-fatal):", e.message);
@@ -378,7 +413,9 @@ export class TestEngineService {
   }
 
   // Build a ready-to-take test (answers stripped) from a live test config.
-  static async startTest(testId) {
+  // Uses the same intelligent, no-repeat, distribution-balanced selection as
+  // practice generation so every started paper is fresh for the student.
+  static async startTest(testId, userId = null) {
     const { data: test, error } = await TestRepository.getTestById(testId);
     if (error || !test) throw new AppError("Test not found", 404, "NOT_FOUND");
     if (!test.is_live) throw new AppError("This test is not currently available", 403, "FORBIDDEN");
@@ -398,7 +435,8 @@ export class TestEngineService {
     if (!pool.length) throw new AppError("No questions available for this test yet", 409, "NO_QUESTIONS");
 
     const count = Math.min(test.question_count, pool.length);
-    const questions = secureShuffleArray(pool).slice(0, count).map((q) => {
+    const picked = await TestEngineService._pickForUser(pool, count, userId);
+    const questions = picked.map((q) => {
       const { answer, explanation, ...safe } = q;
       return safe;
     });

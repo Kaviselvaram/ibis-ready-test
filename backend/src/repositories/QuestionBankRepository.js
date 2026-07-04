@@ -55,44 +55,56 @@ export class QuestionBankRepository {
     return true;
   }
 
+  // Case-insensitive chapter match (#13): "Mechanics"/"mechanics"/"MECHANICS"
+  // resolve to the same existing chapter instead of creating casing duplicates.
+  // ilike is passed the raw title with wildcard metacharacters escaped so it
+  // behaves as a case-insensitive exact match.
   static async upsertChapter(title) {
     const supabase = getServiceSupabase();
+    const needle = escapeIlike(String(title).trim());
     const { data, error } = await supabase
       .from('chapters')
       .select('id')
-      .eq('title', title)
-      .maybeSingle();
+      .ilike('title', needle)
+      .order('order_index', { ascending: true })
+      .limit(1);
 
     if (error) throw new RepositoryError(error.message, error, 'upsertChapter');
-    if (data) return data.id;
+    if (data && data.length) return data[0].id;
 
     const id = crypto.randomUUID();
     const { error: insertError } = await supabase
       .from('chapters')
-      .insert({ id, title, order_index: 0 });
-      
+      .insert({ id, title: String(title).trim(), order_index: 0 });
+
     if (insertError) throw new RepositoryError(insertError.message, insertError, 'upsertChapter');
     return id;
   }
 
   static async upsertTopic(chapterId, title) {
     const supabase = getServiceSupabase();
+    const needle = escapeIlike(String(title).trim());
     const { data, error } = await supabase
       .from('topics')
       .select('id')
       .eq('chapter_id', chapterId)
-      .eq('title', title)
-      .maybeSingle();
+      .ilike('title', needle)
+      .limit(1);
 
     if (error) throw new RepositoryError(error.message, error, 'upsertTopic');
-    if (data) return data.id;
+    if (data && data.length) return data[0].id;
 
     const id = crypto.randomUUID();
     const { error: insertError } = await supabase
       .from('topics')
-      .insert({ id, chapter_id: chapterId, title, order_index: 0 });
-      
+      .insert({ id, chapter_id: chapterId, title: String(title).trim(), order_index: 0 });
+
     if (insertError) throw new RepositoryError(insertError.message, insertError, 'upsertTopic');
     return id;
   }
+}
+
+// Escape ilike wildcards so a literal title is matched case-insensitively.
+function escapeIlike(s) {
+  return s.replace(/[\\%_]/g, (m) => `\\${m}`);
 }

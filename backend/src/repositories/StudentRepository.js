@@ -83,12 +83,16 @@ export class StudentRepository {
     }
 
     const results = [];
+    const seenInBatch = new Set(); // in-file duplicate detection (#12)
     for (const row of rows) {
       const email = (row.email || "").trim().toLowerCase();
       const name = (row.full_name || "").trim();
       const entry = { email, name, status: "created", password: null, error: null };
 
       if (!email) { entry.status = "error"; entry.error = "Missing email"; results.push(entry); continue; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { entry.status = "error"; entry.error = "Invalid email"; results.push(entry); continue; }
+      if (seenInBatch.has(email)) { entry.status = "skipped"; entry.error = "Duplicate in import"; results.push(entry); continue; }
+      seenInBatch.add(email);
 
       const password = StudentRepository._tempPassword();
       try {
@@ -175,6 +179,19 @@ export class StudentRepository {
     const { data, error } = await supabase.from('profiles').select('batch_id').eq('id', userId).single();
     if (error) return null;
     return data?.batch_id || null;
+  }
+
+  // The user's batch {id,name} or null for universal (batch-less) students.
+  // Drives the global-vs-batch rank separation (#9).
+  static async getUserBatch(userId) {
+    const supabase = getServiceSupabase();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('batch_id, batches ( id, name )')
+      .eq('id', userId)
+      .single();
+    if (error || !data?.batch_id) return null;
+    return { id: data.batch_id, name: data.batches?.name || null };
   }
 
   // Leaderboard source rows. When batchId is given, only that batch's students
