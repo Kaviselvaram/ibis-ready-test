@@ -164,7 +164,7 @@ export class StudentRepository {
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from('test_attempts')
-      .select('title, test_type, score, total, correct, wrong, skipped, completed_at, report')
+      .select('title, test_type, score, total, correct, wrong, skipped, time_taken_seconds, completed_at, report')
       .eq('profile_id', profileId)
       .order('completed_at', { ascending: false })
       .limit(300);

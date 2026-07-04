@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Flame, Trophy, Target, TrendingUp, Award, Brain, BookOpen,
-  ClipboardList, CheckCircle2, Zap, BarChart3, Gauge, Medal, ArrowUpRight, ArrowDownRight
+  ClipboardList, CheckCircle2, Zap, BarChart3, Gauge, Medal, ArrowUpRight, ArrowDownRight,
+  Clock, Video, CalendarDays
 } from "lucide-react";
 import { StudentRepository } from "../../repositories/StudentRepository";
 import { BadgeRepository } from "../../repositories/BadgeRepository";
@@ -88,8 +89,10 @@ export default function ProgressDashboard() {
         <div className="pdash-tiles">
           <Tile icon={ClipboardList} value={totals.tests} label="Tests" />
           <Tile icon={CheckCircle2} value={totals.testsPassed} label="Passed" tone="sage" />
-          <Tile icon={Target} value={`${totals.lowestScore}%`} label="Lowest" />
           <Tile icon={Brain} value={totals.correct} label="Correct" tone="gold" />
+          <Tile icon={Clock} value={`${totals.learningHours ?? 0}h`} label="Learning time" />
+          <Tile icon={Video} value={badges?.stats?.videos ?? 0} label="Videos" tone="sage" />
+          <Tile icon={CalendarDays} value={totals.activeDays ?? 0} label="Active days" tone="gold" />
         </div>
 
         <div className="pdash-level-streak">

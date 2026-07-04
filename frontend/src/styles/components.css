@@ -3999,6 +3999,12 @@ textarea {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
+.gamify-medals {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 0 2px;
+}
 .gamify-tier {
   display: grid;
   gap: 2px;
@@ -8645,7 +8651,7 @@ body:has(.embedded-content-frame) {
 .ring-value { font-family: var(--display); font-weight: 700; font-size: 24px; fill: var(--ink); }
 .ring-sub { font-size: 9px; font-weight: 700; fill: var(--muted); }
 
-.pdash-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: center; }
+.pdash-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: center; }
 .pdash-tile { display: grid; gap: 1px; padding: 8px 12px; border-radius: 12px; background: rgba(44,31,24,0.04); }
 .pdash-tile svg { color: var(--clay-dark); }
 .pdash-tile.sage svg { color: #3f5a4c; }

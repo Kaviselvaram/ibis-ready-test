@@ -68,6 +68,10 @@ export class ProgressService {
     const questionsAnswered = attempts.reduce((n, a) => n + (a.total || 0), 0);
     const correct = attempts.reduce((n, a) => n + (a.correct || 0), 0);
 
+    // Real learning time + consistency from the attempts themselves.
+    const totalSeconds = attempts.reduce((n, a) => n + (a.time_taken_seconds || 0), 0);
+    const activeDays = new Set(attempts.map((a) => new Date(a.completed_at).toISOString().slice(0, 10))).size;
+
     const totals = {
       tests,
       avgScore: tests ? Math.round(scores.reduce((n, s) => n + s, 0) / tests) : 0,
@@ -76,7 +80,9 @@ export class ProgressService {
       testsPassed: attempts.filter((a) => (parseFloat(a.score) || 0) >= 40).length,
       questionsAnswered,
       correct,
-      accuracy: questionsAnswered ? Math.round((correct / questionsAnswered) * 100) : 0
+      accuracy: questionsAnswered ? Math.round((correct / questionsAnswered) * 100) : 0,
+      learningHours: Math.round((totalSeconds / 3600) * 10) / 10,
+      activeDays
     };
 
     const byTopic = mergeGroups(attempts, "byTopic");

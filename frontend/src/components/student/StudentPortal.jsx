@@ -15,6 +15,8 @@ import TextReveal from '../ui/TextReveal';
 import GradientBlobCard from '../ui/GradientBlobCard';
 import ChapterCardStack from '../shared/ChapterCardStack';
 import { StudentChapterShowcase } from '../common/Landing';
+import { BadgeRepository } from '../../repositories/BadgeRepository';
+import { BadgeMedallion } from './BadgeGallery';
 
 export function getCalendarDays(year, month) {
   const firstDayIndex = new Date(year, month, 1).getDay();
@@ -403,13 +405,24 @@ export function computeTiers({ streak = 0, badges = 0, rank = null }) {
   ];
 }
 
-export function RankStack({ leaderboard, streak, onOpenLeaderboard }) {
+// Pick a showcase of real badges: most-recently earned, then closest-to-earn.
+function badgeShowcase(badgeData) {
+  if (!badgeData?.badges) return [];
+  const earned = badgeData.badges.filter((b) => b.earned);
+  const next = badgeData.badges.filter((b) => !b.earned).sort((a, b) => b.progress - a.progress);
+  return [...earned.slice(-3), ...next].slice(0, 4);
+}
+
+export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard }) {
   const [peek, setPeek] = useState(false);
   const me = leaderboard?.find((s) => s.isMe);
   const rank = me?.rank || null;
   const badges = me?.badges || 0;
+  // Prefer the REAL badge system when loaded; fall back to derived tiers otherwise.
   const tiers = computeTiers({ streak, badges, rank });
-  const earned = tiers.filter((t) => t.earned).length;
+  const earned = badgeData ? badgeData.earnedCount : tiers.filter((t) => t.earned).length;
+  const total = badgeData ? badgeData.total : tiers.length;
+  const showcase = badgeShowcase(badgeData);
 
   return (
     <div
@@ -417,7 +430,7 @@ export function RankStack({ leaderboard, streak, onOpenLeaderboard }) {
       onMouseEnter={() => setPeek(true)}
       onMouseLeave={() => setPeek(false)}
     >
-      {/* Card BEHIND the rank card — gamification batches. */}
+      {/* Card BEHIND the rank card — real gamification badges. */}
       <motion.div
         className="gamify-card"
         initial={false}
@@ -426,20 +439,26 @@ export function RankStack({ leaderboard, streak, onOpenLeaderboard }) {
       >
         <div className="gamify-head">
           <span><Sparkles size={14} /> Gamification badges</span>
-          <b>{earned}/{tiers.length}</b>
+          <b>{earned}/{total}</b>
         </div>
-        <div className="gamify-grid">
-          {tiers.map((t) => {
-            const Icon = t.icon;
-            return (
-              <div key={t.key} className={`gamify-tier ${t.earned ? "earned" : "locked"}`}>
-                <span className="gamify-tier-ic"><Icon size={16} /></span>
-                <strong>{t.name}</strong>
-                <small>{t.hint}</small>
-              </div>
-            );
-          })}
-        </div>
+        {badgeData ? (
+          <div className="gamify-medals">
+            {showcase.map((b) => <BadgeMedallion key={b.key} badge={b} size={46} />)}
+          </div>
+        ) : (
+          <div className="gamify-grid">
+            {tiers.map((t) => {
+              const Icon = t.icon;
+              return (
+                <div key={t.key} className={`gamify-tier ${t.earned ? "earned" : "locked"}`}>
+                  <span className="gamify-tier-ic"><Icon size={16} /></span>
+                  <strong>{t.name}</strong>
+                  <small>{t.hint}</small>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
       {/* Front rank card — reuses the existing GradientBlobCard treatment. */}
@@ -499,6 +518,14 @@ export default function StudentPortal() {
 
   const [statsOpen, setStatsOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [badgeData, setBadgeData] = useState(null);
+
+  // Load the student's real earned badges for the rank-stack gamification card.
+  useEffect(() => {
+    let active = true;
+    BadgeRepository.getMine().then((b) => active && setBadgeData(b)).catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   return (
     <section className="app-shell">
@@ -528,6 +555,7 @@ export default function StudentPortal() {
           <RankStack
             leaderboard={leaderboard}
             streak={streak}
+            badgeData={badgeData}
             onOpenLeaderboard={() => setLeaderboardOpen(true)}
           />
 
