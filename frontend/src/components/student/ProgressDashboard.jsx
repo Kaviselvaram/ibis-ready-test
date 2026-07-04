@@ -8,7 +8,7 @@ import {
 import { StudentRepository } from "../../repositories/StudentRepository";
 import { BadgeRepository } from "../../repositories/BadgeRepository";
 import { GlassButton, Button } from "../ui/LegacyUI";
-import { RadarChart, Donut, AreaTrend, RankBars, ProgressRing, CLAY, SAGE, GOLD, PALETTE } from "../shared/Charts";
+import { RadarChart, Donut, AreaTrend, RankBars, ProgressRing, Heatmap, CLAY, SAGE, GOLD, PALETTE } from "../shared/Charts";
 import { BadgeStrip, BadgeGallery } from "./BadgeGallery";
 
 const band = (n) => (n >= 75 ? "high" : n >= 45 ? "mid" : "low");
@@ -154,6 +154,13 @@ export default function ProgressDashboard() {
           {badges ? <BadgeStrip data={badges} onOpen={() => setGalleryOpen(true)} />
             : <Card title="Badges" icon={Award} sub="Loading…"><Empty label="Loading badges…" /></Card>}
         </div>
+
+        <section className="pdash-card pdash-card-wide">
+          <header><h3><CalendarDays size={15} /> Study consistency</h3><span>last 13 weeks · tests per day</span></header>
+          <div className="pdash-card-body">
+            {data.heatmap?.length ? <Heatmap days={data.heatmap} /> : <Empty label="Your daily study rhythm will appear here" />}
+          </div>
+        </section>
       </div>
 
       {galleryOpen && <BadgeGallery data={badges} onClose={() => setGalleryOpen(false)} />}

@@ -113,6 +113,21 @@ export class ProgressService {
       };
     });
 
+    // Study-consistency heatmap: test activity per day over the last 13 weeks
+    // (91 days), real from attempt dates — powers the dashboard heatmap.
+    const dayCount = {};
+    attempts.forEach((a) => {
+      const key = new Date(a.completed_at).toISOString().slice(0, 10);
+      dayCount[key] = (dayCount[key] || 0) + 1;
+    });
+    const heatmap = [];
+    for (let i = 90; i >= 0; i--) {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      heatmap.push({ date: key, count: dayCount[key] || 0 });
+    }
+
     const streak = computeStreak(attempts.map((a) => a.completed_at));
     const xp = correct * 10 + tests * 25;
     const level = levelFrom(xp);
@@ -133,6 +148,6 @@ export class ProgressService {
       { id: "explorer", label: "Explorer", desc: "Practice across 5 chapters", earned: chaptersAttempted >= 5 }
     ];
 
-    return { totals, streak, level, chapters, byBloom, byDifficulty, byTopic, strongestTopics, weakestTopics, trend, badges };
+    return { totals, streak, level, chapters, byBloom, byDifficulty, byTopic, strongestTopics, weakestTopics, trend, heatmap, badges };
   }
 }

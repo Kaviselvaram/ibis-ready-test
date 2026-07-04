@@ -206,4 +206,34 @@ export function ProgressRing({ value, label, sub, color = CLAY, size = 104 }) {
   );
 }
 
+/* ---- Study-consistency heatmap (GitHub-style, real activity per day) ---- */
+export function Heatmap({ days }) {
+  // days: [{ date, count }] oldest→newest (91). Group into week columns.
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  const max = Math.max(1, ...days.map((d) => d.count));
+  const level = (c) => (c <= 0 ? 0 : c >= max ? 4 : Math.min(3, Math.ceil((c / max) * 3)));
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  return (
+    <div className="heatmap">
+      <div className="heatmap-grid">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="heatmap-col">
+            {week.map((d) => (
+              <span key={d.date} className={`heatmap-cell lvl-${level(d.count)}`}
+                title={`${d.date}: ${d.count} test${d.count === 1 ? "" : "s"}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="heatmap-legend">
+        <span>Less</span>
+        {[0, 1, 2, 3, 4].map((l) => <i key={l} className={`heatmap-cell lvl-${l}`} />)}
+        <span>More</span>
+      </div>
+    </div>
+  );
+}
+
 export { PALETTE, CLAY, CLAY_DARK, SAGE, GOLD };
