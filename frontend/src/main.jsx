@@ -54,10 +54,13 @@ import { CourseProvider } from "./contexts/CourseContext";
 import { AccessProvider } from "./contexts/AccessContext";
 
 import HomeSession from "./components/common/HomeSession";
-import StudentPortal from "./components/student/StudentPortal";
-import ChapterView from "./components/student/ChapterView";
-import { BatchModal } from "./components/student/StudentPortal";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
+
+// Post-login screens are lazy so an unauthenticated visitor on the landing page
+// never downloads the student portal / chapter reader code.
+const StudentPortal = React.lazy(() => import("./components/student/StudentPortal"));
+const ChapterView = React.lazy(() => import("./components/student/ChapterView"));
+const BatchModal = React.lazy(() => import("./components/student/StudentPortal").then((m) => ({ default: m.BatchModal })));
 
 // Route-level code splitting — admin, test-taking and secondary pages load on
 // demand so a student never downloads admin code (and vice versa).
@@ -81,8 +84,6 @@ const AdminBatchDetail = React.lazy(() => import("./components/admin/AdminBatchD
 const Signup = React.lazy(() => import("./components/auth/Signup"));
 const Checkout = React.lazy(() => import("./components/auth/Checkout"));
 const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage"));
-
-const FaultyTerminal = React.lazy(() => import("./components/ui/FaultyTerminal"));
 
 function App() {
   const { initializeSession, resyncSession, isSignedIn } = useAuthenticationController();
@@ -168,7 +169,11 @@ function App() {
         <Route path="*" element={<RouteFallback />} />
       </Routes>
       </Suspense>
-      {batchOpen && <BatchModal onClose={() => setBatchOpen(false)} />}
+      {batchOpen && (
+        <Suspense fallback={null}>
+          <BatchModal onClose={() => setBatchOpen(false)} />
+        </Suspense>
+      )}
     </AppLayout>
   );
 }

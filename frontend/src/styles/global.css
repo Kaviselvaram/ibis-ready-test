@@ -73,3 +73,20 @@ textarea {
 button {
   cursor: pointer;
 }
+
+/* Respect users/low-end devices that ask for reduced motion: near-instant
+   transitions and no looping background animations (big GPU saver on weak
+   hardware) — without changing any layout or functionality. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .mesh-blob,
+  .calendar-beam,
+  .badge-medallion.mythic-anim svg {
+    animation: none !important;
+  }
+}
