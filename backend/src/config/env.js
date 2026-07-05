@@ -27,7 +27,13 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 chars"),
-  TOTP_MASTER_KEY: z.string().min(32).max(32, "TOTP_MASTER_KEY must be exactly 32 chars").optional()
+  TOTP_MASTER_KEY: z.string().min(32).max(32, "TOTP_MASTER_KEY must be exactly 32 chars").optional(),
+  // Payments (Razorpay). All optional — when KEY_ID + KEY_SECRET are present the
+  // checkout goes live automatically; otherwise pricing shows "Coming soon".
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
+  MAIL_FROM: z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse({

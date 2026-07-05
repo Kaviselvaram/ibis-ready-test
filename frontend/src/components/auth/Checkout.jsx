@@ -2,7 +2,11 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { useUI } from "../../contexts/UIContext";
 import { useAccessController } from "../../hooks/useAccessController";
 import { useNavigationController } from "../../hooks/useNavigationController";
+import { useAuthenticationController } from "../../hooks/useAuthenticationController";
+import { useToast, friendlyMessage } from "../../contexts/ToastContext";
 import { CourseRepository } from "../../repositories/CourseRepository";
+import { PaymentRepository } from "../../repositories/PaymentRepository";
+import { loadRazorpay } from "../../utils/razorpay";
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, Check, Lock, GraduationCap } from 'lucide-react';
 import { Brand, Button, GlassButton, Pill } from '../ui/LegacyUI';
@@ -25,12 +29,15 @@ export default function Checkout() {
   const { enterPortal } = useAccessController();
   const { goBackFromCheckout, goToSignup } = useNavigationController();
   const { isSignedIn } = useAuthContext();
-  
+  const { user } = useAuthenticationController();
+  const toast = useToast();
+
   const onBack = goBackFromCheckout;
 
   // Pricing comes from the backend (nothing hardcoded here).
   const [pricing, setPricing] = useState(null);
   const [comingSoon, setComingSoon] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -40,12 +47,55 @@ export default function Checkout() {
     return () => { active = false; };
   }, []);
 
-  // Payments are not live yet — surface a clean "coming soon" state instead of
-  // granting access without a real, verified payment.
-  const onDone = () => setComingSoon(true);
-
   const [starterFast, setStarterFast] = useState(false);
   const [proFast, setProFast] = useState(false);
+
+  // Real Razorpay checkout. Falls back to "Coming soon" when payments are not
+  // configured on the server (pricing.available === false).
+  const startPayment = async (planId, withAddon) => {
+    if (!pricing?.available) { setComingSoon(true); return; }
+    if (!isSignedIn) { goToSignup(); return; }   // must have an account to pay
+    if (busy) return;
+    setBusy(true);
+    try {
+      const order = await PaymentRepository.createOrder(planId, withAddon);
+      const ready = await loadRazorpay();
+      if (!ready || !window.Razorpay) throw new Error("Could not load the payment gateway. Check your connection.");
+
+      const rzp = new window.Razorpay({
+        key: order.keyId,
+        order_id: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Ibis Physics",
+        description: `${order.planName} plan`,
+        prefill: { email: user?.email || "" },
+        theme: { color: "#c95f42" },
+        modal: { ondismiss: () => setBusy(false) },
+        handler: async (resp) => {
+          try {
+            await PaymentRepository.verify({
+              orderId: order.orderId,
+              paymentId: resp.razorpay_payment_id,
+              signature: resp.razorpay_signature,
+              planId,
+              addon: withAddon
+            });
+            toast.success("Payment successful — unlocking full access…");
+            setTimeout(() => { window.location.href = "/student"; }, 900);
+          } catch (e) {
+            setBusy(false);
+            toast.error(friendlyMessage(e, "Payment verification failed. If you were charged, contact support."));
+          }
+        }
+      });
+      rzp.on("payment.failed", () => { setBusy(false); toast.error("Payment failed. Please try again."); });
+      rzp.open();
+    } catch (e) {
+      setBusy(false);
+      toast.error(friendlyMessage(e, "Couldn’t start the payment. Please try again."));
+    }
+  };
 
   const starterPlan = pricing?.plans?.find((p) => p.id === "starter");
   const proPlan = pricing?.plans?.find((p) => p.id === "pro");
@@ -125,8 +175,8 @@ export default function Checkout() {
               <span className="pricing-stolen-period">/month</span>
             </div>
 
-            <button className="pricing-stolen-btn pricing-stolen-btn-light" onClick={onDone}>
-              Get Started
+            <button className="pricing-stolen-btn pricing-stolen-btn-light" onClick={() => startPayment("starter", starterFast)} disabled={busy}>
+              {busy ? "Processing…" : "Get Started"}
               <ArrowRight size={18} />
             </button>
           </div>
@@ -173,8 +223,8 @@ export default function Checkout() {
               <span className="pricing-stolen-period">/year</span>
             </div>
 
-            <button className="pricing-stolen-btn pricing-stolen-btn-dark" onClick={onDone}>
-              Enroll Now
+            <button className="pricing-stolen-btn pricing-stolen-btn-dark" onClick={() => startPayment("pro", proFast)} disabled={busy}>
+              {busy ? "Processing…" : "Enroll Now"}
               <AcademicHatIcon />
             </button>
           </div>

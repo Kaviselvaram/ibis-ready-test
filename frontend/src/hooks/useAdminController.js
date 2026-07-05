@@ -14,7 +14,6 @@ export const useAdminController = () => {
     if (!questionBank) {
       initializers.push(
         loadBank().then(bank => {
-          console.log("loadBank success:", bank, "active:", active);
           if (active) setQuestionBank(bank || []);
         }).catch(err => {
           console.error("loadBank failed:", err);

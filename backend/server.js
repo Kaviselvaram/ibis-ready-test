@@ -9,6 +9,7 @@ import { requestId } from "./src/middleware/requestId.js";
 import routes from "./src/routes/index.js";
 import { logger } from "./src/utils/logger.js";
 import { requestLogger } from "./src/middleware/requestLogger.js";
+import { handleRazorpayWebhook } from "./src/services/PaymentService.js";
 
 const app = express();
 
@@ -60,6 +61,19 @@ app.use(cookieParser());
 app.use(requestId);
 
 app.use(requestLogger);
+
+// Razorpay webhook (raw body parsed above) — reliable server-to-server
+// activation of subscriptions on payment.captured. Registered before the JSON
+// API router so it keeps the raw Buffer body needed for HMAC verification.
+app.post("/api/webhooks/razorpay", async (req, res) => {
+  try {
+    const signature = req.headers["x-razorpay-signature"];
+    const result = await handleRazorpayWebhook(req.body, signature, req.headers);
+    res.status(200).json({ received: true, ...result });
+  } catch (e) {
+    res.status(e.statusCode || 400).json({ error: e.message || "Webhook error" });
+  }
+});
 
 // API Routes
 app.use("/api", routes);

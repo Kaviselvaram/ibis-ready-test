@@ -8,26 +8,33 @@ import { ContentRepository } from "../repositories/ContentRepository.js";
 
 // Pricing is served from the backend so the monetary values are never
 // hardcoded in the client and can be changed without a frontend deploy.
-// `available: false` => payment is not live yet ("Coming soon").
+export const PRICING_PLANS = [
+  {
+    id: "starter",
+    name: "1-Month",
+    period: "month",
+    price: 2499,
+    addon: { label: "Mentor doubt chat", price: 499 }
+  },
+  {
+    id: "pro",
+    name: "12-Month",
+    period: "year",
+    price: 14999,
+    addon: { label: "Printed prep books", price: 1999 }
+  }
+];
+
+// `available` is derived from configuration: payments go live automatically the
+// moment RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET are set on the server; otherwise
+// the client shows "Coming soon". Nothing hardcoded.
+export const isPaymentEnabled = () =>
+  Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+
 export const getPricing = () => ({
   currency: "INR",
-  available: false,
-  plans: [
-    {
-      id: "starter",
-      name: "1-Month",
-      period: "month",
-      price: 2499,
-      addon: { label: "Mentor doubt chat", price: 499 }
-    },
-    {
-      id: "pro",
-      name: "12-Month",
-      period: "year",
-      price: 14999,
-      addon: { label: "Printed prep books", price: 1999 }
-    }
-  ]
+  available: isPaymentEnabled(),
+  plans: PRICING_PLANS
 });
 
 export const verifyAccess = async (user, profile) => {
