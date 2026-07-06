@@ -243,7 +243,6 @@ export default function Landing({ onWhyIbis: sessionOnWhyIbis }) {
             </span>
             <span className="title-line line-three">
               <span className="ink-word">clicks</span>
-              <span className="hero-doodle hero-doodle-underline" aria-hidden="true" />
             </span>
           </h1>
           <div className="hero-actions hero-actions-polished">

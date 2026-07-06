@@ -163,6 +163,9 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: clamp(20px, 2.6vw, 36px);
+  /* Comfortable, responsive whitespace after the last section so no widget /
+     chapter row ever sits flush against the scroll edge. */
+  padding-bottom: clamp(44px, 6vh, 80px);
   display: grid;
   gap: 22px;
   align-content: start;

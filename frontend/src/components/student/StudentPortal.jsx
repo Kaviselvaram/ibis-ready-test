@@ -83,8 +83,6 @@ export function CalendarCard({ onClick, isNested = false }) {
         )}
       </div>
       <div className="calendar-grid-wrapper">
-        {/* Always-on animated beam sweeping across the month — no click needed. */}
-        <span className="calendar-beam" aria-hidden="true" />
         <div className="weekdays-row">
           <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
         </div>
@@ -414,7 +412,6 @@ function badgeShowcase(badgeData) {
 }
 
 export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard }) {
-  const [peek, setPeek] = useState(false);
   const me = leaderboard?.find((s) => s.isMe);
   const rank = me?.rank || null;
   const badges = me?.badges || 0;
@@ -424,18 +421,34 @@ export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard })
   const total = badgeData ? badgeData.total : tiers.length;
   const showcase = badgeShowcase(badgeData);
 
+  // Two fully separate, stacked containers — Current Rank and Gamification
+  // Badges never overlap at any size/zoom.
   return (
-    <div
-      className={`rank-stack ${peek ? "peek" : ""}`}
-      onMouseEnter={() => setPeek(true)}
-      onMouseLeave={() => setPeek(false)}
-    >
-      {/* Card BEHIND the rank card — real gamification badges. */}
+    <div className="rank-stack">
+      {/* Current Rank — its own container. */}
+      <div className="rank-front">
+        <GradientBlobCard onClick={onOpenLeaderboard} className="achievement-card">
+          <div className="metric-card" style={{ background: "transparent", border: "none", boxShadow: "none", padding: "16px", cursor: "pointer", display: "grid", gap: "10px", width: "100%" }}>
+            <Trophy />
+            <span>Current rank</span>
+            <strong style={{ fontFamily: "var(--display-accent)" }}>#{rank || '-'}</strong>
+            <small>{badges} badges earned · tap for leaderboard</small>
+            <div className="mini-leaderboard">
+              {leaderboard?.slice(0, 2).map((s) => (
+                <b key={s.id}>#{s.rank} {s.name.split(" ")[0]}</b>
+              ))}
+              <b>#{rank || '-'} You</b>
+            </div>
+          </div>
+        </GradientBlobCard>
+      </div>
+
+      {/* Gamification badges — its own separate container. */}
       <motion.div
         className="gamify-card"
-        initial={false}
-        animate={{ y: peek ? -18 : 0, scale: peek ? 1 : 0.965 }}
-        transition={{ type: "spring", stiffness: 260, damping: 26 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
       >
         <div className="gamify-head">
           <span><Sparkles size={14} /> Gamification badges</span>
@@ -459,32 +472,6 @@ export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard })
             })}
           </div>
         )}
-      </motion.div>
-
-      {/* Front rank card — reuses the existing GradientBlobCard treatment. */}
-      <motion.div
-        className="rank-front"
-        initial={false}
-        animate={{ y: peek ? 6 : 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 26 }}
-      >
-        <GradientBlobCard onClick={onOpenLeaderboard} className="achievement-card">
-          <div className="metric-card" style={{ background: "transparent", border: "none", boxShadow: "none", padding: "16px", cursor: "pointer", display: "grid", gap: "10px", width: "100%" }}>
-            <Trophy />
-            <span>Current rank</span>
-            <strong style={{ fontFamily: "var(--display-accent)" }}>#{rank || '-'}</strong>
-            <small>{badges} badges earned · tap for leaderboard</small>
-            <div className="mini-leaderboard">
-              {leaderboard?.slice(0, 2).map((s) => (
-                <b key={s.id}>#{s.rank} {s.name.split(" ")[0]}</b>
-              ))}
-              <b>#{rank || '-'} You</b>
-            </div>
-          </div>
-        </GradientBlobCard>
-        <button type="button" className="rank-peek-toggle" onClick={(e) => { e.stopPropagation(); setPeek((p) => !p); }}>
-          <ChevronUp size={13} className={peek ? "flip" : ""} /> {earned}/{tiers.length} badges
-        </button>
       </motion.div>
     </div>
   );

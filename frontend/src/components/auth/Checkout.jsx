@@ -14,9 +14,10 @@ import ReflectiveTiltFrame from '../ui/ReflectiveTiltFrame';
 import TesplePill from '../ui/TesplePill';
 
 const ToggleSwitch = ({ enabled, onChange, label, isDark }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', marginTop: '16px', fontWeight: 600 }}>
-    <input type="checkbox" checked={enabled} onChange={(e) => onChange(e.target.checked)} style={{ cursor: 'pointer' }} />
-    {label}
+  <label className={`pricing-addon ${isDark ? "dark" : ""} ${enabled ? "on" : ""}`}>
+    <input type="checkbox" checked={enabled} onChange={(e) => onChange(e.target.checked)} />
+    <span className="pricing-addon-box"><Check size={13} strokeWidth={3} /></span>
+    <span className="pricing-addon-label">{label}</span>
   </label>
 );
 
