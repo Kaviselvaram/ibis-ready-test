@@ -1,9 +1,14 @@
 import { AuthClient } from '../api/AuthClient';
-import { setToken } from '../api/ApiClient';
+import { setToken, api } from '../api/ApiClient';
 import { parseToken } from '../utils/token';
 import { RepositoryError } from '../errors/RepositoryError';
 
 export const AuthenticationRepository = {
+  // Request a password-reset email (always resolves; never reveals account existence).
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  // Set a new password using the emailed token.
+  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
+
   signUp: async (email, password, metadata) => {
     try {
       const payload = await AuthClient.register(email, password, metadata?.full_name || "");

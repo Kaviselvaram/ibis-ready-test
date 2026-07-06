@@ -1,5 +1,6 @@
 import { useAccessController } from "../../hooks/useAccessController";
 import { useNavigationController } from "../../hooks/useNavigationController";
+import { useNavigate } from "react-router-dom";
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import { Brand, Button, GlassButton } from '../ui/LegacyUI';
@@ -366,6 +367,7 @@ export function SignupCharacters({ password, showPassword, isTyping }) {
 export default function Signup({ initialMode = "signup" }) {
   const { enterPortal, initiateCheckout } = useAccessController();
   const { goToHome, goToLegal } = useNavigationController();
+  const navigate = useNavigate();
   
   const onBack = goToHome;
   const onPay = () => initiateCheckout("signup");
@@ -541,7 +543,7 @@ export default function Signup({ initialMode = "signup" }) {
                 <input type="checkbox" />
                 <span>Remember for 30 days</span>
               </label>
-              {isLogin ? <button type="button">Forgot password?</button> : <span className="signup-secure-note"><Lock size={13} /> Secure checkout next</span>}
+              {isLogin ? <button type="button" onClick={() => navigate("/forgot-password")}>Forgot password?</button> : <span className="signup-secure-note"><Lock size={13} /> Secure checkout next</span>}
             </div>
 
             <GlassButton type="submit" size="default" className="auth-cta-glass" contentClassName="auth-cta-glass-text" disabled={isLoading}>

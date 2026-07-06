@@ -1,9 +1,47 @@
 import { UserRepository } from "../repositories/UserRepository.js";
 import { PaymentRepository } from "../repositories/PaymentRepository.js";
 import { AppError } from "../errors/AppError.js";
+import crypto from "crypto";
 import { generateTokens, verifyRefreshToken } from "../utils/jwt.js";
 import { getRedisClient } from "../config/redis.js";
-import { sendWelcomeEmail } from "../utils/mailer.js";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "../utils/mailer.js";
+
+const sha256 = (s) => crypto.createHash("sha256").update(s).digest("hex");
+const frontendBase = () =>
+  (process.env.FRONTEND_ORIGIN || "").split(",")[0].trim() || "https://ibis-frontend.pages.dev";
+
+// Request a password reset. Always resolves the same way (never reveals whether
+// an account exists). Emails a single-use, 1-hour link via Resend/SMTP if set.
+export const requestPasswordReset = async (email) => {
+  const clean = String(email || "").trim().toLowerCase();
+  if (!clean) return { ok: true };
+  const { data: profile } = await UserRepository.findProfileByEmail(clean);
+  if (profile?.id) {
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+    await UserRepository.createPasswordReset(profile.id, sha256(token), expiresAt);
+    const resetUrl = `${frontendBase()}/reset-password?token=${token}`;
+    // Best-effort — never blocks or reveals; logs if it couldn't send.
+    sendPasswordResetEmail({ name: profile.full_name, email: clean, resetUrl })
+      .then((r) => { if (r?.error) console.warn("Reset email not sent:", r.error); })
+      .catch((e) => console.warn("Reset email error:", e.message));
+  }
+  return { ok: true };
+};
+
+// Complete a reset: validate the single-use token, update the password, burn it.
+export const resetPassword = async (token, password) => {
+  const { data: row } = await UserRepository.findValidReset(sha256(String(token || "")));
+  if (!row) throw new AppError("This reset link is invalid or has already been used.", 400, "BAD_TOKEN");
+  if (new Date(row.expires_at) < new Date()) {
+    await UserRepository.markResetUsed(row.id);
+    throw new AppError("This reset link has expired. Please request a new one.", 400, "TOKEN_EXPIRED");
+  }
+  const { error } = await UserRepository.updateUserPassword(row.profile_id, password);
+  if (error) throw new AppError("Could not update the password. Please try again.", 500, "RESET_FAILED");
+  await UserRepository.markResetUsed(row.id);
+  return { ok: true };
+};
 
 export const signup = async ({ email, password, name }) => {
   const { data, error } = await UserRepository.signUp(email, password, { full_name: name });

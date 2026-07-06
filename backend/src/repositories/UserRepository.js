@@ -78,6 +78,39 @@ export class UserRepository {
     return supabase.auth.admin.deleteUser(userId);
   }
 
+  // ---- Password reset (custom token flow) ----
+  static async findProfileByEmail(email) {
+    const supabase = getServiceSupabase();
+    return supabase.from('profiles').select('id, email, full_name').eq('email', email).maybeSingle();
+  }
+
+  static async createPasswordReset(profileId, tokenHash, expiresAt) {
+    const supabase = getServiceSupabase();
+    // Invalidate any prior outstanding tokens for this user first.
+    await supabase.from('password_resets').update({ used: true }).eq('profile_id', profileId).eq('used', false);
+    return supabase.from('password_resets').insert({ profile_id: profileId, token_hash: tokenHash, expires_at: expiresAt });
+  }
+
+  static async findValidReset(tokenHash) {
+    const supabase = getServiceSupabase();
+    return supabase
+      .from('password_resets')
+      .select('id, profile_id, expires_at, used')
+      .eq('token_hash', tokenHash)
+      .eq('used', false)
+      .maybeSingle();
+  }
+
+  static async markResetUsed(id) {
+    const supabase = getServiceSupabase();
+    return supabase.from('password_resets').update({ used: true }).eq('id', id);
+  }
+
+  static async updateUserPassword(userId, password) {
+    const supabase = getServiceSupabase();
+    return supabase.auth.admin.updateUserById(userId, { password });
+  }
+
   static async logDeletion(userIdHash) {
     const supabase = getServiceSupabase();
     const { error } = await supabase

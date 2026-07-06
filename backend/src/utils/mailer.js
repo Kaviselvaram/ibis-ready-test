@@ -97,6 +97,35 @@ export function welcomeEmail({ name, loginUrl }) {
   return { subject, text, html };
 }
 
+export function passwordResetEmail({ name, resetUrl }) {
+  const subject = "Reset your Ibis Physics password";
+  const text =
+    `Hi ${name || "there"},\n\n` +
+    `We received a request to reset your Ibis Physics password.\n\n` +
+    `Reset it here (link expires in 1 hour): ${resetUrl}\n\n` +
+    `If you didn't request this, you can safely ignore this email.\n\n— Ibis Physics`;
+  const html =
+    `<div style="font-family:system-ui,Arial,sans-serif;max-width:520px;margin:auto;color:#20160f">` +
+    `<h2 style="font-family:Georgia,serif">Reset your password</h2>` +
+    `<p>Hi ${name || "there"}, we received a request to reset your Ibis Physics password.</p>` +
+    `<p style="margin:20px 0"><a href="${resetUrl}" style="display:inline-block;background:#c95f42;color:#fff;padding:11px 20px;border-radius:10px;text-decoration:none;font-weight:700">Reset password</a></p>` +
+    `<p style="color:#7a6a5f;font-size:13px">This link expires in 1 hour. If you didn't request it, ignore this email.</p>` +
+    `</div>`;
+  return { subject, text, html };
+}
+
+// Send a password-reset email (best-effort, Resend-or-SMTP, env-gated).
+export async function sendPasswordResetEmail({ name, email, resetUrl }) {
+  const msg = passwordResetEmail({ name, resetUrl });
+  try {
+    if (isResendConfigured()) { await sendViaResend({ to: email, ...msg }); return { sent: true, via: "resend" }; }
+    if (isMailConfigured()) { await sendMail({ to: email, ...msg }); return { sent: true, via: "smtp" }; }
+    return { sent: false, skipped: true, reason: "No mail provider configured" };
+  } catch (e) {
+    return { sent: false, error: e.message };
+  }
+}
+
 // Send a welcome email (best-effort). Prefers Resend (free tier), falls back to
 // SMTP if that's the only thing configured. Returns a status; never throws for
 // the caller — signup must succeed even if email delivery is unavailable.

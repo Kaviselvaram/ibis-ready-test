@@ -84,6 +84,8 @@ const AdminBatchDetail = React.lazy(() => import("./components/admin/AdminBatchD
 const Signup = React.lazy(() => import("./components/auth/Signup"));
 const Checkout = React.lazy(() => import("./components/auth/Checkout"));
 const LegalInfoPage = React.lazy(() => import("./components/common/LegalInfoPage"));
+const ForgotPassword = React.lazy(() => import("./components/auth/PasswordReset"));
+const ResetPassword = React.lazy(() => import("./components/auth/PasswordReset").then((m) => ({ default: m.ResetPassword })));
 
 function App() {
   const { initializeSession, resyncSession, isSignedIn } = useAuthenticationController();
@@ -160,6 +162,8 @@ function App() {
         </Route>
 
         {/* Unprotected Static Routes */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/why-ibis" element={<WhyIbisView />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/legal/:page" element={<LegalInfoPage />} />

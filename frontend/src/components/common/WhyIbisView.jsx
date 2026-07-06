@@ -1,10 +1,17 @@
 import { useNavigationController } from "../../hooks/useNavigationController";
 import React, { useRef } from 'react';
-import { Menu, ArrowLeft } from 'lucide-react';
+import { Menu, ArrowLeft, GraduationCap, TrendingUp, Users } from 'lucide-react';
 import { TimelineContent } from '../ui/timeline-animation';
 import { AwardBadge } from '../ui/award-badge';
 import { Brand, Button } from '../ui/LegacyUI';
 import TesplePill from '../ui/TesplePill';
+
+// Right-rail credibility cards — each a distinct accent while staying on-palette.
+const ACHIEVEMENTS = [
+  { icon: GraduationCap, value: "10+", label: "Years Teaching", accent: "clay" },
+  { icon: TrendingUp, value: "98%", label: "Board Success Rate", accent: "sage" },
+  { icon: Users, value: "5,000+", label: "Students Mentored", accent: "gold" }
+];
 
 export default function WhyIbisView({ onBack: sessionOnBack }) {
   const { goToHome } = useNavigationController();
@@ -58,8 +65,8 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
         <Button className="icon-btn subtle" style={{ visibility: "hidden" }} aria-hidden="true"><Menu size={18} /></Button>
       </div>
 
-      {/* Photo removed — full-width editorial layout centred on the Yibis story. */}
-      <div className="why-ibis-single-layout">
+      {/* Two-column: text-heavy left, visual credibility rail on the right. */}
+      <div className="why-ibis-split2">
         <div className="why-ibis-stage">
           <div className="why-ibis-glass-card yibis-card">
             <span className="yibis-kicker" aria-label="Yibis mentor">
@@ -100,21 +107,34 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
                 <span className="glass-badge-reflect glass-badge-pink">exam anxiety</span>, and make top-tier mentoring accessible.
               </div>
             </TimelineContent>
-
-            <div style={{ marginTop: "32px" }}>
-              <TimelineContent
-                as="div"
-                animationNum={4}
-                timelineRef={whyIbisHeroRef}
-                customVariants={textVariants}
-                style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-start" }}
-              >
-                <AwardBadge type="cbse-coaching" variant="transparent" />
-                <AwardBadge type="harvard-leadership" variant="transparent" />
-              </TimelineContent>
-            </div>
           </div>
         </div>
+
+        {/* Right credibility rail: existing award badges + new achievement cards. */}
+        <TimelineContent
+          as="aside"
+          animationNum={2}
+          timelineRef={whyIbisHeroRef}
+          customVariants={textVariants}
+          className="why-ibis-rail"
+        >
+          <div className="why-ibis-awards">
+            <AwardBadge type="cbse-coaching" variant="transparent" />
+            <AwardBadge type="harvard-leadership" variant="transparent" />
+          </div>
+          <div className="why-ach-grid">
+            {ACHIEVEMENTS.map((a) => {
+              const Icon = a.icon;
+              return (
+                <div key={a.label} className={`why-ach-card accent-${a.accent}`}>
+                  <span className="why-ach-icon"><Icon size={20} /></span>
+                  <strong className="why-ach-value">{a.value}</strong>
+                  <span className="why-ach-label">{a.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </TimelineContent>
       </div>
     </section>
   );

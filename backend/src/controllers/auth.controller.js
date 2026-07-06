@@ -1,4 +1,4 @@
-import { login, refresh, logout, signup } from "../services/AuthService.js";
+import { login, refresh, logout, signup, requestPasswordReset, resetPassword } from "../services/AuthService.js";
 import { AnalyticsRepository } from "../repositories/AnalyticsRepository.js";
 
 // Fire-and-forget login event → feeds the daily login streak (gamification).
@@ -50,6 +50,16 @@ export const refreshController = async ({ req, res }) => {
   const { accessToken, refreshToken } = await refresh(token);
   setRefreshCookie(res, refreshToken);
   return { access_token: accessToken };
+};
+
+// Always returns { ok: true } — never reveals whether the email is registered.
+export const forgotPasswordController = async ({ validatedData }) => {
+  await requestPasswordReset(validatedData.email);
+  return { ok: true };
+};
+
+export const resetPasswordController = async ({ validatedData }) => {
+  return await resetPassword(validatedData.token, validatedData.password);
 };
 
 export const logoutController = async ({ req, res, user }) => {
