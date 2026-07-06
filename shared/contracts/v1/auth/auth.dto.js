@@ -4,7 +4,9 @@ import { createSchema, ZodSanitized } from "../common/schemaFactory.js";
 // Validation and structure for Auth Endpoints
 export const LoginRequest = createSchema({
   email: ZodSanitized.email(),
-  password: z.string().min(1, "Password is required")
+  password: z.string().min(1, "Password is required"),
+  // Optional Cloudflare Turnstile token (enforced server-side only when configured).
+  turnstileToken: z.string().max(4000).optional()
 });
 
 export const LoginResponse = createSchema({
@@ -20,7 +22,8 @@ export const LoginResponse = createSchema({
 export const SignupRequest = createSchema({
   email: ZodSanitized.email(),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  name: z.string().min(1)
+  name: z.string().min(1),
+  turnstileToken: z.string().max(4000).optional()
 });
 
 export const SignupResponse = createSchema({

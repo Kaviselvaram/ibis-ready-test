@@ -33,7 +33,10 @@ const envSchema = z.object({
   RAZORPAY_KEY_ID: z.string().optional(),
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
-  MAIL_FROM: z.string().optional()
+  MAIL_FROM: z.string().optional(),
+  // Cloudflare Turnstile (free). Login/signup enforce it only when the secret is
+  // set; otherwise the captcha is dormant and auth behaves exactly as before.
+  TURNSTILE_SECRET_KEY: z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse({

@@ -5,37 +5,71 @@ import { env } from "../config/env.js";
 import { AppError } from "../errors/AppError.js";
 import { PaymentRepository } from "../repositories/PaymentRepository.js";
 import { ContentRepository } from "../repositories/ContentRepository.js";
+import { SettingsRepository } from "../repositories/SettingsRepository.js";
 
-// Pricing is served from the backend so the monetary values are never
-// hardcoded in the client and can be changed without a frontend deploy.
-export const PRICING_PLANS = [
-  {
-    id: "starter",
-    name: "1-Month",
-    period: "month",
-    price: 2499,
-    addon: { label: "Mentor doubt chat", price: 499 }
-  },
-  {
-    id: "pro",
-    name: "12-Month",
-    period: "year",
-    price: 14999,
-    addon: { label: "Printed prep books", price: 1999 }
-  }
-];
+const PRICING_KEY = "pricing_config";
 
-// `available` is derived from configuration: payments go live automatically the
-// moment RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET are set on the server; otherwise
-// the client shows "Coming soon". Nothing hardcoded.
+// Editable pricing defaults. Admins can override every field from the portal
+// (stored in app_settings.pricing_config); the client + payment engine read the
+// live config, so nothing is hardcoded on the frontend.
+export const DEFAULT_PRICING = {
+  currency: "INR",
+  defaultPlan: "pro",
+  plans: [
+    {
+      id: "starter", name: "1-Month", period: "month", price: 2499,
+      badge: "Most Flexible", buttonText: "Get Started",
+      addon: { label: "Mentor doubt chat", price: 499 },
+      features: [
+        { text: "1 Chapter Access", enabled: true },
+        { text: "Core Physics Lessons", enabled: true },
+        { text: "Active Doubt Support", enabled: true },
+        { text: "Basic Practice", enabled: true },
+        { text: "Progression Tracking", enabled: false },
+        { text: "Rewards & Badges", enabled: false },
+        { text: "Leaderboard & Ranking", enabled: false }
+      ]
+    },
+    {
+      id: "pro", name: "12-Month", period: "year", price: 14999,
+      badge: "Best Value", buttonText: "Enroll Now",
+      addon: { label: "Printed prep books", price: 1999 },
+      features: [
+        { text: "Full Access (All Chapters)", enabled: true },
+        { text: "Core Physics Lessons", enabled: true },
+        { text: "Active Doubt Support", enabled: true },
+        { text: "Basic Practice", enabled: true },
+        { text: "Progression Tracking", enabled: true },
+        { text: "Rewards & Badges", enabled: true },
+        { text: "Leaderboard & Ranking", enabled: true }
+      ]
+    }
+  ]
+};
+
+// Back-compat: the default plan list (payment engine reads live config below).
+export const PRICING_PLANS = DEFAULT_PRICING.plans;
+
+// `available` is config-derived: payments go live the moment RAZORPAY_KEY_ID +
+// RAZORPAY_KEY_SECRET are set; otherwise the client shows "Coming soon".
 export const isPaymentEnabled = () =>
   Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
 
-export const getPricing = () => ({
-  currency: "INR",
-  available: isPaymentEnabled(),
-  plans: PRICING_PLANS
-});
+// The admin-editable pricing config (falls back to defaults until an admin saves).
+export const getPricingConfig = async () => {
+  const stored = await SettingsRepository.get(PRICING_KEY);
+  return (stored && Array.isArray(stored.plans) && stored.plans.length) ? stored : DEFAULT_PRICING;
+};
+
+export const updatePricingConfig = async (config) => {
+  await SettingsRepository.set(PRICING_KEY, config);
+  return config;
+};
+
+export const getPricing = async () => {
+  const cfg = await getPricingConfig();
+  return { ...cfg, available: isPaymentEnabled() };
+};
 
 export const verifyAccess = async (user, profile) => {
   if (profile?.is_admin) return true;

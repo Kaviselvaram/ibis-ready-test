@@ -6,6 +6,8 @@ import { z } from "zod";
 
 const router = Router();
 
+// LoginRequest / SignupRequest now include the optional turnstileToken field
+// (enforced server-side only when TURNSTILE_SECRET_KEY is set).
 router.post("/login", withHandler({
   method: "POST",
   schema: LoginRequest,

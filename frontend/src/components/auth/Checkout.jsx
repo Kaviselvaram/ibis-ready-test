@@ -103,25 +103,9 @@ export default function Checkout() {
   const starterPrice = (starterPlan?.price || 0) + (starterFast ? (starterPlan?.addon?.price || 0) : 0);
   const proPrice = (proPlan?.price || 0) + (proFast ? (proPlan?.addon?.price || 0) : 0);
 
-  const starterFeatures = [
-    { text: "1 Chapter Access", enabled: true },
-    { text: "Core Physics Lessons", enabled: true },
-    { text: "Active Doubt Support", enabled: true },
-    { text: "Basic Practice", enabled: true },
-    { text: "Progression Tracking", enabled: false },
-    { text: "Rewards & Badges", enabled: false },
-    { text: "Leaderboard & Ranking", enabled: false },
-  ];
-
-  const proFeatures = [
-    { text: "Full Access (All Chapters)", enabled: true },
-    { text: "Core Physics Lessons", enabled: true },
-    { text: "Active Doubt Support", enabled: true },
-    { text: "Basic Practice", enabled: true },
-    { text: "Progression Tracking", enabled: true },
-    { text: "Rewards & Badges", enabled: true },
-    { text: "Leaderboard & Ranking", enabled: true },
-  ];
+  // Feature lists come from the admin-editable pricing config (backend).
+  const starterFeatures = starterPlan?.features || [];
+  const proFeatures = proPlan?.features || [];
 
   return (
     <section className="checkout-flow">
@@ -163,21 +147,21 @@ export default function Checkout() {
           <div className="pricing-stolen-inner-light">
             <div className="pricing-stolen-header">
               <div className="pricing-stolen-title-area">
-                <h2>1-Month</h2>
+                <h2>{starterPlan?.name || "1-Month"}</h2>
                 <p>Perfect for trying out Ibis Portal chapters.</p>
               </div>
-              <span className="pricing-stolen-badge">
-                Most Flexible
-              </span>
+              {starterPlan?.badge && (
+                <span className="pricing-stolen-badge">{starterPlan.badge}</span>
+              )}
             </div>
 
             <div className="pricing-stolen-price-area">
               <span className="pricing-stolen-price">₹{starterPrice.toLocaleString('en-IN')}</span>
-              <span className="pricing-stolen-period">/month</span>
+              <span className="pricing-stolen-period">/{starterPlan?.period || "month"}</span>
             </div>
 
             <button className="pricing-stolen-btn pricing-stolen-btn-light" onClick={() => startPayment("starter", starterFast)} disabled={busy}>
-              {busy ? "Processing…" : "Get Started"}
+              {busy ? "Processing…" : (starterPlan?.buttonText || "Get Started")}
               <ArrowRight size={18} />
             </button>
           </div>
@@ -211,21 +195,21 @@ export default function Checkout() {
           <div className="pricing-stolen-inner-dark">
             <div className="pricing-stolen-header">
               <div className="pricing-stolen-title-area">
-                <h2>12-Month</h2>
+                <h2>{proPlan?.name || "12-Month"}</h2>
                 <p>Unlock complete access to the full platform.</p>
               </div>
-              <span className="pricing-stolen-badge">
-                Best Value
-              </span>
+              {proPlan?.badge && (
+                <span className="pricing-stolen-badge">{proPlan.badge}</span>
+              )}
             </div>
 
             <div className="pricing-stolen-price-area">
               <span className="pricing-stolen-price">₹{proPrice.toLocaleString('en-IN')}</span>
-              <span className="pricing-stolen-period">/year</span>
+              <span className="pricing-stolen-period">/{proPlan?.period || "year"}</span>
             </div>
 
             <button className="pricing-stolen-btn pricing-stolen-btn-dark" onClick={() => startPayment("pro", proFast)} disabled={busy}>
-              {busy ? "Processing…" : "Enroll Now"}
+              {busy ? "Processing…" : (proPlan?.buttonText || "Enroll Now")}
               <AcademicHatIcon />
             </button>
           </div>

@@ -1,4 +1,5 @@
 import { api, refreshAccessToken } from './ApiClient';
+import { getTurnstileToken, clearTurnstileToken } from '../utils/turnstile';
 
 // Auth is typically the first request a visitor makes, so it's the one most
 // likely to hit a cold backend (free-tier scale-to-zero can take 30-50s to wake).
@@ -7,10 +8,20 @@ const AUTH_TIMEOUT = 60000;
 
 export const AuthClient = {
   login: async (email, password) => {
-    return await api.post('/auth/login', { email, password }, { timeout: AUTH_TIMEOUT });
+    const turnstileToken = getTurnstileToken() || undefined;
+    try {
+      return await api.post('/auth/login', { email, password, turnstileToken }, { timeout: AUTH_TIMEOUT });
+    } finally {
+      clearTurnstileToken();   // tokens are single-use; force a fresh one on the next attempt
+    }
   },
   register: async (email, password, name) => {
-    return await api.post('/auth/signup', { email, password, name }, { timeout: AUTH_TIMEOUT });
+    const turnstileToken = getTurnstileToken() || undefined;
+    try {
+      return await api.post('/auth/signup', { email, password, name, turnstileToken }, { timeout: AUTH_TIMEOUT });
+    } finally {
+      clearTurnstileToken();
+    }
   },
   logout: async () => {
     return await api.post('/auth/logout');

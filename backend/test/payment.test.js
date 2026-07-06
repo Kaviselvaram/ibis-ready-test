@@ -20,11 +20,11 @@ test("payments are disabled (503) when keys are absent", async () => {
   );
 });
 
-test("pricing.available reflects key presence", () => {
+test("pricing.available reflects key presence", async () => {
   clearKeys();
-  assert.equal(getPricing().available, false);
+  assert.equal((await getPricing()).available, false);
   setKeys();
-  assert.equal(getPricing().available, true);
+  assert.equal((await getPricing()).available, true);
   clearKeys();
 });
 

@@ -1,10 +1,16 @@
 import { AppError } from "../errors/AppError.js";
-import { verifyAccess, getSecureMediaLink, getProtectedVideo, getPricing } from "../services/ContentService.js";
+import { verifyAccess, getSecureMediaLink, getProtectedVideo, getPricing, updatePricingConfig } from "../services/ContentService.js";
 import { UploadService } from "../services/UploadService.js";
 import { logger } from "../utils/logger.js";
 
 export const getPricingController = async () => {
-  return getPricing();
+  return await getPricing();
+};
+
+// Admin: save the editable pricing config (prices, titles, features, badges,
+// button text, add-ons, default plan). Reflects immediately on the checkout.
+export const updatePricingController = async ({ validatedData }) => {
+  return await updatePricingConfig(validatedData);
 };
 
 export const createUploadUrl = async ({ validatedData }) => {

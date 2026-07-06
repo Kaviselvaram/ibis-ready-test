@@ -8,6 +8,7 @@ import { useAuthenticationController } from '../../hooks/useAuthenticationContro
 
 import PortalBadge from '../ui/PortalBadge';
 import { Mail, Lock, Eye, EyeOff, Users } from 'lucide-react';
+import TurnstileWidget from './TurnstileWidget';
 const FaultyTerminal = React.lazy(() => import('../ui/FaultyTerminal'));
 
 export function Pupil({ size = 12, maxDistance = 5, pupilColor = "black", forceLookX, forceLookY }) {
@@ -545,6 +546,9 @@ export default function Signup({ initialMode = "signup" }) {
               </label>
               {isLogin ? <button type="button" onClick={() => navigate("/forgot-password")}>Forgot password?</button> : <span className="signup-secure-note"><Lock size={13} /> Secure checkout next</span>}
             </div>
+
+            {/* Cloudflare Turnstile — renders only when configured (env-gated). */}
+            <TurnstileWidget />
 
             <GlassButton type="submit" size="default" className="auth-cta-glass" contentClassName="auth-cta-glass-text" disabled={isLoading}>
               <span>{isLoading ? (isLogin ? "Logging in..." : "Creating account...") : (isLogin ? "Login to portal" : "Continue to plans")}</span>

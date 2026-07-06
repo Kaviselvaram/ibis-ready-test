@@ -3,12 +3,15 @@ import { env } from "../config/env.js";
 import { PaymentRepository } from "../repositories/PaymentRepository.js";
 import { AppError } from "../errors/AppError.js";
 import { getRedisClient } from "../config/redis.js";
-import { PRICING_PLANS, isPaymentEnabled } from "./ContentService.js";
+import { getPricingConfig, isPaymentEnabled } from "./ContentService.js";
 
 const RAZORPAY_API = "https://api.razorpay.com/v1";
 
-function planOr404(planId) {
-  const plan = PRICING_PLANS.find((p) => p.id === planId);
+// Look up a plan from the LIVE (admin-editable) pricing config so order amounts
+// always reflect the current price.
+async function planOr404(planId) {
+  const cfg = await getPricingConfig();
+  const plan = (cfg.plans || []).find((p) => p.id === planId);
   if (!plan) throw new AppError("Unknown plan", 400, "BAD_INPUT");
   return plan;
 }
@@ -29,7 +32,7 @@ function validUntilFor(plan) {
 // Returns what the browser needs to open Razorpay Checkout.
 export const createOrder = async (userId, planId, withAddon = false) => {
   if (!isPaymentEnabled()) throw new AppError("Payments are not available yet.", 503, "PAYMENTS_DISABLED");
-  const plan = planOr404(planId);
+  const plan = await planOr404(planId);
   const amount = amountPaise(plan, withAddon);
 
   const auth = Buffer.from(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`).toString("base64");
@@ -62,7 +65,7 @@ export const verifyAndActivate = async ({ userId, orderId, paymentId, signature,
     throw new AppError("Payment verification failed.", 400, "BAD_SIGNATURE");
   }
 
-  const plan = planOr404(planId);
+  const plan = await planOr404(planId);
   const { data, error } = await PaymentRepository.processPayment(
     userId, paymentId, amountPaise(plan, withAddon), "INR", validUntilFor(plan)
   );

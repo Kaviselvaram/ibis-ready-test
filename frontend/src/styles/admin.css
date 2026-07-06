@@ -672,6 +672,25 @@ a.kpi-card:hover { transform: translateY(-2px); border-color: var(--clay); box-s
 .gencfg-save:disabled { opacity: 0.6; cursor: default; }
 @media (max-width: 720px) { .gencfg-row.bloom { grid-template-columns: repeat(3, 1fr); } }
 
+/* Admin pricing editor (dynamic pricing management) */
+.pxcfg-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 12px; }
+.pxcfg-plan { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: var(--paper-soft); display: grid; gap: 10px; }
+.pxcfg-plan-head { display: flex; align-items: center; justify-content: space-between; }
+.pxcfg-planid { font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.74rem; color: var(--clay-dark); background: rgba(198,95,61,0.1); padding: 3px 9px; border-radius: 999px; }
+.pxcfg-default { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: var(--muted); cursor: pointer; }
+.pxcfg-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pxcfg-f { display: grid; gap: 3px; }
+.pxcfg-f > span { font-size: 0.7rem; font-weight: 800; color: var(--muted); }
+.pxcfg-f input { border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; font-weight: 600; background: var(--paper-card); color: var(--ink); font-size: 0.85rem; }
+.pxcfg-feats { display: grid; gap: 6px; margin-top: 2px; }
+.pxcfg-feats-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; font-weight: 800; color: var(--muted); }
+.pxcfg-feats-head button { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); background: var(--paper-card); color: var(--clay-dark); font-weight: 800; font-size: 0.72rem; padding: 4px 9px; border-radius: 8px; cursor: pointer; }
+.pxcfg-feat { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.pxcfg-feat > input[type="text"], .pxcfg-feat > input:not([type="checkbox"]) { border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: 0.82rem; background: var(--paper-card); color: var(--ink); }
+.pxcfg-feat > input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--clay); cursor: pointer; }
+.pxcfg-feat-del { border: none; background: transparent; color: var(--clay-dark); cursor: pointer; padding: 4px; border-radius: 7px; }
+.pxcfg-feat-del:hover { background: rgba(180,65,45,0.1); }
+
 .bulk-tools { display: flex; gap: 8px; margin-bottom: 12px; }
 .bulk-tool {
   display: inline-flex; align-items: center; gap: 7px;

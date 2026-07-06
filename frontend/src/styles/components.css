@@ -9042,3 +9042,7 @@ body:has(.embedded-content-frame) {
   background: rgba(180, 65, 45, 0.08); border: 1px solid rgba(180, 65, 45, 0.28); border-radius: 10px; padding: 9px 12px;
 }
 .pwreset-hint { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+
+/* Cloudflare Turnstile widget (renders only when configured) */
+.turnstile-widget { width: 100%; display: flex; justify-content: center; margin: 2px 0 2px; min-height: 0; }
+.turnstile-widget iframe { max-width: 100%; }

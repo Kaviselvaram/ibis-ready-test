@@ -1,5 +1,14 @@
 import { login, refresh, logout, signup, requestPasswordReset, resetPassword } from "../services/AuthService.js";
 import { AnalyticsRepository } from "../repositories/AnalyticsRepository.js";
+import { verifyTurnstile } from "../utils/turnstile.js";
+import { AppError } from "../errors/AppError.js";
+
+// Enforce Cloudflare Turnstile when configured (no-op otherwise).
+async function ensureHuman(req, validatedData) {
+  const ip = req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "";
+  const ok = await verifyTurnstile(validatedData?.turnstileToken, ip);
+  if (!ok) throw new AppError("Human verification failed. Please try again.", 403, "TURNSTILE_FAILED");
+}
 
 // Fire-and-forget login event → feeds the daily login streak (gamification).
 // Never blocks or fails the auth response. `sub` is decoded from the freshly
@@ -31,6 +40,7 @@ const cookieOptions = () => ({
 const setRefreshCookie = (res, token) => res.cookie("refresh_token", token, cookieOptions());
 
 export const signupController = async ({ req, res, validatedData }) => {
+  await ensureHuman(req, validatedData);
   await signup(validatedData);
   const { accessToken, refreshToken } = await login({ email: validatedData.email, password: validatedData.password });
   setRefreshCookie(res, refreshToken);
@@ -39,6 +49,7 @@ export const signupController = async ({ req, res, validatedData }) => {
 };
 
 export const loginController = async ({ req, res, validatedData }) => {
+  await ensureHuman(req, validatedData);
   const { accessToken, refreshToken } = await login(validatedData);
   setRefreshCookie(res, refreshToken);
   logLogin(accessToken);

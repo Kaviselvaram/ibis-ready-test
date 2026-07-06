@@ -14,6 +14,7 @@ export const CourseRepository = {
   getPricing: async () => {
     return await api.get('/content/pricing');
   },
+  updatePricing: (config) => api.put('/content/pricing', config),   // admin
 
   // ---- Admin CRUD (persists to Supabase) ----
   createChapter: (title, image_url = null) => api.post('/course/chapters', { title, image_url }),
