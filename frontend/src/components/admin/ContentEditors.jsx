@@ -35,7 +35,7 @@ function VideoRow({ item, onPreview, onSaveTitle, onDelete }) {
   return (
     <article className="vid-row">
       <button type="button" className="vid-thumb" onClick={() => onPreview({ videoId: item.url, title: item.title })} title="Preview video">
-        <img src={getYouTubeThumbnail(item.url)} alt="" />
+        <img src={getYouTubeThumbnail(item.url)} alt="" loading="lazy" decoding="async" />
         <i><Play size={14} /></i>
       </button>
       <input
@@ -105,7 +105,7 @@ export function AdminVideos({ topic, onAddVideo, onUpdateVideo, onDeleteVideo })
       {urlDirty && (
         urlValid ? (
           <div className="yt-detect ok">
-            <img className="yt-detect-thumb" src={getYouTubeThumbnail(detectedId)} alt="" />
+            <img className="yt-detect-thumb" src={getYouTubeThumbnail(detectedId)} alt="" loading="lazy" decoding="async" />
             <div className="yt-detect-info">
               <strong><Check size={14} /> Video detected</strong>
               <small>{title.trim() ? "Ready to add." : "Add a lesson title to save it."} The link is stored privately — students only see the player.</small>

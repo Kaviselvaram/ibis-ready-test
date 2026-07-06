@@ -56,7 +56,7 @@ export function VideoCard({ video, faint = false, chapterId, topicId }) {
         style={{ cursor: "pointer" }}
       >
         <span className="play-thumb">
-          <img src={getYouTubeThumbnail(video.url)} alt="" className="transition-transform duration-300 group-hover:scale-105" />
+          <img src={getYouTubeThumbnail(video.url)} alt="" loading="lazy" decoding="async" className="transition-transform duration-300 group-hover:scale-105" />
           <i><Play size={14} className="fill-current" style={{ marginLeft: "1.5px" }} /></i>
         </span>
         <span>

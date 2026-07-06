@@ -89,7 +89,7 @@ export default function AdminContent() {
       <div className="content-add content-add-chapter">
         <label className="chapter-thumb-pick" title="Optional thumbnail">
           {thumb ? (
-            <img src={thumb.preview} alt="" />
+            <img src={thumb.preview} alt="" loading="lazy" decoding="async" />
           ) : (
             <span><ImageUp size={18} /><small>Thumbnail</small></span>
           )}
