@@ -1,16 +1,19 @@
 import { useNavigationController } from "../../hooks/useNavigationController";
 import React, { useRef } from 'react';
-import { Menu, ArrowLeft, GraduationCap, TrendingUp, Users } from 'lucide-react';
+import { Menu, ArrowLeft, GraduationCap, TrendingUp, Users, BadgeCheck, Trophy, Atom } from 'lucide-react';
 import { TimelineContent } from '../ui/timeline-animation';
-import { AwardBadge } from '../ui/award-badge';
 import { Brand, Button } from '../ui/LegacyUI';
 import TesplePill from '../ui/TesplePill';
 
-// Right-rail credibility cards — each a distinct accent while staying on-palette.
+// Right-rail credibility wall — six professional achievement cards, each with a
+// distinct accent while staying on the paper/clay palette.
 const ACHIEVEMENTS = [
   { icon: GraduationCap, value: "10+", label: "Years Teaching", accent: "clay" },
   { icon: TrendingUp, value: "98%", label: "Board Success Rate", accent: "sage" },
-  { icon: Users, value: "5,000+", label: "Students Mentored", accent: "gold" }
+  { icon: Users, value: "5,000+", label: "Students Mentored", accent: "gold" },
+  { icon: BadgeCheck, value: "CBSE", label: "Certified Instructor", accent: "purple" },
+  { icon: Trophy, value: "Harvard", label: "Leadership Program", accent: "blue" },
+  { icon: Atom, value: "JEE · NEET", label: "Physics Specialist", accent: "teal" }
 ];
 
 export default function WhyIbisView({ onBack: sessionOnBack }) {
@@ -118,10 +121,7 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
           customVariants={textVariants}
           className="why-ibis-rail"
         >
-          <div className="why-ibis-awards">
-            <AwardBadge type="cbse-coaching" variant="transparent" />
-            <AwardBadge type="harvard-leadership" variant="transparent" />
-          </div>
+          <span className="why-ach-kicker">Proven track record</span>
           <div className="why-ach-grid">
             {ACHIEVEMENTS.map((a) => {
               const Icon = a.icon;
