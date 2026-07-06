@@ -5530,6 +5530,28 @@ main,
   transform: rotate(-0.7deg);
 }
 
+/* --- Hero hierarchy + font pairing (premium editorial) ---
+   Anchor words (Physics / Clicks) dominate; the connective line reads smaller
+   with an elegant Fraunces italic — a stronger pairing against the bold poster
+   caps. Layout, uppercase rhythm, yellow accent and doodles are all preserved. */
+.title-line.line-one .ink-word,
+.title-line.line-three .ink-word {
+  font-size: 1.05em;
+}
+.title-line.line-two {
+  font-size: 0.78em;
+}
+.title-line.line-two .ink-word {
+  font-family: var(--display, "Fraunces", Georgia, serif);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.title-line.line-two .sun-word {
+  font-family: var(--display, "Fraunces", Georgia, serif);
+  font-style: italic;
+}
+
 .sun-word {
   color: #f1b73a;
   -webkit-text-stroke: 2px #201611;
