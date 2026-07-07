@@ -3755,9 +3755,9 @@ textarea {
 .calendar-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  padding: 16px;
+  padding: 12px 14px;
   cursor: pointer;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   min-height: auto;
@@ -3890,17 +3890,23 @@ textarea {
 .calendar-card-live .calendar-grid-wrapper {
   position: relative;
   border-radius: 12px;
-  padding: 6px 4px 2px;
+  padding: 4px 4px 2px;
 }
 .calendar-card-live .weekdays-row {
-  margin-bottom: 7px;
+  margin-bottom: 5px;
   font-size: 0.62rem;
   letter-spacing: 0.06em;
   color: var(--muted);
 }
-.calendar-card-live .calendar-days-grid { gap: 5px; }
+.calendar-card-live .calendar-days-grid { gap: 4px; }
 .calendar-card-live .day-cell {
-  border-radius: 8px;
+  /* Height is tied to the VIEWPORT (not cell width) so six week-rows always fit
+     the sidebar: square/width-driven cells grew too tall on wide-but-short
+     screens (e.g. 1366×768) and forced the calendar to scroll. Now the calendar
+     compresses on short screens and caps out on tall ones. */
+  aspect-ratio: auto;
+  height: clamp(22px, 3.3vh, 34px);
+  border-radius: 7px;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 .calendar-card-live .day-cell:not(.empty):hover {
@@ -3968,13 +3974,23 @@ textarea {
 .rank-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   min-width: 0;
+}
+/* Tighten the rank blob card's inner padding (set inline in JSX) so the stack
+   fits the sidebar height. */
+.rank-front .metric-card {
+  padding: 11px !important;
+  gap: 5px !important;
+}
+.rank-front .metric-card strong {
+  font-size: 2.15rem !important;
+  line-height: 1 !important;
 }
 .gamify-card {
   position: static;
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 11px 13px;
   background: linear-gradient(160deg, #2c1f18, #4a3122);
   color: #fbeede;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3988,7 +4004,7 @@ textarea {
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   color: #f4d8b8;
 }
 .gamify-head span { display: inline-flex; align-items: center; gap: 6px; }
@@ -3996,7 +4012,7 @@ textarea {
 .gamify-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 .gamify-medals {
   display: flex;
@@ -4006,19 +4022,19 @@ textarea {
 }
 .gamify-tier {
   display: grid;
-  gap: 2px;
-  padding: 9px 10px;
-  border-radius: 12px;
+  gap: 1px;
+  padding: 5px 8px;
+  border-radius: 11px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 .gamify-tier-ic {
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  margin-bottom: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+  margin-bottom: 2px;
   background: rgba(255, 255, 255, 0.08);
   color: #9c8a78;
 }
@@ -5285,13 +5301,23 @@ textarea {
 body:has(.landing-screen),
 body:has(.checkout-flow),
 body:has(.why-ibis-screen) {
-  background: linear-gradient(135deg, #d37150 0%, #db7a59 50%, #c65f3d 100%) !important;
+  /* Premium layered gradient — a warm cream light source top-left, a soft gold
+     glow top-right and a deep clay shadow bottom-right over a refined terracotta
+     base. Same palette, added depth; subtle, not flashy. */
+  background:
+    radial-gradient(1200px 820px at 14% 6%, rgba(255, 228, 191, 0.42), transparent 56%),
+    radial-gradient(900px 620px at 84% 2%, rgba(245, 190, 100, 0.20), transparent 52%),
+    radial-gradient(1100px 780px at 92% 96%, rgba(138, 57, 40, 0.30), transparent 55%),
+    linear-gradient(155deg, #d97a58 0%, #d06e4c 46%, #bf5a3a 100%) !important;
+  background-attachment: fixed !important;
 }
 
 body:has(.landing-screen) .mesh-bg-container,
 body:has(.checkout-flow) .mesh-bg-container,
 body:has(.why-ibis-screen) .mesh-bg-container {
-  background: linear-gradient(135deg, #d37150 0%, #db7a59 50%, #c65f3d 100%);
+  /* Transparent so the layered body gradient shows through, with the soft blobs
+     floating over it for gentle, living depth. */
+  background: transparent;
 }
 
 body:has(.landing-screen) .blob-clay,
@@ -5410,10 +5436,37 @@ main,
 }
 
 .student-side {
-  overflow: hidden;
-  gap: clamp(10px, 1.4vh, 16px);
-  padding: clamp(14px, 1.8vw, 20px);
+  /* Scroll only when content genuinely can't fit (short screens) instead of
+     clipping the calendar out of bounds. On normal screens everything fits, so
+     there's no scrollbar. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  gap: clamp(8px, 1vh, 12px);
+  padding: clamp(12px, 1.3vw, 16px);
 }
+/* Short viewports (e.g. the very common 1366×768): tighten the sidebar cards a
+   further notch so the worst case — the fallback badge GRID before real badges
+   load — still fits with no scroll. Taller screens keep the roomier spacing. */
+@media (max-height: 810px) {
+  .student-side { gap: 7px; padding: 12px; }
+  .rank-stack { gap: 7px; }
+  .rank-front .metric-card { padding: 10px !important; gap: 4px !important; }
+  .rank-front .metric-card strong { font-size: 1.95rem !important; }
+  .gamify-card { padding: 9px 12px; }
+  .gamify-head { margin-bottom: 6px; }
+  .gamify-grid { gap: 5px; }
+  .gamify-tier { padding: 4px 8px; }
+  .gamify-tier-ic { width: 19px; height: 19px; }
+  .calendar-card { padding: 10px 12px; gap: 5px; }
+  .calendar-card-live .day-cell { height: clamp(18px, 2.6vh, 30px); }
+}
+
+.student-side::-webkit-scrollbar { width: 5px; }
+.student-side::-webkit-scrollbar-thumb { background: rgba(44, 31, 24, 0.18); border-radius: 99px; }
+.stat-card-hover { transition: transform 0.2s ease; }
+.stat-card-hover:hover { transform: translateY(-3px); }
 
 .topic-list,
 .topic-content,
@@ -5489,11 +5542,11 @@ main,
   gap: clamp(10px, 1.45vh, 17px);
   margin: clamp(14px, 2vh, 24px) 0 clamp(16px, 2.2vh, 28px) !important;
   color: #201611;
-  font-family: var(--poster);
-  font-size: clamp(3.55rem, 8.1vw, 8.8rem) !important;
-  font-weight: 800;
-  line-height: 0.795 !important;
-  letter-spacing: -0.055em !important;
+  font-family: var(--display); /* Fraunces — elegant serif anchors */
+  font-size: clamp(3.35rem, 7.6vw, 8.4rem) !important;
+  font-weight: 600;
+  line-height: 0.92 !important;
+  letter-spacing: -0.022em !important;
   text-transform: uppercase;
 }
 
@@ -5513,43 +5566,35 @@ main,
   padding-left: clamp(4px, 1vw, 18px);
 }
 
+/* Straight, refined words (no playful rotation) + a soft, subtle lift instead of
+   the heavy emboss — a polished, production-grade look. */
 .ink-word,
 .sun-word {
   display: inline-block;
-  transform: rotate(-1.3deg);
-  text-shadow:
-    0 2px 0 rgba(255, 246, 237, 0.72),
-    0 8px 22px rgba(32, 22, 17, 0.12);
+  transform: none;
+  text-shadow: 0 1px 0 rgba(255, 246, 237, 0.4), 0 12px 30px rgba(32, 22, 17, 0.14);
 }
+.title-line:nth-child(2) .ink-word,
+.title-line:nth-child(3) .ink-word { transform: none; }
 
-.title-line:nth-child(2) .ink-word {
-  transform: rotate(0.8deg);
-}
-
-.title-line:nth-child(3) .ink-word {
-  transform: rotate(-0.7deg);
-}
-
-/* --- Hero hierarchy + font pairing (premium editorial) ---
-   Anchor words (Physics / Clicks) dominate; the connective line reads smaller
-   with an elegant Fraunces italic — a stronger pairing against the bold poster
-   caps. Layout, uppercase rhythm, yellow accent and doodles are all preserved. */
-.title-line.line-one .ink-word,
-.title-line.line-three .ink-word {
-  font-size: 1.05em;
-}
+/* --- Two-font pairing + hierarchy (classic + modern) ---
+   Anchors "Physics" / "Clicks" are the elegant Fraunces serif (from the base);
+   the connective "that finally" is a compact modern Bricolage grotesque — a
+   crisp label between the serif anchors. Layout + yellow accent preserved. */
 .title-line.line-two {
-  font-size: 0.78em;
+  font-family: var(--poster);
+  font-size: 0.46em;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  gap: clamp(6px, 0.9vw, 14px);
+  padding-left: clamp(10px, 2.6vw, 46px);
 }
-.title-line.line-two .ink-word {
-  font-family: var(--display, "Fraunces", Georgia, serif);
-  font-style: italic;
-  font-weight: 600;
-  letter-spacing: 0;
-}
+.title-line.line-two .ink-word,
 .title-line.line-two .sun-word {
-  font-family: var(--display, "Fraunces", Georgia, serif);
-  font-style: italic;
+  font-family: var(--poster);
+  font-style: normal;
+  letter-spacing: 0.055em;
+  text-shadow: 0 8px 20px rgba(32, 22, 17, 0.16);
 }
 
 .sun-word {
@@ -5579,16 +5624,11 @@ main,
   border-radius: 10px;
 }
 
+/* Retired: the rotated hard-shadow triangle overlapped "finally" and read as a
+   sticker against the refined serif/grotesque pairing. The yellow "that" word
+   now carries the single accent, keeping the hero classic and premium. */
 .hero-doodle-triangle {
-  right: clamp(14px, 3.4vw, 70px);
-  top: clamp(-8px, -0.5vw, -2px);
-  width: 0;
-  height: 0;
-  border-left: clamp(23px, 3vw, 44px) solid transparent;
-  border-right: clamp(23px, 3vw, 44px) solid transparent;
-  border-bottom: clamp(30px, 3.6vw, 54px) solid #f1b73a;
-  filter: drop-shadow(5px 5px 0 rgba(32, 22, 17, 0.92));
-  transform: rotate(13deg);
+  display: none;
 }
 
 .hero-doodle-underline {
@@ -6312,6 +6352,77 @@ main,
 
   .metric-card strong {
     font-size: 2.25rem;
+  }
+}
+
+/* Landscape phones / very short viewports: the width-driven hero title (up to
+   6.2rem) is far too tall for ~360–430px heights, so it was clipped above the
+   fold and collided with the top bar. Bind the hero size to viewport HEIGHT here
+   so the whole "Physics that finally clicks" + CTAs stay on-screen, uncut. */
+/* Landscape phones (portrait is gated, so phone users land here): a fixed 100dvh
+   cram clips the oversized width-driven title and collides the CTAs with the
+   cards. Instead, let this short-landscape case stack in flow and scroll — logo →
+   hero → CTAs → feature cards — so nothing overlaps or clips at any height. */
+@media (max-width: 1080px) and (max-height: 560px) {
+  /* Stack the container vertically and let it scroll internally (root overflow is
+     locked, so the scroll must live on .landing-screen itself). */
+  .landing-screen {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: 100svh !important;
+    max-height: 100svh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .landing-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  /* Drop the decorative illustration; the hero copy carries the fold. */
+  .hero-subject-showcase {
+    display: none !important;
+  }
+
+  /* Shrink the floating brand so it doesn't crowd the title. */
+  .landing-screen > div[style*="left: 24px"] {
+    transform: scale(0.56);
+    transform-origin: top left;
+  }
+
+  .hero-copy {
+    justify-content: flex-start !important;
+    transform: none !important;
+    /* Base .hero-copy sets `padding` shorthand with !important, so the top
+       clearance must also be !important (and via the shorthand) to win. */
+    padding: clamp(100px, 28vh, 118px) clamp(12px, 3vw, 24px) 14px !important;
+  }
+
+  .hero-editorial-title {
+    font-size: clamp(1.9rem, 9vh, 4rem) !important;
+    line-height: 0.9 !important;
+    gap: clamp(1px, 0.5vh, 5px);
+    margin: clamp(2px, 0.7vh, 7px) 0 clamp(5px, 1vh, 9px) !important;
+  }
+
+  .hero-actions-polished {
+    margin-top: clamp(4px, 1vh, 9px);
+    gap: 8px;
+  }
+
+  /* Feature cards flow beneath the hero instead of floating over it. */
+  .landing-feature-rail {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 4px 16px 22px !important;
   }
 }
 
@@ -7506,6 +7617,37 @@ main,
   .pricing-stolen-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Pricing skeleton — shown until real prices load (no ₹0 flash, no layout shift). */
+.pricing-skeleton-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 940px;
+  margin: 14px auto 0 auto;
+  box-sizing: border-box;
+}
+@media (min-width: 768px) {
+  .pricing-skeleton-grid { grid-template-columns: 1fr 1fr; }
+}
+.pricing-skeleton-card {
+  min-height: clamp(380px, 52vh, 440px);
+  border-radius: 24px;
+  border: 1px solid rgba(32, 22, 17, 0.08);
+  background: linear-gradient(100deg, rgba(255,255,255,0.45) 30%, rgba(255,255,255,0.72) 50%, rgba(255,255,255,0.45) 70%);
+  background-size: 200% 100%;
+  animation: px-shimmer 1.35s ease-in-out infinite;
+}
+.pricing-skeleton-card.dark {
+  border-color: rgba(32, 22, 17, 0.5);
+  background: linear-gradient(100deg, rgba(32,22,17,0.5) 30%, rgba(64,48,38,0.68) 50%, rgba(32,22,17,0.5) 70%);
+  background-size: 200% 100%;
+}
+@keyframes px-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .pricing-stolen-card-light {

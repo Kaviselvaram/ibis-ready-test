@@ -18,6 +18,11 @@ import { StudentChapterShowcase } from '../common/Landing';
 import { BadgeRepository } from '../../repositories/BadgeRepository';
 import { BadgeMedallion } from './BadgeGallery';
 
+// Module-level cache so the gamification badges survive portal re-mounts on
+// navigation — the card renders the real badges immediately instead of flashing
+// the derived-tier placeholder each time.
+let cachedBadgeData = null;
+
 export function getCalendarDays(year, month) {
   const firstDayIndex = new Date(year, month, 1).getDay();
   const totalDays = new Date(year, month + 1, 0).getDate();
@@ -443,13 +448,9 @@ export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard })
         </GradientBlobCard>
       </div>
 
-      {/* Gamification badges — its own separate container. */}
-      <motion.div
-        className="gamify-card"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-      >
+      {/* Gamification badges — its own separate container. No mount-entrance
+          animation, so it stays stable across portal re-mounts/navigation. */}
+      <div className="gamify-card">
         <div className="gamify-head">
           <span><Sparkles size={14} /> Gamification badges</span>
           <b>{earned}/{total}</b>
@@ -472,7 +473,7 @@ export function RankStack({ leaderboard, streak, badgeData, onOpenLeaderboard })
             })}
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -505,12 +506,13 @@ export default function StudentPortal() {
 
   const [statsOpen, setStatsOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
-  const [badgeData, setBadgeData] = useState(null);
+  const [badgeData, setBadgeData] = useState(cachedBadgeData);
 
   // Load the student's real earned badges for the rank-stack gamification card.
+  // Seeded from the module cache so re-mounts don't flicker back to placeholders.
   useEffect(() => {
     let active = true;
-    BadgeRepository.getMine().then((b) => active && setBadgeData(b)).catch(() => {});
+    BadgeRepository.getMine().then((b) => { if (active) { cachedBadgeData = b; setBadgeData(b); } }).catch(() => {});
     return () => { active = false; };
   }, []);
 
@@ -533,12 +535,10 @@ export default function StudentPortal() {
       </header>
 
       <div className="portal-grid">
-        <motion.aside
-          className="student-side"
-          initial={{ opacity: 0, x: -18 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
+        {/* Plain <aside> (no mount-entrance animation) so the sidebar + badges
+            don't fade/slide-in and flicker every time the portal re-mounts on
+            navigation. */}
+        <aside className="student-side">
           <RankStack
             leaderboard={leaderboard}
             streak={streak}
@@ -546,12 +546,12 @@ export default function StudentPortal() {
             onOpenLeaderboard={() => setLeaderboardOpen(true)}
           />
 
-          <motion.div whileHover={{ y: -3 }} transition={{ type: "spring", stiffness: 300, damping: 24 }}>
+          <div className="stat-card-hover">
             <GradientBlobCard onClick={() => setStatsOpen(true)} className="stat-card">
               <CalendarCard isNested={true} />
             </GradientBlobCard>
-          </motion.div>
-        </motion.aside>
+          </div>
+        </aside>
 
         <section className="chapter-switcher">
           <StudentChapterShowcase

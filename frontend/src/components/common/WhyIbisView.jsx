@@ -72,8 +72,8 @@ export default function WhyIbisView({ onBack: sessionOnBack }) {
       <div className="why-ibis-split2">
         <div className="why-ibis-stage">
           <div className="why-ibis-glass-card yibis-card">
-            <span className="yibis-kicker" aria-label="Why Ibis mentor">
-              <span className="yibis-dot" /> Why Ibis · your mentor
+            <span className="yibis-kicker" aria-label="Why iBIS mentor">
+              <span className="yibis-dot" /> Why iBIS · your mentor
             </span>
 
             <TimelineContent

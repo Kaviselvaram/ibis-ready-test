@@ -140,7 +140,14 @@ export default function Checkout() {
           )}
         </div>
 
-      {/* Cards Grid */}
+      {/* Cards grid — gated on loaded pricing so the real prices render
+          immediately (no ₹0 → ₹price flash). A skeleton shows while it loads. */}
+      {!pricing ? (
+        <div className="pricing-skeleton-grid" aria-hidden="true">
+          <div className="pricing-skeleton-card" />
+          <div className="pricing-skeleton-card dark" />
+        </div>
+      ) : (
       <div className="pricing-stolen-grid">
         {/* Starter Card (1-Month Access) */}
         <div className="pricing-stolen-card-light">
@@ -239,6 +246,7 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+      )}
     </div>
   </section>
 );
